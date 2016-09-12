@@ -1,0 +1,5 @@
+---
+# defaults file for ansible-role-proxmox
+proxmox_group: proxmox
+proxmox_fetch_directory: fetch/
+proxmox_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription"

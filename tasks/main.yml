@@ -1,0 +1,20 @@
+---
+# tasks file for ansible-role-proxmox
+- include: ssh_cluster_config.yml
+
+- name: Trust Proxmox' packaging key
+  apt_key:
+    keyserver: pgp.mit.edu
+    id: 9887F95A
+    state: present
+
+- name: Add Proxmox repository
+  apt_repository:
+    repo: "{{ proxmox_repository_line }}"
+    filename: proxmox
+    state: present
+
+- name: Run dist-upgrade
+  apt:
+    update_cache: yes
+    upgrade: dist

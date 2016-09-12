@@ -1,0 +1,21 @@
+galaxy_info:
+  author: Musee Ullah
+  description: Installs and configures Proxmox
+  company: your company (optional)
+  #issue_tracker_url: 
+  license: MIT
+
+  min_ansible_version: 1.2
+
+  platforms:
+  - name: Debian
+    versions:
+    - jessie
+    - sid
+    - stretch
+
+  galaxy_tags:
+    - system
+    - virtualization
+
+dependencies: []
