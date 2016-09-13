@@ -30,11 +30,7 @@
     dest: /root/.ssh/config
     marker: "# {mark} {{ item }}"
     block: |
-      {% if 'ansible_default_ipv4_address' in hostvars[item] %}
-      Host {{ item }} {{ hostvars[item].ansible_default_ipv4_address }}
-      {% else %}
-      Host {{ item }}
-      {% endif %}
+      Host {{ item }} {{ hostvars[item].ansible_default_ipv4.address }}
           IdentityFile /root/.ssh/id_pve
     create: yes
   with_items: "{{ groups[proxmox_group] }}"
