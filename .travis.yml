@@ -12,11 +12,6 @@ addons:
     - python-pip
     - lxc
 
-cache:
-  directories:
-    # LXC image cache
-    - /var/cache/lxc/
-
 env:
   - LXC_NAME=jessie-test LXC_ROOTFS=/var/lib/lxc/jessie-test/rootfs
 
