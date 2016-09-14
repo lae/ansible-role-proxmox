@@ -29,8 +29,10 @@ script:
   # Create and configure LXC container to test against
   - sudo lxc-create -n $LXC_NAME -t debian
   - sudo lxc-start -n $LXC_NAME
-  - sudo lxc-attach -n $LXC_NAME -- apt-get -y install python
+  - sudo lxc-attach -n $LXC_NAME -- apt-get -y --force=yes install python
   - sudo /bin/bash -c "echo '$(dig $LXC_NAME @10.0.3.1 +short) test.lxc' >> /etc/hosts"
+  - cat /etc/hosts
+  - ping -c1 test.lxc
   - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
   - sudo mkdir -m 0700 $LXC_ROOTFS/root/.ssh/
   - sudo cp ~/.ssh/id_rsa.pub $LXC_ROOTFS/root/.ssh/authorized_keys
