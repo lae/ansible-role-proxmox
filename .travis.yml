@@ -13,8 +13,7 @@ addons:
     - lxc
 
 env:
-- LXC_NAME=jessie-test
-- LXC_ROOTFS=/var/lib/lxc/jessie-test/rootfs
+  - LXC_NAME=jessie-test LXC_ROOTFS=/var/lib/lxc/jessie-test/rootfs
 
 install:
   # Install ansible
