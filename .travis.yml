@@ -33,9 +33,9 @@ install:
 script:
   # Create and configure LXC container to test against
   - sudo lxc-create -n $LXC_NAME -t debian
-  - sudo lxc-start -n $LXC_NAME
+  - sudo lxc-start -n $LXC_NAME && sleep 2
   - sudo lxc-attach -n $LXC_NAME -- apt-get -y --force-yes install python
-  - sudo /bin/bash -c "printf '\n$(lxc-info -Hin $LXC_NAME) test.lxc\n' >> /etc/hosts"
+  - sudo /bin/bash -c "printf '\n$(sudo lxc-info -Hin $LXC_NAME) test.lxc\n' >> /etc/hosts"
   - cat /etc/hosts
   - ping -c1 test.lxc
   - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
