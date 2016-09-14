@@ -31,8 +31,6 @@ script:
   - sudo lxc-start -n $LXC_NAME && sleep 2
   - sudo lxc-attach -n $LXC_NAME -- apt-get -y --force-yes install python
   - sudo /bin/bash -c "printf '\n$(sudo lxc-info -Hin $LXC_NAME) test.lxc\n' >> /etc/hosts"
-  - cat /etc/hosts
-  - ping -c1 test.lxc
   - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
   - sudo mkdir -m 0700 $LXC_ROOTFS/root/.ssh/
   - sudo cp ~/.ssh/id_rsa.pub $LXC_ROOTFS/root/.ssh/authorized_keys
