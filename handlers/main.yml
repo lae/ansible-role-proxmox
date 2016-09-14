@@ -4,3 +4,8 @@
   service:
     name: pvedaemon
     state: restarted
+
+- name: reload sshd configuration
+  service:
+    name: sshd
+    state: reloaded
