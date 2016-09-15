@@ -37,6 +37,7 @@
     - open-iscsi
     - ksm-control-daemon
     - systemd-sysv
+    - patch
 
 - block:
 
@@ -46,11 +47,10 @@
       filename: pve-enterprise
       state: absent
 
-  - name: Remove subscription popup dialog in web UI
-    replace:
+  - name: Remove subscription check wrapper function in web UI
+    patch:
+      src: 00_remove_checked_command.patch
       dest: /usr/share/pve-manager/ext6/pvemanagerlib.js
-      regexp: "^          if .data.status !== 'Active'. {"
-      replace: "          if (false) {"
       backup: yes
 
   when: "'pve-no-subscription' in proxmox_repository_line"
