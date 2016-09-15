@@ -58,7 +58,7 @@
 - name: Check if kernel has been updated
   script: scripts/check_kernel_update.sh
   register: __proxmox_kernel
-  changed_when: "__proxmox_kernel.stdout == 'updated=true'"
+  changed_when: "'updated=true' in __proxmox_kernel.stdout"
   when: proxmox_check_for_kernel_update
 
 - block:
