@@ -31,6 +31,13 @@
     - ksm-control-daemon
     - systemd-sysv
 
+- name: Remove automatically installed PVE Enterprise repo configuration
+  apt_repository:
+    repo: "deb https://enterprise.proxmox.com/debian jessie pve-enterprise"
+    filename: pve-enterprise
+    state: absent
+  when: "'pve-no-subscription' in proxmox_repository_line"
+
 - name: Check if kernel has been updated
   script: scripts/check_kernel_update.sh
   register: __proxmox_kernel
