@@ -17,4 +17,35 @@
 - name: Run dist-upgrade
   apt:
     update_cache: yes
+    cache_valid_time: 3600
     upgrade: dist
+
+- name: Install Proxmox VE and related packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - proxmox-ve
+    - postfix
+    - open-iscsi
+    - ksm-control-daemon
+    - systemd-sysv
+
+- name: Check if kernel has been updated
+  script: scripts/check_kernel_update.sh
+  register: __proxmox_kernel
+  changed_when: "__proxmox_kernel.stdout == 'updated=true'"
+
+- block:
+  - name: Reboot for kernel update
+    command: "shutdown -r +1 'PVE kernel update detected by Ansible, rebooting'"
+    async: 0
+    poll: 0
+    ignore_errors: true
+
+  - name: Wait for server to come back online
+    local_action: wait_for port=22 host={{ inventory_hostname }} search_regex=OpenSSH delay=60
+    become: false
+
+  when: "__proxmox_kernel|changed and proxmox_reboot_on_kernel_update"
+
