@@ -1,11 +1,10 @@
 galaxy_info:
   author: Musee Ullah
   description: Installs and configures Proxmox
-  company: your company (optional)
-  #issue_tracker_url: 
+  company: FireEye, Inc.
   license: MIT
 
-  min_ansible_version: 1.2
+  min_ansible_version: 2.1
 
   platforms:
   - name: Debian
