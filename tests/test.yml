@@ -4,3 +4,7 @@
   become: True
   roles:
     - ansible-role-proxmox
+  vars:
+    proxmox_check_for_kernel_update: false
+    proxmox_ldap_bind_user: CN=Nonexistent User,OU=Void,DC=FireEye,DC=com
+    proxmox_ldap_bind_password: test_password

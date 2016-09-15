@@ -3,3 +3,8 @@
 proxmox_group: proxmox
 proxmox_fetch_directory: fetch/
 proxmox_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription"
+proxmox_check_for_kernel_update: true
+proxmox_reboot_on_kernel_update: false
+proxmox_remove_old_kernels: true
+# proxmox_ldap_bind_user:
+# proxmox_ldap_bind_password:
