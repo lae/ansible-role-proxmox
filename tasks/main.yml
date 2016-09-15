@@ -84,7 +84,9 @@
   with_items:
     - linux-image-amd64
     - linux-image-3.16.0-4-amd64
-  when: proxmox_remove_old_kernels
+  when:
+    - proxmox_remove_old_kernels
+    - not __proxmox_kernel | changed
 
 - name: LDAP fix for authenticated search
   lineinfile:
