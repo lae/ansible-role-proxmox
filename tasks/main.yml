@@ -2,6 +2,13 @@
 # tasks file for ansible-role-proxmox
 - include: ssh_cluster_config.yml
 
+- name: Ensure public IP is in /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    state: present
+    line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
+    regexp: "{{ ansible_hostname }}"
+
 - name: Trust Proxmox' packaging key
   apt_key:
     keyserver: pgp.mit.edu
