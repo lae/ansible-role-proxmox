@@ -4,3 +4,5 @@
   become: True
   roles:
     - ansible-role-proxmox
+  vars:
+    proxmox_check_for_kernel_update: false
