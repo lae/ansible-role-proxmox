@@ -46,7 +46,7 @@
       replace: "          if (false) {"
       backup: yes
 
-  when: 'pve-no-subscription' in proxmox_repository_line
+  when: "'pve-no-subscription' in proxmox_repository_line"
 
 - name: Check if kernel has been updated
   script: scripts/check_kernel_update.sh
