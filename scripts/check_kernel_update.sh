@@ -9,10 +9,10 @@ for i in /boot/vmlinuz-* /vmlinuz-* /boot/kernel-* ; do
 done 
 
 # Use helper function to find latest kernel
-latest_kernel=$(version_find_latest $list)
+latest_kernel=$(basename $(version_find_latest $list))
 
 # Find currently booted kernel from boot options
-booted_kernel=$(grep -oP "(?<=BOOT_IMAGE=).*?(?= )" /proc/cmdline)
+booted_kernel=$(basename $(grep -oP "(?<=BOOT_IMAGE=).*?(?= )" /proc/cmdline))
 
 # Print out status message for kernel changes if any
 printf "updated="
