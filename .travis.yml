@@ -35,7 +35,7 @@ install:
   - printf '[defaults]\nroles_path=../\nhost_key_checking=False' >ansible.cfg
 
 before_script:
-  - /bin/bash -c "[ -f $HOME/lxc/cache.tar.gz ] && sudo tar xzf $HOME/lxc/cache.tar.gz || return 0"
+  - /bin/bash -c "[ -f $HOME/lxc/cache.tar.gz ] && sudo tar xzf $HOME/lxc/cache.tar.gz || exit 0"
 
 script:
   # Create and configure LXC container to test against
