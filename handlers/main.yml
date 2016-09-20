@@ -9,3 +9,8 @@
   service:
     name: sshd
     state: reloaded
+
+- name: reload watchdog-mux
+  service:
+    name: watchdog-mux
+    state: restarted

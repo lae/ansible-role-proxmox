@@ -77,6 +77,9 @@
     - proxmox_reboot_on_kernel_update
     - __proxmox_kernel | changed
 
+- include: ipmi_watchdog.yml
+  when: proxmox_watchdog == 'ipmi'
+
 - name: Remove old Debian kernels
   apt:
     name: "{{ item }}"
