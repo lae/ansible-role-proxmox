@@ -4,10 +4,28 @@
     name: nmi_watchdog
     state: absent
 
-- name: Unload softdog
+- name: Attempt to unload softdog live
   modprobe:
     name: softdog
     state: absent
+  ignore_errors: true
+  register: __proxmox_rmmod_softdog
+
+- block:
+
+  - name: Stop watchdog-mux
+    service:
+      name: watchdog-mux
+      state: stopped
+    notify:
+      - restart watchdog-mux
+
+  - name: Unload softdog
+    modprobe:
+      name: softdog
+      state: absent
+
+  when: __proxmox_rmmod_softdog|failed
 
 - name: Disable nmi_watchdog via GRUB config
   lineinfile:
