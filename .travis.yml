@@ -35,10 +35,9 @@ install:
   # Create ansible.cfg with correct roles_path
   - printf '[defaults]\nroles_path=../\nhost_key_checking=False' >ansible.cfg
 
-before_script:
+  # Extract LXC image cache
   - sudo tar xf $HOME/lxc/cache.tar -C / || echo "Didn't extract cache."
 
-script:
   # Create and configure LXC container to test against
   - sudo MIRROR=http://mirrors.us.kernel.org/debian LANG= LC_ALL= LC_CTYPE= lxc-create -n $LXC_NAME -t debian
   - sudo lxc-start -n $LXC_NAME && sleep 5
@@ -49,6 +48,7 @@ script:
   - sudo mkdir -vm 0700 $LXC_ROOTFS/root/.ssh/
   - sudo cp -v ~/.ssh/id_rsa.pub $LXC_ROOTFS/root/.ssh/authorized_keys
 
+script:
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
