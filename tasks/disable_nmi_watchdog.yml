@@ -4,6 +4,11 @@
     name: nmi_watchdog
     state: absent
 
+- name: Unload softdog
+  modprobe:
+    name: softdog
+    state: absent
+
 - name: Disable nmi_watchdog via GRUB config
   lineinfile:
     dest: /etc/default/grub
