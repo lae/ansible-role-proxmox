@@ -16,3 +16,4 @@
   register: __proxmox_grub_update
   failed_when: ('error' in __proxmox_grub_update.stderr)
   when: __proxmox_grub|changed
+  tags: skiponlxc

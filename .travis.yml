@@ -53,11 +53,11 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
   # Perform a test run with the playbook
-  - ansible-playbook tests/test.yml -i tests/inventory
+  - ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
 
   # Perform a another test run with the playbook to check for idempotency
   - >
-    ansible-playbook tests/test.yml -i tests/inventory
+    ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
     | grep -qP 'changed=0.*failed=0'
     && (echo "Idempotence: PASS"; exit 0)
     || (echo "Idempotence: FAIL"; exit 1)

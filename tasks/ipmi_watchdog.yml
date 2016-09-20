@@ -6,6 +6,7 @@
     name: ipmi_watchdog
     params: "action={{ proxmox_watchdog_ipmi_action }} timeout={{ proxmox_watchdog_ipmi_timeout }} panic_wdt_timeout=10"
     state: present
+  tags: skiponlxc
 
 - name: Configure ipmi_watchdog module to load on boot
   copy:
