@@ -1,0 +1,21 @@
+---
+- include: disable_nmi_watchdog.yml
+
+- name: Load ipmi_watchdog module
+  modprobe:
+    name: ipmi_watchdog
+    params: "action={{ proxmox_watchdog_ipmi_action }} timeout={{ proxmox_watchdog_ipmi_timeout }} panic_wdt_timeout=10"
+    state: present
+  tags: skiponlxc
+
+- name: Configure ipmi_watchdog module to load on boot
+  copy:
+    content: "options ipmi_watchdog action={{ proxmox_watchdog_ipmi_action }} timeout={{ proxmox_watchdog_ipmi_timeout }} panic_wdt_timeout=10"
+    dest: /etc/modprobe.d/ipmi_watchdog.conf
+
+- name: Configure PVE HA Manager to use ipmi_watchdog
+  copy:
+    content: "WATCHDOG_MODULE=ipmi_watchdog"
+    dest: /etc/default/pve-ha-manager
+  notify:
+    - restart watchdog-mux

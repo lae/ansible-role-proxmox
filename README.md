@@ -77,6 +77,9 @@ proxmox_reboot_on_kernel_update: false # If set to true, will automatically rebo
 proxmox_remove_old_kernels: true # Currently removes kernel from main Debian repository
 # proxmox_ldap_bind_user: # Setting this and the next variable will configure the LDAP authentication method to use this account for searching for a user
 # proxmox_ldap_bind_password:
+proxmox_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
+proxmox_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
+proxmox_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
 ```
 
 Dependencies
