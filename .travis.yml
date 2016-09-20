@@ -12,18 +12,31 @@ addons:
     - python-pip
     - lxc
 
+cache:
+  directories:
+    - $HOME/lxc/
+  pip: true
+
+before_cache:
+  - mkdir $HOME/lxc
+  - sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/
+  - sudo chown $USER. $HOME/lxc/cache.tar
+
 env:
   - LXC_NAME=jessie-test LXC_ROOTFS=/var/lib/lxc/$LXC_NAME/rootfs
 
 install:
   # Install ansible
-  - sudo pip install ansible
+  - pip install ansible
 
   # Check ansible version
   - ansible --version
 
   # Create ansible.cfg with correct roles_path
   - printf '[defaults]\nroles_path=../\nhost_key_checking=False' >ansible.cfg
+
+before_script:
+  - sudo tar xf $HOME/lxc/cache.tar -C / || echo "Didn't extract cache."
 
 script:
   # Create and configure LXC container to test against
