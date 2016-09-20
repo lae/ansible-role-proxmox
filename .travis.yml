@@ -26,7 +26,7 @@ env:
 
 install:
   # Install ansible
-  - sudo pip install ansible
+  - pip install --upgrade ansible
 
   # Check ansible version
   - ansible --version
