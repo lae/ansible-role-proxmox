@@ -40,7 +40,7 @@ before_script:
 
 script:
   # Create and configure LXC container to test against
-  - sudo MIRROR=http://mirrors.us.kernel.org/debian lxc-create -n $LXC_NAME -t debian
+  - sudo MIRROR=http://mirrors.us.kernel.org/debian LANG= LC_ALL= LC_CTYPE= lxc-create -n $LXC_NAME -t debian
   - sudo lxc-start -n $LXC_NAME && sleep 5
   - sudo lxc-attach -n $LXC_NAME -- apt-get -y --force-yes install python
   - sudo lxc-attach -n $LXC_NAME -- mknod -m 666 /dev/fuse c 10 229
