@@ -19,8 +19,8 @@ cache:
 
 before_cache:
   - mkdir $HOME/lxc
-  - sudo tar czf $HOME/lxc/cache.tar.gz /var/cache/lxc/
-  - sudo chown $USER. $HOME/lxc/cache.tar.gz
+  - sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/
+  - sudo chown $USER. $HOME/lxc/cache.tar
 
 env:
   - LXC_NAME=jessie-test LXC_ROOTFS=/var/lib/lxc/$LXC_NAME/rootfs
@@ -36,7 +36,7 @@ install:
   - printf '[defaults]\nroles_path=../\nhost_key_checking=False' >ansible.cfg
 
 before_script:
-  - sudo tar xzf $HOME/lxc/cache.tar.gz -C / || exit 0
+  - sudo tar xf $HOME/lxc/cache.tar -C / || echo "Didn't extract cache."
 
 script:
   # Create and configure LXC container to test against
