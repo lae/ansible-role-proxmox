@@ -10,7 +10,7 @@
     name: sshd
     state: reloaded
 
-- name: reload watchdog-mux
+- name: restart watchdog-mux
   service:
     name: watchdog-mux
     state: restarted
