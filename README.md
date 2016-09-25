@@ -8,13 +8,13 @@ Installs and configures a Proxmox cluster and restricted SSH configuration.
 
 ## Quickstart
 
-The primary goal for this role is to lay out the necessities for configuring a 
-[Proxmox VE cluster][pve-cluster] (see example playbook), however this role can 
+The primary goal for this role is to lay out the necessities for configuring a
+[Proxmox VE cluster][pve-cluster] (see example playbook), however this role can
 be used to quickly install single node Proxmox servers.
 
-I'm assuming you already have [Ansible installed][install-ansible]. You will 
-need to use an external machine to the one you're installing Proxmox on 
-(primarily because of the reboot in the middle of the installation, though I 
+I'm assuming you already have [Ansible installed][install-ansible]. You will
+need to use an external machine to the one you're installing Proxmox on
+(primarily because of the reboot in the middle of the installation, though I
 may handle this somewhat differently for this use case later).
 
 Copy the following playbook to a file like `install_proxmox.yml`:
@@ -23,41 +23,59 @@ Copy the following playbook to a file like `install_proxmox.yml`:
       become: True
       roles:
         - {
+            role: geerlingguy.ntp,
+            ntp_manage_config: true,
+            ntp_servers: [
+              clock.sjc.he.net,
+              clock.fmt.he.net,
+              clock.nyc.he.net
+            ]
+          }
+        - {
             role: lae.proxmox,
             pve_group: all,
             pve_reboot_on_kernel_update: true
           }
 
-Install this role:
+Install this role and a role for configuring NTP:
 
     # Changing ownership of the roles directory may be necessary:
     sudo chown $(whoami): /etc/ansible/roles
-    ansible-galaxy install lae.proxmox
+    ansible-galaxy install lae.proxmox geerlingguy.ntp
 
 Now you can perform the installation:
 
     ansible-playbook install_proxmox.yml -i $SSH_HOST_FQDN, -u $SSH_USER
 
-If your `SSH_USER` has a sudo password, pass the `-K` flag to the above command. 
-If you also authenticate to the host via password instead of pubkey auth, pass 
-the `-k` flag (make sure you have `sshpass` installed as well). You can set 
-those variables prior to running the command or just replace them. Do note the 
-comma is important, as a list is expected (otherwise it'll attempt to look up a 
+If your `SSH_USER` has a sudo password, pass the `-K` flag to the above command.
+If you also authenticate to the host via password instead of pubkey auth, pass
+the `-k` flag (make sure you have `sshpass` installed as well). You can set
+those variables prior to running the command or just replace them. Do note the
+comma is important, as a list is expected (otherwise it'll attempt to look up a
 file containing a list of hosts).
 
-Once complete, you should be able to access your Proxmox VE instance at 
+Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
 
 ## Example Playbook
 
-This will configure hosts in the group `pve01` as one cluster, as well as 
-reboot the machines should the kernel have been updated. (Only recommended to 
-set this flag during installation - reboots during operation should occur 
+This will configure hosts in the group `pve01` as one cluster, as well as
+reboot the machines should the kernel have been updated. (Only recommended to
+set this flag during installation - reboots during operation should occur
 serially during a maintenance period.)
 
     - hosts: pve01
       become: True
       roles:
+        - {
+            role: geerlingguy.ntp,
+            ntp_manage_config: true,
+            ntp_servers: [
+              clock.sjc.he.net,
+              clock.fmt.he.net,
+              clock.nyc.he.net
+            ]
+          }
         - {
             role: lae.proxmox,
             pve_group: pve01,
@@ -85,7 +103,7 @@ pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
 Dependencies
 ------------
 
-This role does not install NTP, so you should configure NTP yourself, with the `geerlingguy.ntp` role for example.
+This role does not install NTP, so you should configure NTP yourself, with the `geerlingguy.ntp` role as in the examples.
 
 
 License

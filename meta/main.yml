@@ -14,7 +14,10 @@ galaxy_info:
     - stretch
 
   galaxy_tags:
-    - system
+    - proxmox
+    - pve
     - virtualization
+    - kvm
+    - lxc
 
 dependencies: []
