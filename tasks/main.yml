@@ -17,7 +17,7 @@
 
 - name: Add Proxmox repository
   apt_repository:
-    repo: "{{ proxmox_repository_line }}"
+    repo: "{{ pve_repository_line }}"
     filename: proxmox
     state: present
 
@@ -53,13 +53,13 @@
       dest: /usr/share/pve-manager/ext6/pvemanagerlib.js
       backup: yes
 
-  when: "'pve-no-subscription' in proxmox_repository_line"
+  when: "'pve-no-subscription' in pve_repository_line"
 
 - name: Check if kernel has been updated
   script: scripts/check_kernel_update.sh
-  register: __proxmox_kernel
-  changed_when: "'updated=true' in __proxmox_kernel.stdout"
-  when: proxmox_check_for_kernel_update
+  register: __pve_kernel
+  changed_when: "'updated=true' in __pve_kernel.stdout"
+  when: pve_check_for_kernel_update
 
 - block:
 
@@ -74,11 +74,11 @@
     become: false
 
   when:
-    - proxmox_reboot_on_kernel_update
-    - __proxmox_kernel | changed
+    - pve_reboot_on_kernel_update
+    - __pve_kernel | changed
 
 - include: ipmi_watchdog.yml
-  when: proxmox_watchdog == 'ipmi'
+  when: pve_watchdog == 'ipmi'
 
 - name: Remove old Debian kernels
   apt:
@@ -88,17 +88,17 @@
     - linux-image-amd64
     - linux-image-3.16.0-4-amd64
   when:
-    - proxmox_remove_old_kernels
-    - not __proxmox_kernel | changed
+    - pve_remove_old_kernels
+    - not __pve_kernel | changed
 
 - name: LDAP fix for authenticated search
   lineinfile:
-    line: "    $ldap->bind('{{ proxmox_ldap_bind_user }}', password => '{{ proxmox_ldap_bind_password }}');"
+    line: "    $ldap->bind('{{ pve_ldap_bind_user }}', password => '{{ pve_ldap_bind_password }}');"
     insertbefore: "ldap->search\\("
     dest: /usr/share/perl5/PVE/Auth/LDAP.pm
   notify:
     - restart pvedaemon
   when:
-    - proxmox_ldap_bind_user is defined
-    - proxmox_ldap_bind_password is defined
+    - pve_ldap_bind_user is defined
+    - pve_ldap_bind_password is defined
 

@@ -16,15 +16,15 @@
 - name: Fetch root SSH public key
   fetch:
     src: /root/.ssh/id_rsa.pub
-    dest: "{{ proxmox_fetch_directory }}/{{ inventory_hostname }}/root_rsa.pub"
+    dest: "{{ pve_fetch_directory }}/{{ inventory_hostname }}/root_rsa.pub"
     fail_on_missing: yes
     flat: yes
 
 - name: Authorize all hosts' root SSH public keys
   authorized_key:
     user: root
-    key: "{{ lookup('file', proxmox_fetch_directory + '/' + item + '/root_rsa.pub') }}"
-  with_items: "{{ groups[proxmox_group] }}"
+    key: "{{ lookup('file', pve_fetch_directory + '/' + item + '/root_rsa.pub') }}"
+  with_items: "{{ groups[pve_group] }}"
 
 - name: Add key configuration for accessing PVE hosts
   blockinfile:
@@ -34,7 +34,7 @@
       Host {{ item }} {{ hostvars[item].ansible_default_ipv4.address }}
           IdentityFile /root/.ssh/id_rsa
     create: yes
-  with_items: "{{ groups[proxmox_group] }}"
+  with_items: "{{ groups[pve_group] }}"
 
 - name: Allow root logins from cluster hosts
   blockinfile:
@@ -44,6 +44,6 @@
       Match Address {{ hostvars[item].ansible_default_ipv4.address }}
           PermitRootLogin yes
     validate: "/usr/sbin/sshd -t -f %s"
-  with_items: "{{ groups[proxmox_group] }}"
+  with_items: "{{ groups[pve_group] }}"
   notify:
     - reload sshd configuration

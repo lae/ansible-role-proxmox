@@ -24,8 +24,8 @@ Copy the following playbook to a file like `install_proxmox.yml`:
       roles:
         - {
             role: lae.proxmox,
-            proxmox_group: all,
-            proxmox_reboot_on_kernel_update: true
+            pve_group: all,
+            pve_reboot_on_kernel_update: true
           }
 
 Install this role:
@@ -60,8 +60,8 @@ serially during a maintenance period.)
       roles:
         - {
             role: lae.proxmox,
-            proxmox_group: pve01,
-            proxmox_reboot_on_kernel_update: true
+            pve_group: pve01,
+            pve_reboot_on_kernel_update: true
           }
 
 Role Variables
@@ -69,17 +69,17 @@ Role Variables
 
 ```
 [variable]: [default] #[description/purpose]
-proxmox_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-proxmox_fetch_directory: fetch/ # local directory used to download root public keys from each host to
-proxmox_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
-proxmox_check_for_kernel_update: true # Runs a script on the host to check kernel versions
-proxmox_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
-proxmox_remove_old_kernels: true # Currently removes kernel from main Debian repository
-# proxmox_ldap_bind_user: # Setting this and the next variable will configure the LDAP authentication method to use this account for searching for a user
-# proxmox_ldap_bind_password:
-proxmox_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
-proxmox_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
-proxmox_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
+pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
+pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
+pve_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
+pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
+pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
+# pve_ldap_bind_user: # Setting this and the next variable will configure the LDAP authentication method to use this account for searching for a user
+# pve_ldap_bind_password:
+pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
+pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
+pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
 ```
 
 Dependencies
