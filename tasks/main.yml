@@ -11,7 +11,7 @@
 
 - name: Trust Proxmox' packaging key
   apt_key:
-    keyserver: pgp.mit.edu
+    data: "{{ lookup('file', 'files/proxmox_key.asc') }}"
     id: 9887F95A
     state: present
 
