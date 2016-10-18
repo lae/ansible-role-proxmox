@@ -4,6 +4,9 @@ python: "2.7"
 sudo: required
 dist: trusty
 
+matrix:
+  fast_finish: true
+
 addons:
   apt:
     sources:
