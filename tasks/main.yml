@@ -50,7 +50,7 @@
   - name: Remove subscription check wrapper function in web UI
     patch:
       src: 00_remove_checked_command.patch
-      dest: /usr/share/pve-manager/ext6/pvemanagerlib.js
+      dest: /usr/share/pve-manager/js/pvemanagerlib.js
       backup: yes
 
   when: "'pve-no-subscription' in pve_repository_line"
