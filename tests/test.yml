@@ -1,6 +1,5 @@
 ---
-- hosts: test.lxc
-  remote_user: root
+- hosts: all
   become: True
   roles:
     - ansible-role-proxmox

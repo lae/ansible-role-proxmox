@@ -1,72 +1,34 @@
 ---
 language: python
-python: "2.7"
 sudo: required
 dist: trusty
-
+cache:
+  directories: [ '$HOME/lxc' ]
+  pip: true
+env:
+- LXC_DISTRO=debian LXC_RELEASE=jessie
 matrix:
   fast_finish: true
-
-addons:
-  apt:
-    sources:
-    - sourceline: 'ppa:ubuntu-lxc/stable'
-    packages:
-    - python-pip
-    - lxc
-
-cache:
-  directories:
-    - $HOME/lxc/
-  pip: true
-
 before_cache:
-  - mkdir $HOME/lxc
-  - sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/
-  - sudo chown $USER. $HOME/lxc/cache.tar
-
-env:
-  - LXC_NAME=jessie-test LXC_ROOTFS=/var/lib/lxc/$LXC_NAME/rootfs
-
+- sudo mkdir $HOME/lxc && sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/ && sudo chown $USER. $HOME/lxc/cache.tar
 install:
-  # Install ansible
-  - pip install ansible
-
-  # Check ansible version
-  - ansible --version
-
-  # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../\nhost_key_checking=False' >ansible.cfg
-
-  # Extract LXC image cache
-  - sudo tar xf $HOME/lxc/cache.tar -C / || echo "Didn't extract cache."
-
-  # Create and configure LXC container to test against
-  - sudo MIRROR=http://mirrors.us.kernel.org/debian LANG= LC_ALL= LC_CTYPE= lxc-create -n $LXC_NAME -t debian
-  - sudo lxc-start -n $LXC_NAME && sleep 5
-  - sudo lxc-attach -n $LXC_NAME -- apt-get -y --force-yes install python
-  - sudo lxc-attach -n $LXC_NAME -- mknod -m 666 /dev/fuse c 10 229
-  - sudo /bin/bash -c "printf '\n$(sudo lxc-info -Hin $LXC_NAME) test.lxc' >> /etc/hosts"
-  - ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
-  - sudo mkdir -vm 0700 $LXC_ROOTFS/root/.ssh/
-  - sudo cp -v ~/.ssh/id_rsa.pub $LXC_ROOTFS/root/.ssh/authorized_keys
-
+- sudo tar xf $HOME/lxc/cache.tar -C / || true
+- sudo apt-get install -y expect-dev
+- pip install ansible
+- ansible --version
+- printf '[defaults]\nroles_path=../\ncallback_whitelist=profile_tasks'  >ansible.cfg
+- ansible-galaxy install lae.travis-lxc
+- ansible-playbook -vvv tests/install.yml -i tests/inventory
 script:
-  # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
-
-  # Perform a test run with the playbook
-  - ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
-
-  # Perform a another test run with the playbook to check for idempotency
-  - >
-    ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
-    | grep -qP 'changed=0.*failed=0'
-    && (echo "Idempotence: PASS"; exit 0)
-    || (echo "Idempotence: FAIL"; exit 1)
-
-  # Test Proxmox Web UI is online
-  - curl -k https://test.lxc:8006
+- ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+- ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
+- unbuffer ansible-playbook -vvv tests/test.yml -i tests/inventory --skip skiponlxc >/tmp/idempotency.log
+  2>&1
+- 'grep -A1 "PLAY RECAP" /tmp/idempotency.log | grep -qP "changed=0.*failed=0" && (echo "Idempotence:
+  PASS"; exit 0) || (echo "Idempotence: FAIL"; cat /tmp/idempotency.log; exit 1)'
+- ansible -m shell -a "journalctl --no-pager -xu pvedaemon.service" -i tests/inventory all
+- ansible -m shell -a "journalctl --no-pager -xu pve-cluster.service" -i tests/inventory all
+- ansible -m uri -a 'url=https://{{ inventory_hostname }}:8006 validate_certs=no' -i tests/inventory all
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  roles:
+    - { name: lae.travis-lxc }
+  vars:
+    host_quantity: 3
+
+# Run the following within the containers in the inventory
+- hosts: all
+  tasks:
+    - name: Create FUSE device within containers
+      command: "mknod -m 666 /dev/fuse c 10 229"
+      args:
+        creates: /dev/fuse
