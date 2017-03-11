@@ -1,0 +1,6 @@
+.*.swp
+*.*~*
+*.bak
+
+ansible.cfg
+*.retry
