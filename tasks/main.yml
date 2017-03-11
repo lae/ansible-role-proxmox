@@ -27,6 +27,11 @@
     cache_valid_time: 3600
     upgrade: dist
 
+- name: Remove os-prober package
+  apt:
+    name: os-prober
+    state: absent
+
 - name: Install Proxmox VE and related packages
   apt:
     name: "{{ item }}"
