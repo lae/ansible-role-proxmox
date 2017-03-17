@@ -14,7 +14,7 @@
     marker: "# {mark} ANSIBLE MANAGED: Proxmox Cluster Hosts"
     content: |
       {% for host in groups[pve_group] %}
-      {{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ hostvars[host]['ansible_fqdn'] }} {{ hostvars[host]['ansible_hostname'] }}
+      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}{% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
       {% endfor %}
 
 - name: Trust Proxmox' packaging key
