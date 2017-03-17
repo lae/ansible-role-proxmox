@@ -69,11 +69,11 @@
 
   when: "'pve-no-subscription' in pve_repository_line"
 
-- name: Check if kernel has been updated
-  script: scripts/check_kernel_update.sh
+- name: Gather information about kernels
+  collect_kernel_info:
   register: __pve_kernel
-  changed_when: "'updated=true' in __pve_kernel.stdout"
-  when: pve_check_for_kernel_update
+
+- debug: var=__pve_kernel
 
 - block:
 
@@ -89,7 +89,7 @@
 
   when:
     - pve_reboot_on_kernel_update
-    - __pve_kernel | changed
+    - __pve_kernel.new_kernel_exists
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
