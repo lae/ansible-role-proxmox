@@ -2,7 +2,7 @@
 # tasks file for ansible-role-proxmox
 - assert:
     that:
-      - "hostvars[item].ansible_default_ipv4.address == True"
+      - "hostvars[item].ansible_default_ipv4.address is defined"
     msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
   with_items: "{{ groups[pve_group] }}"
 
