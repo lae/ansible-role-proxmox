@@ -1,5 +1,11 @@
 ---
 # tasks file for ansible-role-proxmox
+- assert:
+    that:
+      - "hostvars[item].ansible_default_ipv4.address == True"
+    msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
+  with_items: "{{ groups[pve_group] }}"
+
 - include: ssh_cluster_config.yml
 
 - name: Enumerate all cluster hosts within the hosts file
