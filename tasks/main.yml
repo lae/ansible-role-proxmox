@@ -69,11 +69,11 @@
 
   when: "'pve-no-subscription' in pve_repository_line"
 
-- name: Check if kernel has been updated
-  script: scripts/check_kernel_update.sh
-  register: __pve_kernel
-  changed_when: "'updated=true' in __pve_kernel.stdout"
-  when: pve_check_for_kernel_update
+- name: Check for kernel update
+  collect_kernel_info:
+    lookup_packages: false
+  register: __pve_kernel_update
+  when: pve_reboot_on_kernel_update
 
 - block:
 
@@ -89,21 +89,26 @@
 
   when:
     - pve_reboot_on_kernel_update
-    - __pve_kernel | changed
+    - __pve_kernel_update.new_kernel_exists
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
 
-- name: Remove old Debian kernels
+- name: Collect kernel package information
+  collect_kernel_info:
+  register: __pve_kernel
+
+- name: Remove old Debian/PVE kernels
   apt:
     name: "{{ item }}"
     state: absent
-  with_items:
+    purge: yes
+  with_items: 
+    - linux-base
     - linux-image-amd64
-    - linux-image-3.16.0-4-amd64
+    - "{{ __pve_kernel.old_packages }}"
   when:
     - pve_remove_old_kernels
-    - not __pve_kernel | changed
 
 - name: LDAP fix for authenticated search
   lineinfile:
