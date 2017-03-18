@@ -6,6 +6,9 @@
     msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
   with_items: "{{ groups[pve_group] }}"
 
+- debug: var=hostvars[item]
+  with_items: "{{ groups[pve_group] }}"
+
 - include: ssh_cluster_config.yml
 
 - name: Enumerate all cluster hosts within the hosts file
@@ -14,7 +17,10 @@
     marker: "# {mark} ANSIBLE MANAGED: Proxmox Cluster Hosts"
     content: |
       {% for host in groups[pve_group] %}
-      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}{% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
+      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}
+      {% if ansible_fqdn == hostvars[host].ansible_fqdn %}
+       pvelocalhost
+      {% endif %}
       {% endfor %}
 
 - name: Trust Proxmox' packaging key
