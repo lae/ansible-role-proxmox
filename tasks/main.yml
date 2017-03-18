@@ -1,13 +1,22 @@
 ---
 # tasks file for ansible-role-proxmox
+- assert:
+    that:
+      - "hostvars[item].ansible_default_ipv4.address is defined"
+    msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
+  with_items: "{{ groups[pve_group] }}"
+
 - include: ssh_cluster_config.yml
 
-- name: Ensure public IP is in /etc/hosts
-  lineinfile:
+- name: Enumerate all cluster hosts within the hosts file
+  blockinfile:
     dest: /etc/hosts
-    state: present
-    line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
-    regexp: "{{ ansible_hostname }}"
+    marker: "# {mark} ANSIBLE MANAGED: Proxmox Cluster Hosts"
+    content: |
+      {% for host in groups[pve_group] %}
+      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}{% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
+
+      {% endfor %}
 
 - name: Trust Proxmox' packaging key
   apt_key:
