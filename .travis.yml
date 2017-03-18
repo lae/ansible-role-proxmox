@@ -28,7 +28,6 @@ script:
   PASS"; exit 0) || (echo "Idempotence: FAIL"; cat /tmp/idempotency.log; exit 1)'
 - ansible -m shell -a "journalctl --no-pager -xu pvedaemon.service" -i tests/inventory all
 - ansible -m shell -a "journalctl --no-pager -xu pve-cluster.service" -i tests/inventory all
-- ansible -m shell -a "cat /etc/hosts" -i tests/inventory all
 - ansible -m uri -a 'url=https://{{ inventory_hostname }}:8006 validate_certs=no' -i tests/inventory all
 
 notifications:
