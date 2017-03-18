@@ -47,3 +47,25 @@
   with_items: "{{ groups[pve_group] }}"
   notify:
     - reload sshd configuration
+
+- name: Fetch SSH public host keys
+  fetch:
+    src: "/etc/ssh/{{ item }}"
+    dest: "{{ pve_fetch_directory }}/{{ inventory_hostname }}/{{ item }}"
+    flat: yes
+  with_items:
+    - ssh_host_rsa_key.pub
+    - ssh_host_ed25519_key.pub
+    - ssh_host_ecdsa_key.pub
+
+- name: Add every host's host keys to global known_hosts
+  blockinfile:
+    dest: "/etc/ssh/ssh_known_hosts"
+    marker: "# {mark} PROXMOX HOST KEYS (ANSIBLE MANAGED)"
+    content: |
+      {% for host in groups[pve_group] %}
+      {% for keytype in ['rsa', 'ed25519', 'ecdsa'] %}
+      {{ hostvars[host].ansible_default_ipv4.address }},{{ hostvars[host].ansible_fqdn }},{{ hostvars[host].ansible_hostname }} {{ ' '.join(lookup('file', pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub').split()[:-1]) }}
+      {% endfor %}
+      {% endfor %}
+    create: yes

@@ -1,7 +1,7 @@
 ---
 # defaults file for ansible-role-proxmox
 pve_group: proxmox
-pve_fetch_directory: fetch/
+pve_fetch_directory: fetch
 pve_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription"
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
