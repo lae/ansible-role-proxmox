@@ -60,11 +60,15 @@
     - ssh_host_ed25519_key.pub
     - ssh_host_ecdsa_key.pub
 
+- name: Check status of known hosts file
+  stat:
+    path: /etc/ssh/ssh_known_hosts
+  register: __pve_known_hosts_file
+
 - name: Add every host's host keys to global known_hosts
   blockinfile:
-    dest: "/etc/ssh/ssh_known_hosts"
+    dest: /etc/ssh/ssh_known_hosts
     create: yes
-    follow: yes
     marker: "# {mark}: PVE host keys (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
@@ -72,3 +76,5 @@
       {{ hostvars[host].ansible_fqdn }},{{ hostvars[host].ansible_hostname }},{{ hostvars[host].ansible_default_ipv4.address }} {{ ' '.join(lookup('file', pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub').split()[:-1]) }}
       {% endfor %}
       {% endfor %}
+  when:
+    - "not (__pve_known_hosts_file.stat.islnk is defined and __pve_known_hosts_file.stat.islnk)"
