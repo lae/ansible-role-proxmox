@@ -107,7 +107,6 @@
     state: absent
     purge: yes
   with_items: 
-    - linux-base
     - linux-image-amd64
     - "{{ __pve_kernel.old_packages }}"
   when:
