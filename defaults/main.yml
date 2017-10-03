@@ -11,3 +11,5 @@ pve_remove_old_kernels: true
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
+# pve_ssl_private_key:
+# pve_ssl_certificate:

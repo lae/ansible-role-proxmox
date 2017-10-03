@@ -110,6 +110,11 @@
   when:
     - pve_remove_old_kernels
 
+- include: ssl_config.yml
+  when:
+    - pve_ssl_private_key is defined
+    - pve_ssl_certificate is defined
+
 - name: LDAP fix for authenticated search
   lineinfile:
     line: "    $ldap->bind('{{ pve_ldap_bind_user }}', password => '{{ pve_ldap_bind_password }}');"
