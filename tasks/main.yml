@@ -116,6 +116,9 @@
     dest: "{{ item.dest }}"
     unsafe_writes: yes
     follow: yes
+    mode: 0640
+    owner: root
+    group: www-data
   with_items:
     - { dest: "/etc/pve/local/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
     - { dest: "/etc/pve/local/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
