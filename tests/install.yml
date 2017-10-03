@@ -16,8 +16,10 @@
       copy:
         src: "{{ ssl_ca_cert_path }}"
         dest: /usr/local/share/ca-certificates/test-ca.pem
+      become: True
     - name: Update CA certificate store
       shell: update-ca-certificates
+      become: True
   vars:
     host_quantity: 3
 
