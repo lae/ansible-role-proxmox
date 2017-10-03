@@ -5,6 +5,11 @@
     name: pvedaemon
     state: restarted
 
+- name: restart pveproxy
+  service:
+    name: pveproxy
+    state: restarted
+
 - name: reload sshd configuration
   service:
     name: sshd

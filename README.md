@@ -98,6 +98,8 @@ pve_remove_old_kernels: true # Currently removes kernel from main Debian reposit
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
+# pve_ssl_private_key: # Should be set to the contents of the private key to use for HTTPS
+# pve_ssl_certificate: # Should be set to the contents of the certificate to use for HTTPS
 ```
 
 Dependencies

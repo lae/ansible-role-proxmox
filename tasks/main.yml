@@ -110,6 +110,19 @@
   when:
     - pve_remove_old_kernels
 
+- name: Install PVE SSL certificate chain and key
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { dest: "/etc/pve/nodes/{{ ansible_fqdn }}/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
+    - { dest: "/etc/pve/nodes/{{ ansible_fqdn }}/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
+  notify:
+    - restart pveproxy
+  when:
+    - pve_ssl_private_key is defined
+    - pve_ssl_certificate is defined
+
 - name: LDAP fix for authenticated search
   lineinfile:
     line: "    $ldap->bind('{{ pve_ldap_bind_user }}', password => '{{ pve_ldap_bind_password }}');"
