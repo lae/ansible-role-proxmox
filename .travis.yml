@@ -7,6 +7,7 @@ cache:
   pip: true
 env:
 - LXC_DISTRO=debian LXC_RELEASE=jessie
+- LXC_DISTRO=debian LXC_RELEASE=stretch
 matrix:
   fast_finish: true
 before_cache:
@@ -20,18 +21,17 @@ install:
 - ansible-galaxy install lae.travis-lxc
 - ansible-playbook -vvv tests/install.yml -i tests/inventory
 script:
-- ansible-playbook tests/test.yml -i tests/inventory --syntax-check
-- ansible-playbook tests/test.yml -i tests/inventory --skip skiponlxc
-- unbuffer ansible-playbook -vvv tests/test.yml -i tests/inventory --skip skiponlxc >/tmp/idempotency.log
-  2>&1
-- 'grep -A1 "PLAY RECAP" /tmp/idempotency.log | grep -qP "changed=0.*failed=0" && (echo "Idempotence:
-  PASS"; exit 0) || (echo "Idempotence: FAIL"; cat /tmp/idempotency.log; exit 1)'
-- ansible -m shell -a "journalctl --no-pager -xu pvedaemon.service" -i tests/inventory all
-- ansible -m shell -a "journalctl --no-pager -xu pve-cluster.service" -i tests/inventory all
-- ansible -m uri -a 'url=https://{{ inventory_hostname }}:8006' -i tests/inventory all
+- ansible-playbook tests/deploy.yml -i tests/inventory --syntax-check
+- ansible-playbook tests/deploy.yml -i tests/inventory --skip skiponlxc
+- 'ANSIBLE_STDOUT_CALLBACK=debug unbuffer ansible-playbook -vv tests/deploy.yml
+  -i tests/inventory --skip skiponlxc >/tmp/idempotency.log 2>&1 ||
+  (e=$?; cat /tmp/idempotency.log; exit $e)'
+- 'grep -A1 "PLAY RECAP" /tmp/idempotency.log | grep -qP "changed=0.*failed=0" &&
+  (echo "Idempotence: PASS"; exit 0) ||
+  (echo "Idempotence: FAIL"; cat /tmp/idempotency.log; exit 1)'
+- ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v tests/test.yml -i tests/inventory
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
   slack:
     secure: ftqNxPWTKL0GTozlHohkYIoh+8j/bQe7lLt+5gtzvvdFhF9N/99KCRgMRVVp9ggNyPp3fELpKXtdeLv4/RXDYtlNWR/dRR5l1vgUoXA/kA6UBJ52LziivH8P84Pe6G9Iy20SHC9nhm16yHmiivXxdS41pi5Mbs+Mblog9jYLBKXY0V9nlrv/agfdLmR3qk5mxAtPNPHYfC+R3YjedPasK7nyEYaWV29uHH3rEjhnrjRwdNuB981K7T+l5vIKieXNvsF+kaXYWGKxY57J/zFuZfyLXXFVE8XMwIA1spWG/FVcq6TQGAkB+n1NcHPSeeeb5Rt6IrUP7LTAjCGMcM2hQqTbq0Xce00FGd4qEWqpw0AtX//vBlynGnCjlS0FstRri+ZlsAn7micr/DcnGJYFNhvn6c8p4TDIgCnp4uifYyZJyxx4aOXwscs77N4VKYnfy53Um8TJOt8yQe2dHRpNV2QZWnODhtH9NSQt7AI0SkitCFVjr4iDeoQ/bds6agxpfAtoNNjaRV1MSxSi7ruBQHDQbzT9qRXak3BMp0BrkHM9XOXdVDnmHtCvBIy7qW2qWqTwQ+Eg4so2qnMAK+o53Qhu6mWx6XRYW/MHLbs4ez5t4ABsVBg0ZQiiBA4Iq6c8666ORGOxk65+TNyyl3QlgLwwuASQig1HFFzioWGZvTc=
-
