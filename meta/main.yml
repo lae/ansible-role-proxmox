@@ -1,16 +1,15 @@
 galaxy_info:
   author: Musee Ullah
-  description: Installs and configures Proxmox
+  description: Installs and configures Proxmox 5.x and 4.x (for clustering)
   company: FireEye, Inc.
   license: MIT
 
-  min_ansible_version: 2.2
+  min_ansible_version: 2.1
 
   platforms:
   - name: Debian
     versions:
     - jessie
-    - sid
     - stretch
 
   galaxy_tags:
