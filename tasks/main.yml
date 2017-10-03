@@ -1,5 +1,8 @@
 ---
 # tasks file for ansible-role-proxmox
+- name: Gather distribution specific variables
+  include_vars: "debian-{{ ansible_distribution_release }}.yml"
+
 - assert:
     that:
       - "hostvars[item].ansible_default_ipv4.address is defined"
@@ -20,8 +23,8 @@
 
 - name: Trust Proxmox' packaging key
   apt_key:
-    data: "{{ lookup('file', 'files/proxmox_key.asc') }}"
-    id: 9887F95A
+    data: "{{ lookup('file', pve_release_key) }}"
+    id: "{{ pve_release_key_id }}"
     state: present
 
 - name: Add Proxmox repository
