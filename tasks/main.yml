@@ -115,8 +115,8 @@
     content: "{{ item.content }}"
     dest: "{{ item.dest }}"
   with_items:
-    - { dest: "/etc/pve/nodes/{{ ansible_fqdn }}/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
-    - { dest: "/etc/pve/nodes/{{ ansible_fqdn }}/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
+    - { dest: "/etc/pve/local/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
+    - { dest: "/etc/pve/local/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
   notify:
     - restart pveproxy
   when:
