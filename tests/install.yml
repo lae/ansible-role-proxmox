@@ -6,15 +6,15 @@
   tasks:
     - name: Create SSL directory for storing secrets
       file:
-        dest: tests/ssl
+        dest: "{{ ssl_directory }}"
         state: directory
     - name: Create Root CA private key
-      shell: openssl genrsa -out tests/ssl/test-ca.key 2048
+      shell: "openssl genrsa -out {{ ssl_ca_key_path }} 2048"
     - name: Create Root CA certificate
-      shell: "openssl req -x509 -new -nodes -key tests/ssl/test-ca.key -sha256 -days 1 -subj '/C=JP/ST=Kyoto Prefecture/L=Kyoto/O=Idol Activities/OU=test/CN=test-cluster' -out tests/ssl/test-ca.pem"
+      shell: "openssl req -x509 -new -nodes -key {{ ssl_ca_key_path }} -sha256 -days 1 -subj '{{ ssl_subj }}' -out {{ ssl_ca_cert_path }}"
     - name: Install Root CA certificate
       copy:
-        src: ssl/test-ca.pem
+        src: "{{ ssl_ca_cert_path }}"
         dest: /usr/local/share/ca-certificates/test-ca.pem
     - name: Update CA certificate store
       shell: update-ca-certificates
@@ -28,9 +28,11 @@
       command: "mknod -m 666 /dev/fuse c 10 229"
       args:
         creates: /dev/fuse
-    - name: Create host SSL private key
-      shell: "openssl genrsa -out tests/ssl/{{ inventory_hostname }}.key 2048"
-    - name: Create host SSL certificate signing request
-      shell: "openssl req -new -key tests/ssl/{{ inventory_hostname }}.key -subj '/C=JP/ST=Kyoto Prefecture/L=Kyoto/O=Idol Activities/OU=test/CN={{ inventory_hostname }}' -out tests/ssl/{{ inventory_hostname }}.csr"
-    - name: Create host SSL certificate
-      shell: "openssl x509 -req -in tests/ssl/{{ inventory_hostname }}.csr -CA tests/ssl/test-ca.pem -CAkey tests/ssl/test-ca.key -days 1 -CAcreateserial -sha256 -out tests/ssl/{{ inventory_hostname }}.pem"
+    - block:
+      - name: Create host SSL private key
+        shell: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
+      - name: Create host SSL certificate signing request
+        shell: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
+      - name: Create host SSL certificate
+        shell: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
+      delegate_to: localhost
