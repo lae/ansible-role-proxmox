@@ -110,20 +110,7 @@
   when:
     - pve_remove_old_kernels
 
-- name: Install PVE SSL certificate chain and key
-  copy:
-    content: "{{ item.content }}"
-    dest: "{{ item.dest }}"
-    unsafe_writes: yes
-    follow: yes
-    mode: 0640
-    owner: root
-    group: www-data
-  with_items:
-    - { dest: "/etc/pve/local/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
-    - { dest: "/etc/pve/local/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
-  notify:
-    - restart pveproxy
+- include: ssl_config.yml
   when:
     - pve_ssl_private_key is defined
     - pve_ssl_certificate is defined
