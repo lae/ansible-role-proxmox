@@ -21,6 +21,20 @@
 
       {% endfor %}
 
+- name: Remove conflicting lines in hosts files
+  lineinfile:
+    dest: /etc/hosts
+    # expanded, this turns out to be, for example:
+    # regexp: '^(?!10\.0\.3\.17 test01\.lxc test01( pvelocalhost)?)(?!10\.0\.3\.17)[\w:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
+    # basically first we ignore lines that match from the host enumeration task
+    # above, then we match against different IPs (e.g. NOT 10.0.3.17) that have
+    # the hostname/fqdn we inserted a record for previously, taking care also to
+    # detect word boundaries (\b wasn't working for some reason)
+    regexp: '^(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }} {{ hostvars[item].ansible_fqdn | regex_escape() }} {{ hostvars[item].ansible_hostname | regex_escape() }}( pvelocalhost)?)(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }})[\w:.]+(\s+.*)?\s({{ hostvars[item].ansible_fqdn | regex_escape() }}|{{ hostvars[item].ansible_hostname | regex_escape() }}{% if ansible_fqdn == hostvars[item].ansible_fqdn %}|pvelocalhost{% endif %})(\s+.*|\s*)$'
+    state: absent
+    backup: yes
+  with_items: "{{ groups[pve_group] }}"
+
 - name: Trust Proxmox' packaging key
   apt_key:
     data: "{{ lookup('file', pve_release_key) }}"

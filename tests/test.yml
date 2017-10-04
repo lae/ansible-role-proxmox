@@ -11,4 +11,6 @@
           shell: "journalctl --no-pager -xu pve-cluster.service"
         - name: pveproxy service status
           shell: "journalctl --no-pager -xu pveproxy.service"
+        - name: hosts file
+          shell: "cat /etc/hosts"
       ignore_errors: yes
