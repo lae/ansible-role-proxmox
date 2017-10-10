@@ -1,9 +1,4 @@
 ---
-- name: Generate new cryptographic key for corosync
-  command: "corosync-keygen -l -k {{ pve_cluster_authfile }}"
-  args:
-    creates: "{{ pve_cluster_authfile }}"
-
 - name: Query cluster.status
   proxmox_query:
     name: cluster.status
