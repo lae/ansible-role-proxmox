@@ -14,8 +14,8 @@ before_cache:
 - sudo mkdir $HOME/lxc && sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/ && sudo chown $USER. $HOME/lxc/cache.tar
 install:
 - sudo tar xf $HOME/lxc/cache.tar -C / || true
-- sudo apt-get install -y expect-dev python-jmespath
-- pip install ansible
+- sudo apt-get install -y expect-dev
+- pip install ansible jmespath
 - ansible --version
 - printf '[defaults]\nroles_path=../\ncallback_whitelist=profile_tasks'  >ansible.cfg
 - ansible-galaxy install lae.travis-lxc
