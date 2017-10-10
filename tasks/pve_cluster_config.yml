@@ -7,7 +7,7 @@
 - name: Query cluster.status
   proxmox_query:
     name: cluster.status
-    register: __pve_cluster
+  register: __pve_cluster
 
 - set_fact:
     __pve_in_cluster: '{{ __pve_cluster.response | json_query(query) }}'
