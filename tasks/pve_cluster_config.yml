@@ -13,7 +13,7 @@
     __pve_in_cluster: '{{ __pve_cluster.response | json_query(query) }}'
   when: "__pve_cluster.response | json_query(query) | ternary(true, false)"
   vars:
-    query: "[?type='cluster'].name"
+    query: "[?type=='cluster'].name"
 
 - set_fact:
     __pve_clusters: "{{ __pve_clusters | default([]) | intersect([hostvars[item]['__pve_in_cluster']]) }}"
