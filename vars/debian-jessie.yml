@@ -1,3 +1,4 @@
 ---
 pve_release_key: proxmox-ve-release-4.x.asc
 pve_release_key_id: C23AC7F49887F95A
+pve_ssh_ciphers: "blowfish-cbc,aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,aes128-cbc,3des-cbc"

@@ -78,3 +78,11 @@
       {% endfor %}
   when:
     - "not (__pve_known_hosts_file.stat.islnk is defined and __pve_known_hosts_file.stat.islnk)"
+
+- name: Add PVE-provided ciphers to SSH client config
+  lineinfile:
+    line: "Ciphers {{ pve_ssh_ciphers }}"
+    regexp: "^Ciphers .*"
+    insertbefore: BOF
+    create: yes
+    dest: /root/.ssh/config
