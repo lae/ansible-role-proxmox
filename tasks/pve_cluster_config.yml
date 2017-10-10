@@ -34,10 +34,28 @@
     - "__pve_clusters is not defined"
     - "inventory_hostname == groups[pve_group][0]"
 
-- name: Add node to Proxmox cluster
+- name: Wait for quorum on initialization node
+  proxmox_query:
+    name: cluster.status
+  register: __pve_cluster
+  until: '(__pve_cluster.response | json_query(query)) == 1'
+  retries: 10
+  delay: 3
+  when:
+    - "inventory_hostname == groups[pve_group][0]"
+  vars:
+    query: "[?type=='cluster'].quorate"
+
+- name: Add nodes to Proxmox cluster
   command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }} -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_ring1_addr is defined %} -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
   args:
     creates: "{{ pve_cluster_conf }}"
+  delegate_to: "{{ item }}"
+  register: __pve_join_cluster
+  until: __pve_join_cluster.rc == 0
+  retries: 10
+  delay: 3
+  with_items: "{{ groups[pve_group][1:] }}"
   when:
-    - "__pve_in_cluster is not defined"
-    - "inventory_hostname != groups[pve_group][0]"
+    - "'__pve_in_cluster' not in hostvars[item]"
+    - "inventory_hostname == groups[pve_group][0]"
