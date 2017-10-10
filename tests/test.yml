@@ -13,4 +13,11 @@
           shell: "journalctl --no-pager -xu pveproxy.service"
         - name: hosts file
           shell: "cat /etc/hosts"
+        - name: Query cluster.status
+          proxmox_query:
+            name: cluster.status
+            register: __pve_cluster
+        - name: PVE cluster status
+          debug:
+            var: __pve_cluster
       ignore_errors: yes
