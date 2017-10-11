@@ -120,7 +120,7 @@ class ProxmoxUser(object):
 
         for key in updated_user:
             if key == 'groups':
-                if self.groups != current_user['groups']:
+                if set(self.groups) != set(current_user['groups']):
                     changes_needed = True
             else:
                 # honestly get rid of this cruft either by fixing proxmoxer or removing it as a dep/embedding pvesh commands in here directly
