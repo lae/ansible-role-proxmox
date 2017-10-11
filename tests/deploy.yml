@@ -5,8 +5,6 @@
     - ansible-role-proxmox
   vars:
     pve_check_for_kernel_update: false
-    pve_ldap_bind_user: CN=Nonexistent User,OU=Void,DC=FireEye,DC=com
-    pve_ldap_bind_password: test_password
     pve_watchdog: ipmi
     pve_ssl_private_key: "{{ lookup('file', ssl_host_key_path) }}"
     pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
