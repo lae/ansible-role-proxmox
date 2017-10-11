@@ -123,7 +123,9 @@ class ProxmoxUser(object):
                 if self.groups != current_user['groups']:
                     changes_needed = True
             else:
-                if updated_user[key].replace('\ ', ' ') != current_user[key]:
+                # honestly get rid of this cruft either by fixing proxmoxer or removing it as a dep/embedding pvesh commands in here directly
+                update = updated_user[key].replace('\ ', ' ') if type(updated_user[key]) is str else updated_user[key]
+                if update != current_user[key]:
                     changes_needed = True
 
         if self.module.check_mode and changes_needed:
