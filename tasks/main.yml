@@ -101,6 +101,12 @@
 - include: pve_cluster_config.yml
   when: pve_cluster_enabled
 
+- name: Configure Proxmox user accounts
+  proxmox_user:
+  args: "{{ item }}"
+  with_items: "{{ pve_users }}"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+
 - include: ssl_config.yml
   when:
     - pve_ssl_private_key is defined

@@ -15,7 +15,7 @@ short_description: Manages user accounts in Proxmox
 options:
     name:
         description:
-            - API endpoint to query
+            - User ID
         required: true
 
 author:
@@ -23,15 +23,9 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Query cluster status
-  proxmox_query:
-    name: cluster.status
 '''
 
 RETURN = '''
-response:
-    description: Response JSON from pvesh query
-    type: json
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -49,7 +43,7 @@ class ProxmoxUser(object):
         self.expire = module.params['expire']
         self.firstname = module.params['firstname']
         self.lastname = module.params['lastname']
-        self.password = module.params['password']A
+        self.password = module.params['password']
 
         self.cluster = ProxmoxAPI(backend='local')
 
@@ -64,6 +58,92 @@ class ProxmoxUser(object):
         if not self.user_exists():
             return False
         return self.cluster.access.users.get(self.name)
+
+    def check_groups_exist(self):
+        # Checks to see if groups specified already exist or not
+        if self.groups is not None:
+            groups = [group['groupid'] for group in self.cluster.access.groups.get()]
+            return set(self.groups).issubset(set(groups))
+        else:
+            return True
+
+    def prepare_user_args(self):
+        args = {}
+
+        args['enable'] = 1 if self.enable else 0
+        args['expire'] = self.expire
+
+        if self.comment is not None:
+            args['comment'] = self.comment.replace(' ', '\ ')
+
+        if self.firstname is not None:
+            args['firstname'] = self.firstname.replace(' ', '\ ')
+
+        if self.lastname is not None:
+            args['lastname'] = self.lastname.replace(' ', '\ ')
+
+        if self.email is not None:
+            args['email'] = self.email
+
+        if self.password is not None:
+            args['password'] = self.password.replace(' ', '\ ')
+
+        if self.groups is not None:
+            args['groups'] = ','.join(self.groups)
+
+        return args
+
+    def remove_user(self):
+        try:
+            self.cluster.access.users.delete(self.name)
+            return (True, None)
+        except:
+            return (False, "Failed to run pvesh delete for user.")
+
+    def create_user(self):
+        new_user = self.prepare_user_args()
+
+        if not self.check_groups_exist():
+            return (False, "One or more specified groups do not exist.")
+
+        try:
+            self.cluster.access.users.create(userid=self.name, **new_user)
+            return (True, None)
+        except:
+            return (False, "Failed to run pvesh create for this user.")
+
+    def modify_user(self):
+        # We can't compare the password of an existing user
+        self.password = None
+
+        current_user = self.user_info()
+        updated_user = self.prepare_user_args()
+
+        changes_needed = False
+
+        for key in updated_user:
+            if key == 'groups':
+                if self.groups != current_user['groups']:
+                    changes_needed = True
+            else:
+                if updated_user[key].replace('\ ', ' ') != current_user[key]:
+                    changes_needed = True
+
+        if self.module.check_mode and changes_needed:
+            self.module.exit_json(changed=True)
+
+        if not changes_needed:
+            # No changes necessary
+            return (False, None)
+
+        if not self.check_groups_exist():
+            return (False, "One or more specified groups do not exist.")
+
+        try:
+            self.cluster.access.users(self.name).put(**updated_user)
+            return (True, None)
+        except:
+            return (False, "Failed to run pvesh create for this user.")
 
 def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
@@ -83,17 +163,38 @@ def main():
         supports_check_mode=True
     )
 
+    user = ProxmoxUser(module)
 
-    if module.check_mode:
-        return result
+    changed = False
+    error = None
+    result = {}
+    result['name'] = user.name
+    result['state'] = user.state
 
-    pve = ProxmoxAPI(backend='local')
+    if user.state == 'absent':
+        if user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (changed, error) = user.remove_user()
+            if error is not None:
+                module.fail_json(name=user.name, msg=error)
+    elif user.state == 'present':
+        if not user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (changed, error) = user.create_user()
+        else:
+            # modify user (note: this function is check mode aware)
+            (changed, err) = user.modify_user()
+        if error is not None:
+            module.fail_json(name=user.name, msg=error)
+        if user.password is not None:
+            result['password'] = 'NOT_LOGGING_PASSWORD'
 
-    try:
-        # maybe sanitize this later
-        result['response'] = eval("pve.{}".format(module.params['name'])).get()
-    except proxmoxer.core.ResourceException:
-        module.fail_json(msg='Failed to execute get query with pvesh.', **result)
+    if user.user_exists():
+        result['user'] = user.user_info()
+
+    result['changed'] = changed
 
     module.exit_json(**result)
 

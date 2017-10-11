@@ -13,6 +13,15 @@
         that: "(__pve_cluster.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "([?type=='cluster'].quorate)[0]"
+    - name: Query PVE users
+      shell: "pvesh get /access/users"
+      register: __pve_users
+      changed_when: False
+    - name: Check that PVE users exist
+      assert:
+        that: "(__pve_users.stdout | to_json | json_query(query)) == 1"
+      vars:
+        query: "length([?userid=={{ item.name }}])"
     - block:
       - name: pvedaemon service status
         shell: "journalctl --no-pager -xu pvedaemon.service"
