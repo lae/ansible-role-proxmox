@@ -84,27 +84,30 @@ class ProxmoxGroup(object):
     def modify_group(self):
         current_group = self.group_info()
         updated_group = {}
+
         if self.comment is not None:
             updated_group['comment'] = self.comment.replace(' ', '\ ')
 
-        changes_needed = False
+        updated_fields = []
+        error = None
 
         for key in updated_group:
             if key not in current_group or updated_group[key].replace('\ ', ' ') != current_group[key]:
-                changes_needed = True
+                updated_fields.append(key)
 
-        if self.module.check_mode and changes_needed:
-            self.module.exit_json(changed=True)
+        if self.module.check_mode and updated_fields:
+            self.module.exit_json(changed=True, expected_changes=updated_fields)
 
-        if not changes_needed:
+        if not updated_fields:
             # No changes necessary
-            return (False, None)
+            return (updated_fields, error)
 
         try:
             self.cluster.access.groups(self.name).put(**updated_group)
-            return (True, None)
         except:
-            return (False, "Failed to run pvesh create for this group.")
+            error = "Failed to run pvesh create for this group."
+
+        return (updated_fields, error)
 
 def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
@@ -129,17 +132,25 @@ def main():
         if group.group_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
             (changed, error) = group.remove_group()
+
             if error is not None:
                 module.fail_json(name=group.name, msg=error)
     elif group.state == 'present':
         if not group.group_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
             (changed, error) = group.create_group()
         else:
             # modify group (note: this function is check mode aware)
-            (changed, err) = group.modify_group()
+            (updated_fields, error) = group.modify_group()
+
+            if updated_fields:
+                changed = True
+                result['updated_fields'] = updated_fields
+
         if error is not None:
             module.fail_json(name=group.name, msg=error)
 

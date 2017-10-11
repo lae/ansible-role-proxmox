@@ -118,8 +118,8 @@ class ProxmoxUser(object):
         if self.groups is not None:
             groups = [group['groupid'] for group in self.cluster.access.groups.get()]
             return set(self.groups).issubset(set(groups))
-        else:
-            return True
+
+        return True
 
     def prepare_user_args(self):
         args = {}
@@ -170,33 +170,35 @@ class ProxmoxUser(object):
         current_user = self.user_info()
         updated_user = self.prepare_user_args()
 
-        changes_needed = False
+        updated_fields = []
+        error = None
 
         for key in updated_user:
             if key == 'groups':
                 if set(self.groups) != set(current_user['groups']):
-                    changes_needed = True
+                    updated_fields.append(key)
             else:
                 # honestly get rid of this cruft either by fixing proxmoxer or removing it as a dep/embedding pvesh commands in here directly
                 update = updated_user[key].replace('\ ', ' ') if type(updated_user[key]) is str else updated_user[key]
                 if key not in current_user or update != current_user[key]:
-                    changes_needed = True
+                    updated_fields.append(key)
 
-        if self.module.check_mode and changes_needed:
-            self.module.exit_json(changed=True)
+        if self.module.check_mode and updated_fields:
+            self.module.exit_json(changed=True, expected_changes=updated_fields)
 
-        if not changes_needed:
+        if not updated_fields:
             # No changes necessary
-            return (False, None)
+            return (updated_fields, error)
 
         if not self.check_groups_exist():
-            return (False, "One or more specified groups do not exist.")
+            error = "One or more specified groups do not exist."
+        else:
+            try:
+                self.cluster.access.users(self.name).put(**updated_user)
+            except:
+                error = "Failed to run pvesh create for this user."
 
-        try:
-            self.cluster.access.users(self.name).put(**updated_user)
-            return (True, None)
-        except:
-            return (False, "Failed to run pvesh create for this user.")
+        return (updated_fields, error)
 
 def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
@@ -228,19 +230,28 @@ def main():
         if user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
             (changed, error) = user.remove_user()
+
             if error is not None:
                 module.fail_json(name=user.name, msg=error)
     elif user.state == 'present':
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
             (changed, error) = user.create_user()
         else:
             # modify user (note: this function is check mode aware)
-            (changed, err) = user.modify_user()
+            (updated_fields, error) = user.modify_user()
+
+            if updated_fields:
+                changed = True
+                result['updated_fields'] = updated_fields
+
         if error is not None:
             module.fail_json(name=user.name, msg=error)
+
         if user.password is not None:
             result['password'] = 'NOT_LOGGING_PASSWORD'
 
