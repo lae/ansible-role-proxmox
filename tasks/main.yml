@@ -7,13 +7,13 @@
     that:
       - "hostvars[item].ansible_default_ipv4.address is defined"
     msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
-    with_items: "{{ groups[pve_group] }}"
+  with_items: "{{ groups[pve_group] }}"
 
 - assert:
     that:
       - "inventory_hostname in groups[pve_group]"
     msg: "This host does not appear to be in the group {{ pve_group }}, did you specify the pve_group host variable correctly?"
-  when: proxmox_cluster_enabled
+  when: pve_cluster_enabled
 
 - include: ssh_cluster_config.yml
 
