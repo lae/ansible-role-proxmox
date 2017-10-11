@@ -100,6 +100,8 @@ pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", an
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
+pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
+pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -130,6 +132,47 @@ requires that the `jmespath` library be installed on your control host. You can
 either `pip install jmespath` or install it via your distribution's package
 manager, e.g. `apt-get install python-jmespath`.
 
+User Management
+---------------
+
+You can use this role to manage users and groups within Proxmox VE (both in
+single server deployments and cluster deployments). Here are some examples.
+
+```
+pve_groups:
+  - name: Admins
+    comment: Administrators of this PVE cluster
+  - name: api_users
+  - name: test_users
+pve_users:
+  - name: root@pam
+    email: postmaster@pve.example
+  - name: lae@pam
+    email: lae@pve.example
+    firstname: Musee
+    lastname: Ullah
+    groups: [ "Admins" ]
+  - name: pveapi@pve
+    password: "Proxmox789"
+    groups:
+      - api_users
+  - name: testapi@pve
+    password: "Test456"
+    enable: no
+    groups:
+      - api_users
+      - test_users
+  - name: tempuser@pam
+    expire: 1514793600
+    groups: [ "test_users" ]
+    comment: "Temporary user set to expire on 2018年  1月  1日 月曜日 00:00:00 PST"
+    email: tempuser@pve.example
+    firstname: Test
+    lastname: User
+```
+
+Refer to `library/proxmox_user.py` [link][user-module] and
+`library/proxmox_group.py` [link][group-module] for module documentation.
 
 License
 -------
@@ -144,3 +187,5 @@ Musee Ullah <musee.ullah@fireeye.com>
 [pve-cluster]: https://pve.proxmox.com/wiki/Proxmox_VE_4.x_Cluster
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
+[group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
