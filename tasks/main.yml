@@ -101,6 +101,12 @@
 - include: pve_cluster_config.yml
   when: pve_cluster_enabled
 
+- name: Configure Proxmox groups
+  proxmox_group:
+  args: "{{ item }}"
+  with_items: "{{ pve_groups }}"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+
 - name: Configure Proxmox user accounts
   proxmox_user:
   args: "{{ item }}"

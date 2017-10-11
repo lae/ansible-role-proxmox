@@ -6,14 +6,23 @@ pve_watchdog: ipmi
 pve_ssl_private_key: "{{ lookup('file', ssl_host_key_path) }}"
 pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes
+pve_groups:
+  - name: testgroup
+  - name: anothertestgroup
+    comment: with a comment
 pve_users:
   - name: testuser@pam
     comment: "What a wonderful world."
     email: "user@example.invalid"
     firstname: Test
     lastname: User
+    groups:
+      - testgroup
+      - anothertestgroup
   - name: testuser@pve
     password: testpass
+    groups:
+      - testgroup
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"
