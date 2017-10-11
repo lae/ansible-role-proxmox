@@ -179,7 +179,7 @@ class ProxmoxUser(object):
             else:
                 # honestly get rid of this cruft either by fixing proxmoxer or removing it as a dep/embedding pvesh commands in here directly
                 update = updated_user[key].replace('\ ', ' ') if type(updated_user[key]) is str else updated_user[key]
-                if update != current_user[key]:
+                if key not in current_user or update != current_user[key]:
                     changes_needed = True
 
         if self.module.check_mode and changes_needed:

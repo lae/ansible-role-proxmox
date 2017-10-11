@@ -90,7 +90,7 @@ class ProxmoxGroup(object):
         changes_needed = False
 
         for key in updated_group:
-            if updated_group[key].replace('\ ', ' ') != current_group[key]:
+            if key not in current_group or updated_group[key].replace('\ ', ' ') != current_group[key]:
                 changes_needed = True
 
         if self.module.check_mode and changes_needed:
