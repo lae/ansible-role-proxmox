@@ -9,6 +9,12 @@
     msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
   with_items: "{{ groups[pve_group] }}"
 
+- assert:
+    that:
+      - "inventory_hostname in groups[pve_group]"
+    msg: "This host does not appear to be in the group {{ pve_group }}, did you specify the pve_group host variable correctly?"
+  when: pve_cluster_enabled
+
 - include: ssh_cluster_config.yml
 
 - name: Enumerate all cluster hosts within the hosts file
@@ -69,6 +75,11 @@
     - ksm-control-daemon
     - systemd-sysv
     - patch
+    - python-pip
+
+- name: Install lae/proxmoxer python library
+  pip:
+    name: https://github.com/lae/proxmoxer/archive/ansible-friendly.tar.gz
 
 - block:
 
@@ -86,45 +97,13 @@
 
   when: "'pve-no-subscription' in pve_repository_line"
 
-- name: Check for kernel update
-  collect_kernel_info:
-    lookup_packages: false
-  register: __pve_kernel_update
-  when: pve_reboot_on_kernel_update
-
-- block:
-
-  - name: Reboot for kernel update
-    command: "shutdown -r +1 'PVE kernel update detected by Ansible, rebooting'"
-    async: 0
-    poll: 0
-    ignore_errors: true
-
-  - name: Wait for server to come back online
-    local_action: wait_for port=22 host={{ inventory_hostname }} search_regex=OpenSSH delay=60 timeout=450
-    become: false
-
-  when:
-    - pve_reboot_on_kernel_update
-    - __pve_kernel_update.new_kernel_exists
+- include: kernel_updates.yml
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
 
-- name: Collect kernel package information
-  collect_kernel_info:
-  register: __pve_kernel
-
-- name: Remove old Debian/PVE kernels
-  apt:
-    name: "{{ item }}"
-    state: absent
-    purge: yes
-  with_items: 
-    - linux-image-amd64
-    - "{{ __pve_kernel.old_packages }}"
-  when:
-    - pve_remove_old_kernels
+- include: pve_cluster_config.yml
+  when: pve_cluster_enabled
 
 - include: ssl_config.yml
   when:
@@ -141,4 +120,3 @@
   when:
     - pve_ldap_bind_user is defined
     - pve_ldap_bind_password is defined
-
