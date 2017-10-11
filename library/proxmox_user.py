@@ -14,9 +14,63 @@ short_description: Manages user accounts in Proxmox
 
 options:
     name:
-        description:
-            - User ID
         required: true
+        aliases: [ "user", "userid" ]
+        description:
+            - Name and realm of the user to create, e.g. C(operator@pam) and
+              C(pveapi@pve).
+    state:
+        required: false
+        default: "present"
+        choices: [ "present", "absent" ]
+        description:
+            - Specifies whether the user should exist or not.
+    enable:
+        required: false
+        default: yes
+        type: bool
+        description:
+            - Whether or not the user should be enabled in PVE.
+    groups:
+        required: false
+        type: list
+        description:
+            - Specifies a list of PVE groups that this user should belong to.
+    comment:
+        required: false
+        description:
+            - Optionally sets the user's comment in PVE.
+    email:
+        required: false
+        description:
+            - Optionally sets the user's email in PVE.
+    firstname:
+        required: false
+        description:
+            - Optionally sets the user's first name in PVE.
+    lastname:
+        required: false
+        description:
+            - Optionally sets the user's last name in PVE.
+    firstname:
+        required: false
+        description:
+            - Optionally sets the user's first name in PVE.
+    password:
+        required: false
+        description:
+            - Optionally sets the user's password in PVE. Note that this is only
+              used during the creation of a user to specify their initial
+              password, thus cannot be used to change a password of a user that
+              already exists (due to a limitation of the API, I believe). This
+              also only applies to the C(pve) realm as well, probably.
+    expire:
+        required: false
+        default: 0
+        type: int
+        description:
+            - Account expiration date (seconds since epoch). C(0) means no
+              expiration date.
 
 author:
     - Musee Ullah (@lae)

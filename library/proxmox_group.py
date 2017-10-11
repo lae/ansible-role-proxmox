@@ -14,12 +14,20 @@ short_description: Manages groups in Proxmox
 
 options:
     name:
-        description:
-            - Group name
         required: true
-    comment:
+        aliases: [ "group", "groupid" ]
         description:
-            - Group comment
+            - Name of the PVE group to manager.
+    state:
+        required: false
+        default: "present"
+        choices: [ "present", "absent" ]
+        description:
+            - Specifies whether the group should exist or not.
+    comment:
+        required: false
+        description:
+            - Optionally sets the group's comment in PVE.
 
 author:
     - Musee Ullah (@lae)
