@@ -85,9 +85,6 @@ class ProxmoxUser(object):
         if self.email is not None:
             args['email'] = self.email
 
-        if self.password is not None:
-            args['password'] = self.password.replace(' ', '\ ')
-
         if self.groups is not None:
             args['groups'] = ','.join(self.groups)
 
@@ -103,6 +100,9 @@ class ProxmoxUser(object):
     def create_user(self):
         new_user = self.prepare_user_args()
 
+        if self.password is not None:
+            new_user['password'] = self.password.replace(' ', '\ ')
+
         if not self.check_groups_exist():
             return (False, "One or more specified groups do not exist.")
 
@@ -113,9 +113,6 @@ class ProxmoxUser(object):
             return (False, "Failed to run pvesh create for this user.")
 
     def modify_user(self):
-        # We can't compare the password of an existing user
-        self.password = None
-
         current_user = self.user_info()
         updated_user = self.prepare_user_args()
 
@@ -158,7 +155,7 @@ def main():
             expire=dict(default=0, type='int'),
             firstname=dict(default=None, type='str'),
             lastname=dict(default=None, type='str'),
-            password=dict(default=None, type='str')
+            password=dict(default=None, type='str', no_log=True)
         ),
         supports_check_mode=True
     )
