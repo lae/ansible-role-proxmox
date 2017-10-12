@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
-    'status': ['preview'],
+    'metadata_version': '1.0',
+    'status': ['stableinterface'],
     'supported_by': 'lae'
 }
 
@@ -10,13 +10,14 @@ DOCUMENTATION = '''
 ---
 module: proxmox_query
 
-short_description: Queries Proxmox API
+short_description: Uses pvesh to query Proxmox API
 
 options:
-    name:
-        description:
-            - API endpoint to query
+    query:
         required: true
+        aliases: [ "name" ]
+        description:
+            - Specifies what resource to query
 
 author:
     - Musee Ullah (@lae)
@@ -25,48 +26,45 @@ author:
 EXAMPLES = '''
 - name: Query cluster status
   proxmox_query:
-    name: cluster.status
+    query: cluster/status
+- name: Collect a list of running LXC containers for some hosts
+  proxmox_query:
+    query: "nodes/{{ item }}/lxc"
+  with_items:
+    - node01
+    - node02
+    - node03
 '''
 
 RETURN = '''
 response:
-    description: Response JSON from pvesh query
+    description: JSON response from pvesh provided by a query
     type: json
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from proxmoxer import ProxmoxAPI
+from ansible.module_utils.pvesh import ProxmoxShellError
+import ansible.module_utils.pvesh as pvesh
 
-def run_module():
-    module_args = dict(
-        name=dict(type='str', required=True),
-    )
-
-    result = dict(
-        changed=False,
-        response=[]
-    )
-
+def main():
     module = AnsibleModule(
-        argument_spec=module_args,
+        argument_spec = dict(
+            query=dict(type='str', required=True, aliases=['name']),
+        ),
         supports_check_mode=True
     )
 
-    if module.check_mode:
-        return result
-
-    pve = ProxmoxAPI(backend='local')
+    result = {"changed": False}
 
     try:
-        # maybe sanitize this later
-        result['response'] = eval("pve.{}".format(module.params['name'])).get()
-    except proxmoxer.core.ResourceException:
-        module.fail_json(msg='Failed to execute get query with pvesh.', **result)
+        result['response'] = pvesh.get(module.params['query'])
+    except ProxmoxShellError as e:
+        if e.data:
+            result["response"] = e.data
+
+        module.fail_json(msg=e.message, status_code=e.status_code, **result)
 
     module.exit_json(**result)
-
-def main():
-    run_module()
 
 if __name__ == '__main__':
     main()

@@ -77,10 +77,6 @@
     - patch
     - python-pip
 
-- name: Install lae/proxmoxer python library
-  pip:
-    name: https://github.com/lae/proxmoxer/archive/ansible-friendly.tar.gz
-
 - block:
 
   - name: Remove automatically installed PVE Enterprise repo configuration
