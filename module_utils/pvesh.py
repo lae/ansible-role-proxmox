@@ -31,7 +31,7 @@ def run_command(handler, path, **params):
 
     if stderr[0] == "200 OK":
         if result == "":
-            result = []
+            result = None
 
         # Attempt to marshall the data into JSON
         try:
@@ -66,12 +66,12 @@ def run_command(handler, path, **params):
     return {u"status": 500, u"message": u"Unexpected result occurred but no error message was provided by pvesh."}
 
 def get(path):
-    result = run_command("get", path)
+    response = run_command("get", path)
 
-    if result["status"] == 404:
-        return []
+    if response["status"] == 404:
+        return None
 
-    if result["status"] == 200:
-        return result["data"]
+    if response["status"] == 200:
+        return response["data"]
 
-    raise ProxmoxShellError(result)
+    raise ProxmoxShellError(response)

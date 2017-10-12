@@ -1,7 +1,7 @@
 ---
 - name: Lookup cluster information
   proxmox_query:
-    name: cluster/status
+    query: cluster/status
   register: __pve_cluster
 
 - name: Identify if the host is already part of a cluster
@@ -40,7 +40,7 @@
 
 - name: Wait for quorum on initialization node
   proxmox_query:
-    name: cluster/status
+    query: cluster/status
   register: __pve_cluster_init
   until: "(__pve_cluster_init | json_query(query)) == 1"
   retries: 5
