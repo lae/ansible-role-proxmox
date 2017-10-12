@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
@@ -53,6 +54,7 @@ group:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
 
@@ -98,7 +100,8 @@ class ProxmoxGroup(object):
         error = None
 
         for key in staged_group:
-            if key not in lookup or staged_group[key] != lookup[key]:
+            staged_value = to_text(staged_group[key]) if isinstance(staged_group[key], str) else staged_group[key]
+            if key not in lookup or staged_value != lookup[key]:
                 updated_fields.append(key)
 
         if self.module.check_mode:

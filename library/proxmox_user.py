@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 ANSIBLE_METADATA = {
     'metadata_version': '0.2',
@@ -117,6 +118,7 @@ user:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
 
@@ -210,7 +212,8 @@ class ProxmoxUser(object):
                 if set(self.groups) != set(lookup['groups']):
                     updated_fields.append(key)
             else:
-                if key not in lookup or staged_user[key] != lookup[key]:
+                staged_value = to_text(staged_user[key]) if isinstance(staged_user[key], str) else staged_user[key]
+                if key not in lookup or staged_value != lookup[key]:
                     updated_fields.append(key)
 
         if self.module.check_mode:
