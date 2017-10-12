@@ -25,7 +25,7 @@ author:
 EXAMPLES = '''
 - name: Query cluster status
   proxmox_query:
-    name: cluster.status
+    name: cluster/status
 '''
 
 RETURN = '''
@@ -35,7 +35,8 @@ response:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from proxmoxer import ProxmoxAPI
+from ansible.module_utils.pvesh import ProxmoxShellError
+import ansible.module_utils.pvesh as pvesh
 
 def run_module():
     module_args = dict(
@@ -55,13 +56,13 @@ def run_module():
     if module.check_mode:
         return result
 
-    pve = ProxmoxAPI(backend='local')
-
     try:
-        # maybe sanitize this later
-        result['response'] = eval("pve.{}".format(module.params['name'])).get()
-    except proxmoxer.core.ResourceException:
-        module.fail_json(msg='Failed to execute get query with pvesh.', **result)
+        result['response'] = pvesh.get(module.params['name'])
+    except ProxmoxShellError as e:
+        if e.data:
+            result["response"] = e.data
+
+        module.fail_json(msg=e.message, status_code=e.status_code, **result)
 
     module.exit_json(**result)
 
