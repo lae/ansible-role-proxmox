@@ -23,15 +23,15 @@ def run_command(handler, path, **params):
         handler,
         path]
     for parameter, value in params.iteritems():
-        command += ["-{}".format(parameter), value]
+        command += ["-{}".format(parameter), "{}".format(value)]
 
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (result, stderr) = pipe.communicate()
     stderr = stderr.splitlines()
 
     if stderr[0] == "200 OK":
-        if result == "":
-            result = None
+        if not result:
+            return {u"status": 200}
 
         # Attempt to marshall the data into JSON
         try:
@@ -75,3 +75,21 @@ def get(path):
         return response["data"]
 
     raise ProxmoxShellError(response)
+
+def delete(path):
+    response = run_command("delete", path)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)
+
+def create(path, **params):
+    response = run_command("create", path, **params)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)
+
+def set(path, **params):
+    response = run_command("set", path, **params)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)

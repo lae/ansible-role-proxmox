@@ -6,6 +6,36 @@ pve_watchdog: ipmi
 pve_ssl_private_key: "{{ lookup('file', ssl_host_key_path) }}"
 pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes
+pve_groups:
+  - name: Admins
+    comment: Administrators of this PVE cluster
+  - name: api_users
+  - name: test_users
+pve_users:
+  - name: root@pam
+    email: postmaster@pve.example
+  - name: lae@pam
+    email: lae@pve.example
+    firstname: Musee
+    lastname: Ullah
+    groups: [ "Admins" ]
+  - name: pveapi@pve
+    password: "Proxmox789"
+    groups:
+      - api_users
+  - name: testapi@pve
+    password: "Test456"
+    enable: no
+    groups:
+      - api_users
+      - test_users
+  - name: tempuser@pam
+    expire: 1514793600
+    groups: [ "test_users" ]
+    comment: "Temporary user set to expire on 2018年  1月  1日 月曜日 00:00:00 PST"
+    email: tempuser@pve.example
+    firstname: Test
+    lastname: User
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"
