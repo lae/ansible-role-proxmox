@@ -19,3 +19,4 @@ pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 # pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
 pve_groups: []
 pve_users: []
+pve_acls: []

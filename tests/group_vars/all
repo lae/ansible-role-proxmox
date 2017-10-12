@@ -36,6 +36,16 @@ pve_users:
     email: tempuser@pve.example
     firstname: Test
     lastname: User
+pve_acls: # This should generate 3 different ACLs (note that this is count should be modified in tests/test.yml if this var is changed)
+  - path: /
+    roles: [ "Administrator" ]
+    groups: [ "Admins" ]
+  - path: /pools/testpool
+    roles: [ "PVEAdmin" ]
+    users:
+      - pveapi@pve
+    groups:
+      - test_users
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"
