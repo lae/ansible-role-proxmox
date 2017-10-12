@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
+    'metadata_version': '0.2',
     'status': ['preview'],
     'supported_by': 'lae'
 }
@@ -77,13 +77,48 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create PVE user with an initial password that expires at the beginning of 2018
+  proxmox_user:
+    name: helloworld@pve
+    expire: 1514793600
+    password: helloworld
+    firstname: Hello
+    lastname: World
+    comment: A hello world user.
+    groups:[ "test_users" ]
+- name: Another way of defining groups
+  proxmox_user:
+    name: admin@pve
+    password: "{{ vaulted_password }}"
+    groups:
+      - Administrators
+      - APIUsers
+- name: Add email for root user
+  proxmox_user:
+    name: root@pam
+    email: root@mail.example
+- name: Disable a user
+  proxmox_user:
+    name: baduser@pam
+    enable: no
+- name: Ensure a user does not exist
+  proxmox_user:
+    name: ghost@pve
+    state: absent
 '''
 
 RETURN = '''
+updated_fields:
+    description: Fields that were modified for an existing user
+    type: list
+user:
+    description: Information about the user fetched from PVE after this task completed.
+    type: json
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from proxmoxer import ProxmoxAPI
+from ansible.module_utils.pvesh import ProxmoxShellError
+import ansible.module_utils.pvesh as pvesh
 
 class ProxmoxUser(object):
     def __init__(self, module):
@@ -99,25 +134,20 @@ class ProxmoxUser(object):
         self.lastname = module.params['lastname']
         self.password = module.params['password']
 
-        self.cluster = ProxmoxAPI(backend='local')
-
-    def user_exists(self):
+    def lookup(self):
         try:
-            if self.cluster.access.users.get(self.name):
-                return True
-        except:
-            return False
-
-    def user_info(self):
-        if not self.user_exists():
-            return False
-        return self.cluster.access.users.get(self.name)
+            return pvesh.get("access/users/{}".format(self.name))
+        except ProxmoxShellError as e:
+            self.module.fail_json(msg=e.message, status_code=e.status_code)
 
     def check_groups_exist(self):
         # Checks to see if groups specified already exist or not
         if self.groups is not None:
-            groups = [group['groupid'] for group in self.cluster.access.groups.get()]
-            return set(self.groups).issubset(set(groups))
+            try:
+                groups = [group['groupid'] for group in pvesh.get("access/groups")]
+                return set(self.groups).issubset(set(groups))
+            except ProxmoxShellError as e:
+                self.module.fail_json(msg=e.message, status_code=e.status_code)
 
         return True
 
@@ -128,13 +158,13 @@ class ProxmoxUser(object):
         args['expire'] = self.expire
 
         if self.comment is not None:
-            args['comment'] = self.comment.replace(' ', '\ ')
+            args['comment'] = self.comment
 
         if self.firstname is not None:
-            args['firstname'] = self.firstname.replace(' ', '\ ')
+            args['firstname'] = self.firstname
 
         if self.lastname is not None:
-            args['lastname'] = self.lastname.replace(' ', '\ ')
+            args['lastname'] = self.lastname
 
         if self.email is not None:
             args['email'] = self.email
@@ -146,45 +176,45 @@ class ProxmoxUser(object):
 
     def remove_user(self):
         try:
-            self.cluster.access.users.delete(self.name)
+            pvesh.delete("access/users/{}".format(self.name))
             return (True, None)
-        except:
-            return (False, "Failed to run pvesh delete for user.")
+        except ProxmoxShellError as e:
+            return (False, e.message)
 
     def create_user(self):
         new_user = self.prepare_user_args()
 
         if self.password is not None:
-            new_user['password'] = self.password.replace(' ', '\ ')
+            new_user['password'] = self.password
 
         if not self.check_groups_exist():
             return (False, "One or more specified groups do not exist.")
 
         try:
-            self.cluster.access.users.create(userid=self.name, **new_user)
+            pvesh.create("access/users", userid=self.name, **new_user)
             return (True, None)
-        except:
-            return (False, "Failed to run pvesh create for this user.")
+        except ProxmoxShellError as e:
+            return (False, e.message)
 
     def modify_user(self):
-        current_user = self.user_info()
-        updated_user = self.prepare_user_args()
+        lookup = self.lookup()
+        staged_user = self.prepare_user_args()
 
         updated_fields = []
         error = None
 
-        for key in updated_user:
+        for key in staged_user:
             if key == 'groups':
-                if set(self.groups) != set(current_user['groups']):
+                # Since staged_user['groups'] is already converted to a string,
+                # we check our object instead
+                if set(self.groups) != set(lookup['groups']):
                     updated_fields.append(key)
             else:
-                # honestly get rid of this cruft either by fixing proxmoxer or removing it as a dep/embedding pvesh commands in here directly
-                update = updated_user[key].replace('\ ', ' ') if type(updated_user[key]) is str else updated_user[key]
-                if key not in current_user or update != current_user[key]:
+                if key not in lookup or staged_user[key] != lookup[key]:
                     updated_fields.append(key)
 
-        if self.module.check_mode and updated_fields:
-            self.module.exit_json(changed=True, expected_changes=updated_fields)
+        if self.module.check_mode:
+            self.module.exit_json(changed=bool(updated_fields), expected_changes=updated_fields)
 
         if not updated_fields:
             # No changes necessary
@@ -194,9 +224,9 @@ class ProxmoxUser(object):
             error = "One or more specified groups do not exist."
         else:
             try:
-                self.cluster.access.users(self.name).put(**updated_user)
-            except:
-                error = "Failed to run pvesh create for this user."
+                pvesh.set("access/users/{}".format(self.name), **staged_user)
+            except ProxmoxShellError as e:
+                error = e.message
 
         return (updated_fields, error)
 
@@ -226,8 +256,11 @@ def main():
     result['name'] = user.name
     result['state'] = user.state
 
+    if user.password is not None:
+        result['password'] = 'NOT_LOGGING_PASSWORD'
+
     if user.state == 'absent':
-        if user.user_exists():
+        if user.lookup() is not None:
             if module.check_mode:
                 module.exit_json(changed=True)
 
@@ -236,7 +269,7 @@ def main():
             if error is not None:
                 module.fail_json(name=user.name, msg=error)
     elif user.state == 'present':
-        if not user.user_exists():
+        if not user.lookup():
             if module.check_mode:
                 module.exit_json(changed=True)
 
@@ -252,11 +285,9 @@ def main():
         if error is not None:
             module.fail_json(name=user.name, msg=error)
 
-        if user.password is not None:
-            result['password'] = 'NOT_LOGGING_PASSWORD'
-
-    if user.user_exists():
-        result['user'] = user.user_info()
+    lookup = user.lookup()
+    if lookup:
+        result['user'] = lookup
 
     result['changed'] = changed
 

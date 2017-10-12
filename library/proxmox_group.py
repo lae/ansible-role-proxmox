@@ -101,8 +101,8 @@ class ProxmoxGroup(object):
             if key not in lookup or staged_group[key] != lookup[key]:
                 updated_fields.append(key)
 
-        if self.module.check_mode and updated_fields:
-            self.module.exit_json(changed=True, expected_changes=updated_fields)
+        if self.module.check_mode:
+            self.module.exit_json(changed=bool(updated_fields), expected_changes=updated_fields)
 
         if not updated_fields:
             # No changes necessary

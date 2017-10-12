@@ -23,15 +23,15 @@ def run_command(handler, path, **params):
         handler,
         path]
     for parameter, value in params.iteritems():
-        command += ["-{}".format(parameter), value]
+        command += ["-{}".format(parameter), "{}".format(value)]
 
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (result, stderr) = pipe.communicate()
     stderr = stderr.splitlines()
 
     if stderr[0] == "200 OK":
-        if result == "":
-            result = None
+        if not result:
+            return {u"status": 200}
 
         # Attempt to marshall the data into JSON
         try:
