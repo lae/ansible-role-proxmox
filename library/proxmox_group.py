@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
-    'status': ['preview'],
+    'metadata_version': '1.0',
+    'status': ['stableinterface'],
     'supported_by': 'lae'
 }
 
@@ -17,7 +17,7 @@ options:
         required: true
         aliases: [ "group", "groupid" ]
         description:
-            - Name of the PVE group to manager.
+            - Name of the PVE group to manage.
     state:
         required: false
         default: "present"
@@ -34,13 +34,27 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create Administrators group
+  proxmox_group:
+    name: Administrators
+- name: Create API Users group
+  proxmox_group:
+    name: api_users
+    comment: Users allowed to access the API.
 '''
 
 RETURN = '''
+updated_fields:
+    description: Fields that were modified for an existing group
+    type: list
+group:
+    description: Information about the group fetched from PVE after this task completed.
+    type: json
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from proxmoxer import ProxmoxAPI
+from ansible.module_utils.pvesh import ProxmoxShellError
+import ansible.module_utils.pvesh as pvesh
 
 class ProxmoxGroup(object):
     def __init__(self, module):
@@ -49,50 +63,42 @@ class ProxmoxGroup(object):
         self.state = module.params['state']
         self.comment = module.params['comment']
 
-        self.cluster = ProxmoxAPI(backend='local')
-
-    def group_exists(self):
+    def lookup(self):
         try:
-            if self.cluster.access.groups.get(self.name):
-                return True
-        except:
-            return False
-
-    def group_info(self):
-        if not self.group_exists():
-            return False
-        return self.cluster.access.groups.get(self.name)
+            return pvesh.get("access/groups/{}".format(self.name))
+        except ProxmoxShellError as e:
+            self.module.fail_json(msg=e.message, status_code=e.status_code, **result)
 
     def remove_group(self):
         try:
-            self.cluster.access.groups.delete(self.name)
+            pvesh.delete("access/groups/{}".format(self.name))
             return (True, None)
-        except:
-            return (False, "Failed to run pvesh delete for group.")
+        except ProxmoxShellError as e:
+            return (False, e.message)
 
     def create_group(self):
         new_group = {}
         if self.comment is not None:
-            new_group['comment'] = self.comment.replace(' ', '\ ')
+            new_group['comment'] = self.comment
 
         try:
-            self.cluster.access.groups.create(groupid=self.name, **new_group)
+            pvesh.create("access/groups", groupid=self.name, **new_group)
             return (True, None)
-        except:
-            return (False, "Failed to run pvesh create for this group.")
+        except ProxmoxShellError as e:
+            return (False, e.message)
 
     def modify_group(self):
-        current_group = self.group_info()
-        updated_group = {}
+        lookup = self.lookup()
+        staged_group = {}
 
         if self.comment is not None:
-            updated_group['comment'] = self.comment.replace(' ', '\ ')
+            staged_group['comment'] = self.comment
 
         updated_fields = []
         error = None
 
-        for key in updated_group:
-            if key not in current_group or updated_group[key].replace('\ ', ' ') != current_group[key]:
+        for key in staged_group:
+            if key not in lookup or staged_group[key] != lookup[key]:
                 updated_fields.append(key)
 
         if self.module.check_mode and updated_fields:
@@ -103,9 +109,9 @@ class ProxmoxGroup(object):
             return (updated_fields, error)
 
         try:
-            self.cluster.access.groups(self.name).put(**updated_group)
-        except:
-            error = "Failed to run pvesh create for this group."
+            pvesh.set("access/groups/{}".format(self.name), **staged_group)
+        except ProxmoxShellError as e:
+            error = e.message
 
         return (updated_fields, error)
 
@@ -129,7 +135,7 @@ def main():
     result['state'] = group.state
 
     if group.state == 'absent':
-        if group.group_exists():
+        if group.lookup() is not None:
             if module.check_mode:
                 module.exit_json(changed=True)
 
@@ -138,7 +144,7 @@ def main():
             if error is not None:
                 module.fail_json(name=group.name, msg=error)
     elif group.state == 'present':
-        if not group.group_exists():
+        if not group.lookup():
             if module.check_mode:
                 module.exit_json(changed=True)
 
@@ -154,8 +160,9 @@ def main():
         if error is not None:
             module.fail_json(name=group.name, msg=error)
 
-    if group.group_exists():
-        result['group'] = group.group_info()
+    lookup = group.lookup()
+    if lookup is not None:
+        result['group'] = lookup
 
     result['changed'] = changed
 

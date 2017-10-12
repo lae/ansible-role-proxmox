@@ -75,3 +75,21 @@ def get(path):
         return response["data"]
 
     raise ProxmoxShellError(response)
+
+def delete(path):
+    response = run_command("delete", path)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)
+
+def create(path, **params):
+    response = run_command("create", path, **params)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)
+
+def set(path, **params):
+    response = run_command("set", path, **params)
+
+    if response["status"] != 200:
+        raise ProxmoxShellError(response)
