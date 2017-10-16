@@ -132,7 +132,7 @@ requires that the `jmespath` library be installed on your control host. You can
 either `pip install jmespath` or install it via your distribution's package
 manager, e.g. `apt-get install python-jmespath`.
 
-User Management
+User and ACL Management
 ---------------
 
 You can use this role to manage users and groups within Proxmox VE (both in
@@ -174,6 +174,24 @@ pve_users:
 Refer to `library/proxmox_user.py` [link][user-module] and
 `library/proxmox_group.py` [link][group-module] for module documentation.
 
+For managing ACLs, a similar module is employed, but the main difference is that
+most of the parameters only accept lists (subject to change):
+
+```
+pve_acls:
+  - path: /
+    roles: [ "Administrator" ]
+    groups: [ "Admins" ]
+  - path: /pools/testpool
+    roles: [ "PVEAdmin" ]
+    users:
+      - pveapi@pve
+    groups:
+      - test_users
+```
+
+Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
+
 License
 -------
 
@@ -189,3 +207,4 @@ Musee Ullah <musee.ullah@fireeye.com>
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
+[acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py

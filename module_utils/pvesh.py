@@ -13,15 +13,15 @@ class ProxmoxShellError(Exception):
         if "data" in response:
             self.data = response["data"]
 
-def run_command(handler, path, **params):
+def run_command(handler, resource, **params):
     # pvesh strips these before handling, so might as well
-    path = path.strip('/')
+    resource = resource.strip('/')
     # pvesh only has lowercase handlers
     handler = handler.lower()
     command = [
         "/usr/bin/pvesh",
         handler,
-        path]
+        resource]
     for parameter, value in params.iteritems():
         command += ["-{}".format(parameter), "{}".format(value)]
 
@@ -47,7 +47,7 @@ def run_command(handler, path, **params):
         if stderr[0] == "400 Parameter verification failed.":
             return {u"status": 400, u"message": "\n".join(stderr[1:-1])}
 
-        if stderr[0] == "no '{}' handler for '{}'".format(handler, path):
+        if stderr[0] == "no '{}' handler for '{}'".format(handler, resource):
             return {u"status": 405, u"message": stderr[0]}
 
         if handler == "get":
@@ -65,8 +65,8 @@ def run_command(handler, path, **params):
 
     return {u"status": 500, u"message": u"Unexpected result occurred but no error message was provided by pvesh."}
 
-def get(path):
-    response = run_command("get", path)
+def get(resource):
+    response = run_command("get", resource)
 
     if response["status"] == 404:
         return None
@@ -76,20 +76,20 @@ def get(path):
 
     raise ProxmoxShellError(response)
 
-def delete(path):
-    response = run_command("delete", path)
+def delete(resource):
+    response = run_command("delete", resource)
 
     if response["status"] != 200:
         raise ProxmoxShellError(response)
 
-def create(path, **params):
-    response = run_command("create", path, **params)
+def create(resource, **params):
+    response = run_command("create", resource, **params)
 
     if response["status"] != 200:
         raise ProxmoxShellError(response)
 
-def set(path, **params):
-    response = run_command("set", path, **params)
+def set(resource, **params):
+    response = run_command("set", resource, **params)
 
     if response["status"] != 200:
         raise ProxmoxShellError(response)
