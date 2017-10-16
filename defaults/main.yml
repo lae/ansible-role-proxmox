@@ -2,14 +2,21 @@
 # defaults file for ansible-role-proxmox
 pve_group: proxmox
 pve_fetch_directory: fetch
-pve_repository_line: "deb http://download.proxmox.com/debian {{ ansible_distribution_release }} pve-no-subscription"
+pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_remove_old_kernels: true
-# pve_ldap_bind_user:
-# pve_ldap_bind_password:
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
-# pve_ssl_private_key:
-# pve_ssl_certificate:
+# pve_ssl_private_key: "contents of private key"
+# pve_ssl_certificate: "contents of certificate"
+pve_cluster_enabled: no
+pve_cluster_clustername: "{{ pve_group }}"
+pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
+pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
+# pve_cluster_ring1_addr: "another interface's IP address or hostname"
+# pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
+pve_groups: []
+pve_users: []
+pve_acls: []

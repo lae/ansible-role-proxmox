@@ -62,7 +62,7 @@ Once complete, you should be able to access your Proxmox VE instance at
 This will configure hosts in the group `pve01` as one cluster, as well as
 reboot the machines should the kernel have been updated. (Only recommended to
 set this flag during installation - reboots during operation should occur
-serially during a maintenance period.)
+serially during a maintenance period.) It will also enable the IPMI watchdog.
 
     - hosts: pve01
       become: True
@@ -79,7 +79,9 @@ serially during a maintenance period.)
         - {
             role: lae.proxmox,
             pve_group: pve01,
-            pve_reboot_on_kernel_update: true
+            pve_cluster_enabled: yes
+            pve_reboot_on_kernel_update: true,
+            pve_watchdog: ipmi
           }
 
 Role Variables
@@ -89,17 +91,35 @@ Role Variables
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
 pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
-pve_repository_line: "deb http://download.proxmox.com/debian jessie pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
-# pve_ldap_bind_user: # Setting this and the next variable will configure the LDAP authentication method to use this account for searching for a user
-# pve_ldap_bind_password:
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
-# pve_ssl_private_key: # Should be set to the contents of the private key to use for HTTPS
-# pve_ssl_certificate: # Should be set to the contents of the certificate to use for HTTPS
+# pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
+# pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
+pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
+pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
+```
+
+To enable clustering with this role, configure the following variables appropriately:
+
+```
+pve_cluster_enabled: no # Set this to yes to configure hosts to be clustered together
+pve_cluster_clustername: "{{ pve_group }}" # Should be set to the name of the PVE cluster
+```
+
+Information about the following can be found in the PVE Documentation in the
+[Cluster Manager][pvecm-network] chapter.
+
+```
+pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}" 
+pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
+# pve_cluster_ring1_addr: "another interface's IP address or hostname"
+# pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
+
 ```
 
 Dependencies
@@ -107,6 +127,70 @@ Dependencies
 
 This role does not install NTP, so you should configure NTP yourself, with the `geerlingguy.ntp` role as in the examples.
 
+When cluster is enabled, this role makes use of the `json_query` filter, which
+requires that the `jmespath` library be installed on your control host. You can
+either `pip install jmespath` or install it via your distribution's package
+manager, e.g. `apt-get install python-jmespath`.
+
+User and ACL Management
+---------------
+
+You can use this role to manage users and groups within Proxmox VE (both in
+single server deployments and cluster deployments). Here are some examples.
+
+```
+pve_groups:
+  - name: Admins
+    comment: Administrators of this PVE cluster
+  - name: api_users
+  - name: test_users
+pve_users:
+  - name: root@pam
+    email: postmaster@pve.example
+  - name: lae@pam
+    email: lae@pve.example
+    firstname: Musee
+    lastname: Ullah
+    groups: [ "Admins" ]
+  - name: pveapi@pve
+    password: "Proxmox789"
+    groups:
+      - api_users
+  - name: testapi@pve
+    password: "Test456"
+    enable: no
+    groups:
+      - api_users
+      - test_users
+  - name: tempuser@pam
+    expire: 1514793600
+    groups: [ "test_users" ]
+    comment: "Temporary user set to expire on 2018年  1月  1日 月曜日 00:00:00 PST"
+    email: tempuser@pve.example
+    firstname: Test
+    lastname: User
+```
+
+Refer to `library/proxmox_user.py` [link][user-module] and
+`library/proxmox_group.py` [link][group-module] for module documentation.
+
+For managing ACLs, a similar module is employed, but the main difference is that
+most of the parameters only accept lists (subject to change):
+
+```
+pve_acls:
+  - path: /
+    roles: [ "Administrator" ]
+    groups: [ "Admins" ]
+  - path: /pools/testpool
+    roles: [ "PVEAdmin" ]
+    users:
+      - pveapi@pve
+    groups:
+      - test_users
+```
+
+Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
 License
 -------
@@ -120,3 +204,7 @@ Musee Ullah <musee.ullah@fireeye.com>
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Proxmox_VE_4.x_Cluster
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
+[pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
+[group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
+[acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py

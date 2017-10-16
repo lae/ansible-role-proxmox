@@ -1,16 +1,70 @@
 ---
 - hosts: proxmox
   tasks:
+    - name: Ensure Proxmox Web UI returns a successful HTTP response
+      uri:
+        url: "https://{{ inventory_hostname }}:8006"
+
+    - name: Query PVE cluster status
+      shell: "pvesh get /cluster/status"
+      register: __pve_cluster
+      changed_when: False
+
+    - name: Check that this node is within the cluster and it is in quorum
+      assert:
+        that: "(__pve_cluster.stdout | from_json | json_query(query)) == 1"
+      vars:
+        query: "([?type=='cluster'].quorate)[0]"
+
+    - name: Query PVE groups
+      shell: "pvesh get /access/groups"
+      register: __pve_groups
+      changed_when: False
+
+    - name: Check that PVE groups exist
+      assert:
+        that: "(__pve_groups.stdout | from_json | json_query(query)) == 1"
+      vars:
+        query: "length([?groupid=='{{ item.name }}'])"
+      run_once: True
+      with_items: "{{ pve_groups }}"
+
+    - name: Query PVE users
+      shell: "pvesh get /access/users"
+      register: __pve_users
+      changed_when: False
+
+    - name: Check that PVE users exist
+      assert:
+        that: "(__pve_users.stdout | from_json | json_query(query)) == 1"
+      vars:
+        query: "length([?userid=='{{ item.name }}'])"
+      run_once: True
+      with_items: "{{ pve_users }}"
+
+    - name: Query PVE ACLs
+      shell: "pvesh get /access/acl"
+      register: __pve_acl
+      changed_when: False
+
+    - name: Check that PVE ACLs exist
+      assert:
+        that: "(__pve_acl.stdout | from_json | json_query(query)) == 3"
+      vars:
+        query: "length([])"
+      run_once: True
+
     - block:
-        - name: Ensure Proxmox Web UI returns a successful HTTP response
-          uri:
-            url: "https://{{ inventory_hostname }}:8006"
-        - name: pvedaemon service status
-          shell: "journalctl --no-pager -xu pvedaemon.service"
-        - name: pve-cluster service status
-          shell: "journalctl --no-pager -xu pve-cluster.service"
-        - name: pveproxy service status
-          shell: "journalctl --no-pager -xu pveproxy.service"
-        - name: hosts file
-          shell: "cat /etc/hosts"
+      - name: pvedaemon service status
+        shell: "journalctl --no-pager -xu pvedaemon.service"
+        changed_when: False
+      - name: pve-cluster service status
+        shell: "journalctl --no-pager -xu pve-cluster.service"
+        changed_when: False
+      - name: pveproxy service status
+        shell: "journalctl --no-pager -xu pveproxy.service"
+        changed_when: False
+      - name: hosts file
+        shell: "cat /etc/hosts"
+        changed_when: False
       ignore_errors: yes

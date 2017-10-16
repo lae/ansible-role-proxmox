@@ -1,0 +1,57 @@
+---
+- name: Lookup cluster information
+  proxmox_query:
+    query: cluster/status
+  register: __pve_cluster
+
+- name: Identify if the host is already part of a cluster
+  set_fact:
+    __pve_active_cluster: '{{ __pve_cluster | json_query(query) }}'
+  when: "__pve_cluster | json_query(query) | ternary(true, false)"
+  vars:
+    query: "response[?type=='cluster'].name | [0]"
+
+- name: Identify all clusters that the hosts in the specified group may be in
+  set_fact:
+    __pve_found_clusters: "{{ __pve_found_clusters | default([]) | intersect([hostvars[item]['__pve_active_cluster']]) }}"
+  with_items: "{{ groups[pve_group] }}"
+  when: "'__pve_active_cluster' in hostvars[item]"
+
+- name: Ensure that hosts found are not in multiple existing clusters
+  assert:
+    that:
+      - "(__pve_found_clusters | default([]) | length) <= 1"
+    msg: "Some or all of the hosts in {{ pve_group }} appear to already be part of two or more different clusters, please ensure groups only have hosts meant to be in one single cluster."
+
+- name: Ensure that, if we find an existing cluster, that it matches the specified cluster name
+  assert:
+    that:
+      - "__pve_found_clusters[0] == pve_cluster_clustername"
+    msg: "Some or all of the hosts in group '{{ pve_group }}' appear to be in a cluster named '{{ __pve_found_clusters[0] }}', which differs from the specified clustername of '{{ pve_cluster_clustername }}'. Please ensure the clustername is correct. An existing cluster's name cannot be modified."
+  when: "(__pve_found_clusters | default([]) | length) == 1"
+
+- name: Initialize a Proxmox cluster
+  command: "pvecm create {{ pve_cluster_clustername }} -bindnet0_addr {{ pve_cluster_bindnet0_addr }} -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_bindnet1_addr is defined and pve_cluster_ring1_addr is defined %} -bindnet1_addr {{ pve_cluster_bindnet1_addr }} -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
+  args:
+    creates: "{{ pve_cluster_conf }}"
+  when:
+    - "__pve_found_clusters is not defined"
+    - "inventory_hostname == groups[pve_group][0]"
+
+- name: Wait for quorum on initialization node
+  proxmox_query:
+    query: cluster/status
+  register: __pve_cluster_init
+  until: "(__pve_cluster_init | json_query(query)) == 1"
+  retries: 5
+  delay: 5
+  when:
+    - "inventory_hostname == groups[pve_group][0]"
+  vars:
+    query: "response[?type=='cluster'].quorate | [0]"
+
+- include_tasks: pve_add_node.yml
+  with_items: "{{ groups[pve_group][1:] }}"
+  when:
+    - "__pve_active_cluster is not defined"
+    - "inventory_hostname != groups[pve_group][0]"
