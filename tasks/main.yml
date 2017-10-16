@@ -17,6 +17,9 @@
 
 - include: ssh_cluster_config.yml
 
+- name: Run handlers if needed (sshd reload)
+  meta: flush_handlers
+
 - name: Enumerate all cluster hosts within the hosts file
   blockinfile:
     dest: /etc/hosts
