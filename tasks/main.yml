@@ -84,9 +84,14 @@
 
   - name: Remove automatically installed PVE Enterprise repo configuration
     apt_repository:
-      repo: "deb https://enterprise.proxmox.com/debian jessie pve-enterprise"
+      repo: "{{ item }}"
       filename: pve-enterprise
       state: absent
+    with_items:
+      - "deb https://enterprise.proxmox.com/debian jessie pve-enterprise"
+      - "deb https://enterprise.proxmox.com/debian stretch pve-enterprise"
+      - "deb https://enterprise.proxmox.com/debian/pve jessie pve-enterprise"
+      - "deb https://enterprise.proxmox.com/debian/pve stretch pve-enterprise"
 
   - name: Remove subscription check wrapper function in web UI
     patch:
