@@ -84,7 +84,7 @@
 
   - name: Remove automatically installed PVE Enterprise repo configuration
     apt_repository:
-      repo: ""
+      repo: "{{ item }}"
       filename: pve-enterprise
       state: absent
     with_items:
