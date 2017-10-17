@@ -4,11 +4,18 @@
 lae.proxmox
 =========
 
-Installs and configures a Proxmox cluster and restricted SSH configuration.
+Installs and configures a Proxmox 5.x cluster with the following features:
+
+- Ensures all hosts can connect to one another as root
+- Ability to create/manage groups, users, and access control lists
+- Ability to create or add nodes to a PVE cluster
+- IPMI watchdog support
+- BYO HTTPS certificate support
+- Ability to use either `pve-no-subscription` or `pve-enterprise` repositories
 
 ## Quickstart
 
-The primary goal for this role is to lay out the necessities for configuring a
+The primary goal for this role is to configure and manage a
 [Proxmox VE cluster][pve-cluster] (see example playbook), however this role can
 be used to quickly install single node Proxmox servers.
 
@@ -56,6 +63,245 @@ file containing a list of hosts).
 
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
+
+## Deploying a fully-featured PVE 5.x cluster
+
+Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
+eventually look like this, but yours does not have to follow all of the steps:
+
+```
+lab-cluster/
+├── files
+│   └── pve01
+│       ├── lab-node01.local.key
+│       ├── lab-node01.local.pem
+│       ├── lab-node02.local.key
+│       ├── lab-node02.local.pem
+│       ├── lab-node03.local.key
+│       └── lab-node03.local.pem
+├── group_vars
+│   ├── all
+│   └── pve01
+├── inventory
+├── roles
+│   └── requirements.yml
+├── site.yml
+└── templates
+    └── interfaces-pve01.j2
+
+6 directories, 12 files
+```
+
+First thing you may note is that we have a bunch of `.key` and `.pem` files.
+These are private keys and SSL certificates that this role will use to configure
+the web interface for Proxmox across all the nodes. These aren't necessary,
+however, if you want to keep using the signed certificates by the CA that
+Proxmox sets up internally. You may typically use Ansible Vault to encrypt the
+private keys, e.g.:
+
+    ansible-vault encrypt files/pve01/*.key
+
+This would then require you to pass the Vault password when running the playbook.
+
+Let's first specify our cluster hosts. Our `inventory` file may look like this:
+
+```
+[pve01]
+lab-node01.local
+lab-node02.local
+lab-node03.local
+```
+
+You could have multiple clusters, so it's a good idea to have one group for each
+cluster. Now, let's specify our role requirements in `roles/requirements.yml`:
+
+```
+---
+- src: geerlingguy.ntp
+- src: lae.proxmox
+```
+
+We need an NTP role to configure NTP, so we're using Jeff Geerling's role to do
+so. You wouldn't need it if you already have NTP configured or have a different
+method for configuring NTP.
+
+Now, let's specify some group variables. First off, let's create `group_vars/all`
+for setting NTP-related variables:
+
+```
+---
+ntp_manage_config: true
+ntp_servers:
+  - lab-ntp01.local iburst
+  - lab-ntp02.local iburst
+```
+
+Of course, replace those NTP servers with ones you prefer.
+
+Now for the flesh of your playbook, `pve01`'s group variables. Create a file
+`group_vars/pve01`, add the following, and modify accordingly for your environment.
+
+```
+---
+pve_group: pve01
+pve_fetch_directory: "fetch/{{ pve_group }}/"
+pve_watchdog: ipmi
+pve_ssl_private_key: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.key') }}"
+pve_ssl_certificate: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.pem') }}"
+pve_cluster_enabled: yes
+pve_groups:
+  - name: ops
+    comment: Operations Team
+pve_users:
+  - name: admin1@pam
+    email: admin1@lab.local
+    firstname: Admin
+    lastname: User 1
+    groups: [ "ops" ]
+  - name: admin2@pam
+    email: admin2@lab.local
+    firstname: Admin
+    lastname: User 2
+    groups: [ "ops" ]
+pve_acls:
+  - path: /
+    roles: [ "Administrator" ]
+    groups: [ "ops" ]
+interfaces_template: "interfaces-{{ pve_group }}.j2"
+```
+
+`pve_group` is set to the group name of our cluster, `pve01` - it will be used
+for the purposes of ensuring all hosts within that group can connect to each
+other and are clustered together. Note that the PVE cluster name will be set to
+this group name as well, unless otherwise specified by `pve_clustername`.
+Leaving this undefined will default to `proxmox`.
+
+`pve_fetch_directory` will be used to download the host public key and root user's
+public key from all hosts within `pve_group`. These are then uploaded to each
+host into the appropriate configuration files.
+
+`pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
+manager to use it. Leave this undefined if you don't want to configure it.
+
+`pve_ssl_private_key` and `pve_ssl_certificate` here uses a file lookup to read
+the contents of a file in the playbook, e.g. `files/pve01/lab-node01.key`. You
+could possibly just use host variables instead of files, if you prefer.
+
+`pve_cluster_enabled` enables the role to perform all cluster management tasks.
+This includes creating a cluster if it doesn't exist, or adding nodes to the
+existing cluster. There are checks to make sure you're not mixing nodes that
+are already in existing clusters with different names.
+
+`pve_groups`, `pve_users`, and `pve_acls` authorizes some local UNIX users (they
+must already exist) to access PVE and gives them the Administrator role as part
+of the `ops` group. Read the **User and ACL Management** section for more info.
+
+`interfaces_template` is set to the path of a template we'll use for configuring
+the network on these Debian machines. This is only necessary if you want to
+manage networking from Ansible rather than manually or via each host in PVE.
+You should probably be familiar with Ansible prior to doing this, as your method
+may involve setting host variables for the IP addresses for each host, etc.
+
+Let's get that interface template out of the way. Feel free to skip this file
+(and leave it undefined in `group_vars/pve01`) otherwise. Here's one that I use:
+
+```
+# {{ ansible_managed }}
+auto lo
+iface lo inet loopback
+
+allow-hotplug enp2s0f0
+auto enp2s0f0
+iface enp2s0f0 inet static
+    address {{ lookup('dig', ansible_fqdn) }}
+    gateway 10.4.0.1
+    netmask 255.255.255.0
+    dns-nameservers 10.2.2.4 10.3.2.4
+    dns-search local
+
+allow-hotplug enp2s0f1
+auto enp2s0f1
+iface enp2s0f1 inet static
+    address {{ lookup('dig', ansible_hostname + "-clusternet.local") }}
+    netmask 255.255.255.0
+```
+
+You might not be familiar with the `dig` lookup, but basically here we're doing
+an A record lookup for each machine (e.g. lab-node01.local) for the first
+interface, and then another slightly modified lookup for the "clustering" network
+we might use for Ceph ("lab-node01-clusternet.local"). Of course, yours may look
+completely different, especially if you're using bonding, three different networks
+for management/corosync, storage and VM traffic, etc.
+
+Finally, let's write our playbook. `site.yml` will look something like this:
+
+```
+---
+- hosts: all
+  become: True
+  roles:
+    - geerlingguy.ntp
+
+# Leave this out if you're not modifying networking through Ansible
+- hosts: pve01
+  become: True
+  tasks:
+    - name: Configure /etc/network/interfaces
+      template:
+        src: "{{ interfaces_template }}"
+        dest: /etc/network/interfaces
+      notify:
+        - restart networking
+  handlers:
+    - name: restart networking
+      service:
+        name: networking
+        state: restarted
+
+- hosts: pve
+  become: True
+  roles:
+    - lae.proxmox
+```
+
+Basically, we run the NTP role across all hosts (you might want to add some
+non-Proxmox machines), configure networking on `pve01` with our two network
+layout, and then run this Proxmox role against the hosts to setup a cluster.
+
+At this point, our playbook is ready and we can run the playbook.
+
+Ensure that roles and dependencies are installed:
+
+    ansible-galaxy install -r roles/requirements.yml --force
+    pip install jmespath dnspython
+
+`jmespath` is required for some of the tasks involving clustering. `dnspython`
+is only required if you're using a `dig` lookup, which you probably won't be if
+you skipped configuring networking. We pass `--force` to `ansible-galaxy` here
+so that roles are updated to their latest versions if already installed.
+
+Now run the playbook:
+
+    ansible-playbook -i inventory site.yml -e '{"pve_reboot_on_kernel_update": true}'
+
+The `-e '{"pve_reboot_on_kernel_update": true}'` should mainly be run the first
+time you do the Proxmox cluster setup, as it'll reboot the server to boot into
+a PVE kernel. Subsequent runs should leave this out, as you want to sequentially
+reboot servers after the cluster is running.
+
+To specify a particular user, use `-u root` (replacing `root`), and if you need
+to provide passwords, use `-k` for SSH password and/or `-K` for sudo password.
+For example:
+
+    ansible-playbook -i inventory site.yml -K -u admin1
+
+This will ask for a sudo password, then login to the `admin1` user (using public
+key auth - add `-k` for pw) and run the playbook.
+
+That's it! You should now have a fully deployed Proxmox cluster. You may want to
+create Ceph storage on it afterward, which this role does not (yet?) do, and
+other tasks possibly, but the hard part is mostly complete.
+
 
 ## Example Playbook
 
