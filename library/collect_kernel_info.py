@@ -64,7 +64,7 @@ def main():
                 old_kernel_packages.append(subprocess.check_output(["dpkg-query", "-S", kernel]).split(":")[0])
 
     # returns True if we're not booted into the latest kernel
-    new_kernel_exists = booted_kernel.split("/")[-1] == latest_kernel.split("/")[-1]
+    new_kernel_exists = booted_kernel.split("/")[-1] != latest_kernel.split("/")[-1]
     module.exit_json(changed=False, new_kernel_exists=new_kernel_exists, old_packages=old_kernel_packages, booted_package=booted_kernel_package)
 
 if __name__ == '__main__':
