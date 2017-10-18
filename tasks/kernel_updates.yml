@@ -6,7 +6,7 @@
   when: pve_reboot_on_kernel_update
 
 - block:
-  - name: Reboot for networking changes
+  - name: Reboot for kernel update
     shell: "sleep 5 && shutdown -r now 'PVE kernel update detected by Ansible'"
     async: 1
     poll: 0
