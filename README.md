@@ -211,13 +211,18 @@ auto lo
 iface lo inet loopback
 
 allow-hotplug enp2s0f0
-auto enp2s0f0
-iface enp2s0f0 inet static
+iface enp2s0f0 inet manual
+
+auto vmbr0
+iface vmbr0 inet static
     address {{ lookup('dig', ansible_fqdn) }}
     gateway 10.4.0.1
     netmask 255.255.255.0
     dns-nameservers 10.2.2.4 10.3.2.4
     dns-search local
+    bridge_ports enp2s0f0
+    bridge_stp off
+    bridge_fd 0
 
 allow-hotplug enp2s0f1
 auto enp2s0f1
@@ -228,10 +233,11 @@ iface enp2s0f1 inet static
 
 You might not be familiar with the `dig` lookup, but basically here we're doing
 an A record lookup for each machine (e.g. lab-node01.local) for the first
-interface, and then another slightly modified lookup for the "clustering" network
-we might use for Ceph ("lab-node01-clusternet.local"). Of course, yours may look
-completely different, especially if you're using bonding, three different networks
-for management/corosync, storage and VM traffic, etc.
+interface (and configuring it as a bridge we'll use for VM interfaces), and then
+another slightly modified lookup for the "clustering" network we might use for
+Ceph ("lab-node01-clusternet.local"). Of course, yours may look completely
+different, especially if you're using bonding, three different networks for
+management/corosync, storage and VM traffic, etc.
 
 Finally, let's write our playbook. `site.yml` will look something like this:
 
@@ -245,18 +251,28 @@ Finally, let's write our playbook. `site.yml` will look something like this:
 # Leave this out if you're not modifying networking through Ansible
 - hosts: pve01
   become: True
+  serial: 1
   tasks:
+    - name: Install bridge-utils
+      apt:
+        name: bridge-utils
+
     - name: Configure /etc/network/interfaces
       template:
         src: "{{ interfaces_template }}"
         dest: /etc/network/interfaces
-      notify:
-        - restart networking
-  handlers:
-    - name: restart networking
-      service:
-        name: networking
-        state: restarted
+      register: __configure_interfaces
+
+    - block:
+      - name: Reboot for networking changes
+        shell: "sleep 5 && shutdown -r now 'Networking changes found, rebooting'"
+        async: 1
+        poll: 0
+
+      - name: Wait for server to come back online
+        wait_for_connection:
+          delay: 15
+      when: __configure_interfaces | changed
 
 - hosts: pve
   become: True
@@ -265,8 +281,9 @@ Finally, let's write our playbook. `site.yml` will look something like this:
 ```
 
 Basically, we run the NTP role across all hosts (you might want to add some
-non-Proxmox machines), configure networking on `pve01` with our two network
-layout, and then run this Proxmox role against the hosts to setup a cluster.
+non-Proxmox machines), configure networking on `pve01` with our separate cluster
+network and bridge layout, reboot to make those changes take effect, and then
+run this Proxmox role against the hosts to setup a cluster.
 
 At this point, our playbook is ready and we can run the playbook.
 

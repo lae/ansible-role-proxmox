@@ -6,16 +6,14 @@
   when: pve_reboot_on_kernel_update
 
 - block:
-  - name: Reboot for kernel update
-    command: "shutdown -r +1 'PVE kernel update detected by Ansible, rebooting'"
-    async: 0
+  - name: Reboot for networking changes
+    shell: "sleep 5 && shutdown -r now 'PVE kernel update detected by Ansible'"
+    async: 1
     poll: 0
-    ignore_errors: true
 
   - name: Wait for server to come back online
-    local_action: wait_for port=22 host={{ inventory_hostname }} search_regex=OpenSSH delay=60 timeout=450
-    become: false
-
+    wait_for_connection:
+      delay: 15
   when:
     - pve_reboot_on_kernel_update
     - __pve_kernel_update.new_kernel_exists
