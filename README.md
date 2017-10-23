@@ -355,12 +355,15 @@ Role Variables
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
 pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
 pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
+pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS packages - if enabled after PVE is already installed, a reboot is suggested.
+pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
@@ -388,12 +391,13 @@ pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 Dependencies
 ------------
 
-This role does not install NTP, so you should configure NTP yourself, with the `geerlingguy.ntp` role as in the examples.
+This role does not install NTP, so you should configure NTP yourself, e.g. with
+the `geerlingguy.ntp` role as shown in the example playbook.
 
-When cluster is enabled, this role makes use of the `json_query` filter, which
-requires that the `jmespath` library be installed on your control host. You can
-either `pip install jmespath` or install it via your distribution's package
-manager, e.g. `apt-get install python-jmespath`.
+When clustering is enabled, this role makes use of the `json_query` filter,
+which requires that the `jmespath` library be installed on your control host.
+You can either `pip install jmespath` or install it via your distribution's
+package manager, e.g. `apt-get install python-jmespath`.
 
 User and ACL Management
 ---------------

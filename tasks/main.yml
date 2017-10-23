@@ -50,6 +50,11 @@
     id: "{{ pve_release_key_id }}"
     state: present
 
+- name: Remove os-prober package
+  apt:
+    name: os-prober
+    state: absent
+
 - name: Add Proxmox repository
   apt_repository:
     repo: "{{ pve_repository_line }}"
@@ -62,26 +67,15 @@
     cache_valid_time: 3600
     upgrade: dist
 
-- name: Remove os-prober package
-  apt:
-    name: os-prober
-    state: absent
+- include: identify_needed_packages.yml
 
 - name: Install Proxmox VE and related packages
   apt:
     name: "{{ item }}"
     state: latest
-  with_items:
-    - proxmox-ve
-    - postfix
-    - open-iscsi
-    - ksm-control-daemon
-    - systemd-sysv
-    - patch
-    - python-pip
+  with_items: "{{ __pve_install_packages }}"
 
 - block:
-
   - name: Remove automatically installed PVE Enterprise repo configuration
     apt_repository:
       repo: "{{ item }}"
@@ -98,13 +92,19 @@
       src: 00_remove_checked_command.patch
       dest: /usr/share/pve-manager/js/pvemanagerlib.js
       backup: yes
-
   when: "'pve-no-subscription' in pve_repository_line"
 
-- include: kernel_updates.yml
+- name: Configure email address for ZFS event daemon notifications
+  lineinfile:
+    dest: /etc/zfs/zed.d/zed.rc
+    line: 'ZED_EMAIL_ADDR="{{ pve_zfs_zed_email }}"'
+    regexp: '^#?ZED_EMAIL_ADDR='
+  when: pve_zfs_zed_email is defined
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
+
+- include: kernel_updates.yml
 
 - include: pve_cluster_config.yml
   when: pve_cluster_enabled
