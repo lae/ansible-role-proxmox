@@ -3,12 +3,15 @@
 pve_group: proxmox
 pve_fetch_directory: fetch
 pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+pve_extra_packages: []
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_remove_old_kernels: true
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
+pve_zfs_enabled: no
+# pve_zfs_zed_email: "email address for zfs events"
 # pve_ssl_private_key: "contents of private key"
 # pve_ssl_certificate: "contents of certificate"
 pve_cluster_enabled: no
