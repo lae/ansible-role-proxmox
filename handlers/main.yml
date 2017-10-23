@@ -19,3 +19,8 @@
   service:
     name: watchdog-mux
     state: restarted
+
+- name: restart zfs-zed
+  service:
+    name: zfs-zed
+    state: restarted

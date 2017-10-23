@@ -1,0 +1,47 @@
+---
+- name: Remove ZFS modprobe configuration
+  file:
+    dest: /etc/modprobe.d/zfs.conf
+    state: absent
+  when: >
+    (pve_zfs_options is not defined) or
+    (pve_zfs_options is defined and not pve_zfs_options) or
+    (not pve_zfs_enabled)
+
+- name: Disable loading of ZFS module on init
+  file:
+    dest: /etc/modules-load.d/zfs.conf
+    state: absent
+  when: not pve_zfs_enabled
+
+- block:
+  - name: Re-enable nmi_watchdog via GRUB config
+    lineinfile:
+      dest: /etc/default/grub
+      line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX nmi_watchdog=0"'
+      state: absent
+    register: __pve_grub
+
+  - name: Update GRUB configuration
+    command: update-grub
+    register: __pve_grub_update
+    failed_when: ('error' in __pve_grub_update.stderr)
+    when: __pve_grub|changed
+    tags: skiponlxc
+
+  - name: Remove ipmi_watchdog modprobe configuration
+    file:
+      dest: /etc/modprobe.d/ipmi_watchdog.conf
+      state: absent
+
+  - name: Load softdog
+    modprobe:
+      name: softdog
+
+  - name: Set PVE HA Manager watchdog configuration back to default
+    copy:
+      content: "WATCHDOG_MODULE=softdog"
+      dest: /etc/default/pve-ha-manager
+    notify:
+      - restart watchdog-mux
+  when: pve_watchdog != 'ipmi'
