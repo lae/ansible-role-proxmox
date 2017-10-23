@@ -50,6 +50,11 @@
     id: "{{ pve_release_key_id }}"
     state: present
 
+- name: Remove os-prober package
+  apt:
+    name: os-prober
+    state: absent
+
 - name: Add Proxmox repository
   apt_repository:
     repo: "{{ pve_repository_line }}"
@@ -61,11 +66,6 @@
     update_cache: yes
     cache_valid_time: 3600
     upgrade: dist
-
-- name: Remove os-prober package
-  apt:
-    name: os-prober
-    state: absent
 
 - name: Install Proxmox VE and related packages
   apt:
