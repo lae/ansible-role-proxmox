@@ -94,13 +94,15 @@
       backup: yes
   when: "'pve-no-subscription' in pve_repository_line"
 
-- include: zfs.yml
-  when: pve_zfs_enabled
+- include: kernel_updates.yml
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
 
-- include: kernel_updates.yml
+- include: zfs.yml
+  when: pve_zfs_enabled
+
+- include: kernel_module_cleanup.yml
 
 - include: pve_cluster_config.yml
   when: pve_cluster_enabled
