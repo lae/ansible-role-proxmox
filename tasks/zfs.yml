@@ -8,7 +8,7 @@
 
 - name: Configure zfs module to load on boot
   copy:
-    content: "options zfs{% if pve_zfs_options %} {{ pve_zfs_options }}{% endif %}"
+    content: "options zfs{% if pve_zfs_options is defined %} {{ pve_zfs_options }}{% endif %}"
     dest: /etc/modprobe.d/zfs.conf
 
 - name: Configure email address for ZFS event daemon notifications
