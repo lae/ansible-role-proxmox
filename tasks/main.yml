@@ -94,12 +94,8 @@
       backup: yes
   when: "'pve-no-subscription' in pve_repository_line"
 
-- name: Configure email address for ZFS event daemon notifications
-  lineinfile:
-    dest: /etc/zfs/zed.d/zed.rc
-    line: 'ZED_EMAIL_ADDR="{{ pve_zfs_zed_email }}"'
-    regexp: '^#?ZED_EMAIL_ADDR='
-  when: pve_zfs_zed_email is defined
+- include: zfs.yml
+  when: pve_zfs_enabled
 
 - include: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'

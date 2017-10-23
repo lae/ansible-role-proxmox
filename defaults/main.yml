@@ -11,6 +11,7 @@ pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
 pve_zfs_enabled: no
+# pve_zfs_options: "parameters to pass to zfs module"
 # pve_zfs_zed_email: "email address for zfs events"
 # pve_ssl_private_key: "contents of private key"
 # pve_ssl_certificate: "contents of certificate"

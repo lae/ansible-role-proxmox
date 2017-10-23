@@ -362,8 +362,9 @@ pve_remove_old_kernels: true # Currently removes kernel from main Debian reposit
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
-pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS packages - if enabled after PVE is already installed, a reboot is suggested.
-pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
+pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS packages
+# pve_zfs_options: "" # modprobe parameters to pass to zfs module on boot/modprobe
+# pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.

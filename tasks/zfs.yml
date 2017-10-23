@@ -1,0 +1,19 @@
+---
+- name: Load zfs module
+  modprobe:
+    name: zfs
+    params: "{{ pve_zfs_options | default(omit) }}"
+    state: present
+  tags: skiponlxc
+
+- name: Configure zfs module to load on boot
+  copy:
+    content: "options zfs{% if pve_zfs_options %} {{ pve_zfs_options }}{% endif %}"
+    dest: /etc/modprobe.d/zfs.conf
+
+- name: Configure email address for ZFS event daemon notifications
+  lineinfile:
+    dest: /etc/zfs/zed.d/zed.rc
+    line: 'ZED_EMAIL_ADDR="{{ pve_zfs_zed_email }}"'
+    regexp: '^#?ZED_EMAIL_ADDR='
+  when: pve_zfs_zed_email is defined
