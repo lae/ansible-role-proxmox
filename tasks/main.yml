@@ -92,7 +92,9 @@
       src: 00_remove_checked_command.patch
       dest: /usr/share/pve-manager/js/pvemanagerlib.js
       backup: yes
-  when: "'pve-no-subscription' in pve_repository_line"
+    when:
+      - "'pve-no-subscription' in pve_repository_line"
+      - pve_remove_subscription_warning
 
 - include: kernel_updates.yml
 

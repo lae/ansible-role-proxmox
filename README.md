@@ -355,6 +355,7 @@ Role Variables
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
 pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
 pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_disable_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
