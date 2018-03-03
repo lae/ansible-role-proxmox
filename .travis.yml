@@ -8,6 +8,8 @@ cache:
 env:
 - LXC_DISTRO=debian LXC_RELEASE=jessie
 - LXC_DISTRO=debian LXC_RELEASE=stretch
+- ANSIBLE_VERSION='git+https://github.com/ansible/ansible.git@devel' #2.5 DEVEL on debian stretch
+- ANSIBLE_VERSION='ansible>=2.3.0,<2.4.0' #2.3.x on debian stretch
 matrix:
   fast_finish: true
 before_cache:
