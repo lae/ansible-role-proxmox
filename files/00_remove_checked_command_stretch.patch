@@ -1,0 +1,70 @@
+diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+--- /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js	2018-02-16 12:06:39.000000000 +0000
++++ /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js	2018-03-03 05:43:35.083364592 +0000
+@@ -342,37 +342,6 @@
+ 	Ext.Ajax.requestopts);
+     },
+ 
+-    checked_command: function(orig_cmd) {
+-	Proxmox.Utils.API2Request({
+-	    url: '/nodes/localhost/subscription',
+-	    method: 'GET',
+-	    //waitMsgTarget: me,
+-	    failure: function(response, opts) {
+-		Ext.Msg.alert(gettext('Error'), response.htmlStatus);
+-	    },
+-	    success: function(response, opts) {
+-		var data = response.result.data;
+-
+-		if (data.status !== 'Active') {
+-		    Ext.Msg.show({
+-			title: gettext('No valid subscription'),
+-			icon: Ext.Msg.WARNING,
+-			msg: Proxmox.Utils.getNoSubKeyHtml(data.url),
+-			buttons: Ext.Msg.OK,
+-			callback: function(btn) {
+-			    if (btn !== 'ok') {
+-				return;
+-			    }
+-			    orig_cmd();
+-			}
+-		    });
+-		} else {
+-		    orig_cmd();
+-		}
+-	    }
+-	});
+-    },
+-
+     assemble_field_data: function(values, data) {
+         if (Ext.isObject(data)) {
+ 	    Ext.Object.each(data, function(name, val) {
+diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pvemanagerlib.js
+--- /usr/share/pve-manager/js/pvemanagerlib.js	2018-02-16 14:07:52.000000000 +0000
++++ /usr/share/pve-manager/js/pvemanagerlib.js	2018-03-03 05:48:35.567396692 +0000
+@@ -13441,7 +13441,7 @@
+ 	var version_btn = new Ext.Button({
+ 	    text: gettext('Package versions'),
+ 	    handler: function(){
+-		Proxmox.Utils.checked_command(function() { me.showVersions(); });
++		me.showVersions();
+ 	    }
+ 	});
+ 
+@@ -13691,7 +13691,7 @@
+ 		{
+ 		    text: gettext('System Report'),
+ 		    handler: function() {
+-			Proxmox.Utils.checked_command(function (){ me.showReport(); });
++			me.showReport();
+ 		    }
+ 		}
+ 	    ],
+@@ -30605,7 +30605,6 @@
+ 		handler: function(data) {
+ 		    me.login = null;
+ 		    me.updateLoginData(data);
+-		    Proxmox.Utils.checked_command(function() {}); // display subscription status
+ 		}
+ 	    });
+ 	}
