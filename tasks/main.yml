@@ -66,6 +66,7 @@
     update_cache: yes
     cache_valid_time: 3600
     upgrade: dist
+  when: pve_dist_upgrade | default(true)
 
 - include: identify_needed_packages.yml
 
