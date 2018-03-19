@@ -8,7 +8,7 @@ pve_extra_packages: []
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_remove_old_kernels: true
-pve_dist_upgrade: true
+pve_upgrade: dist
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10

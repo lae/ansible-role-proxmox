@@ -357,6 +357,7 @@ pve_fetch_directory: fetch/ # local directory used to download root public keys 
 pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
+pve_upgrade: dist # Performs system upgrade. Can be one of "no", "yes", "safe", "full", "dist".
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
@@ -383,7 +384,7 @@ Information about the following can be found in the PVE Documentation in the
 [Cluster Manager][pvecm-network] chapter.
 
 ```
-pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}" 
+pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
 pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 # pve_cluster_ring1_addr: "another interface's IP address or hostname"
 # pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"

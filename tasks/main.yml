@@ -65,8 +65,7 @@
   apt:
     update_cache: yes
     cache_valid_time: 3600
-    upgrade: dist
-  when: pve_dist_upgrade | default(true)
+    upgrade: pve_upgrade
 
 - include: identify_needed_packages.yml
 
@@ -124,7 +123,7 @@
   args: "{{ item }}"
   with_items: "{{ pve_users }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
-  
+
 - name: Configure Proxmox ACLs
   proxmox_acl:
   args: "{{ item }}"
