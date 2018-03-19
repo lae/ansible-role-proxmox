@@ -65,7 +65,7 @@
   apt:
     update_cache: yes
     cache_valid_time: 3600
-    upgrade: pve_upgrade
+    upgrade: "{{ pve_upgrade }}"
 
 - include: identify_needed_packages.yml
 
