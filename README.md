@@ -2,7 +2,7 @@
 [![Galaxy Role](https://img.shields.io/badge/ansible--galaxy-proxmox-blue.svg)](https://galaxy.ansible.com/lae/proxmox/)
 
 lae.proxmox
-=========
+===========
 
 Installs and configures a Proxmox 5.x cluster with the following features:
 
@@ -347,8 +347,7 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
             pve_watchdog: ipmi
           }
 
-Role Variables
---------------
+## Role Variables
 
 ```
 [variable]: [default] #[description/purpose]
@@ -391,8 +390,7 @@ pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 
 ```
 
-Dependencies
-------------
+## Dependencies
 
 This role does not install NTP, so you should configure NTP yourself, e.g. with
 the `geerlingguy.ntp` role as shown in the example playbook.
@@ -402,8 +400,7 @@ which requires that the `jmespath` library be installed on your control host.
 You can either `pip install jmespath` or install it via your distribution's
 package manager, e.g. `apt-get install python-jmespath`.
 
-User and ACL Management
----------------
+## User and ACL Management
 
 You can use this role to manage users and groups within Proxmox VE (both in
 single server deployments and cluster deployments). Here are some examples.
@@ -462,15 +459,11 @@ pve_acls:
 
 Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
-License
--------
+## Contributors
 
-MIT
-
-Author Information
-------------------
-
-Musee Ullah <musee.ullah@fireeye.com>
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)
+Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
+Jonas Meurer ([@mejo-](https://github.com/mejo-))
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Proxmox_VE_4.x_Cluster
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
