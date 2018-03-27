@@ -4,6 +4,7 @@ ansible_ssh_user: root
 pve_extra_packages:
   - sl
 pve_check_for_kernel_update: false
+pve_run_system_upgrades: true
 pve_watchdog: ipmi
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
