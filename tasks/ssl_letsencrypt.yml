@@ -1,5 +1,4 @@
 ---
-
 - name: Install Proxmox Let's Encrypt post-hook script
   template:
     src: pve-letsencrypt-post-hook.sh.j2

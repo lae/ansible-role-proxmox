@@ -374,7 +374,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
-pve_ssl_letsencrypt: no # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
+pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 ```
