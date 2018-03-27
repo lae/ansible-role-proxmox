@@ -183,9 +183,14 @@ host into the appropriate configuration files.
 `pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
 manager to use it. Leave this undefined if you don't want to configure it.
 
-`pve_ssl_private_key` and `pve_ssl_certificate` here uses a file lookup to read
-the contents of a file in the playbook, e.g. `files/pve01/lab-node01.key`. You
-could possibly just use host variables instead of files, if you prefer.
+`pve_ssl_private_key` and `pve_ssl_certificate` point to the SSL certificates for
+pvecluster. Here, a file lookup is used to read the contents of a file in the
+playbook, e.g. `files/pve01/lab-node01.key`. You could possibly just use host
+variables instead of files, if you prefer.
+
+`pve_ssl_letsencrypt` allows to obtain a Let's Encrypt SSL certificate for
+pvecluster. The Ansible role [systemli.letsencrypt](https://galaxy.ansible.com/systemli/letsencrypt/)
+needs to be installed first in order to use this function.
 
 `pve_cluster_enabled` enables the role to perform all cluster management tasks.
 This includes creating a cluster if it doesn't exist, or adding nodes to the
@@ -368,6 +373,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
+pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 ```

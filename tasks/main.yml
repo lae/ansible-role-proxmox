@@ -143,3 +143,6 @@
   when:
     - pve_ssl_private_key is defined
     - pve_ssl_certificate is defined
+
+- include: ssl_letsencrypt.yml
+  when: pve_ssl_letsencrypt

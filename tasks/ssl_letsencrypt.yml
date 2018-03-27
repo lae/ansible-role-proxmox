@@ -1,0 +1,18 @@
+---
+- name: Install Proxmox Let's Encrypt post-hook script
+  template:
+    src: pve-letsencrypt-post-hook.sh.j2
+    dest: /usr/local/bin/pve-letsencrypt-post-hook.sh
+    mode: 0755
+
+- name: Request Let's Encrypt certificate for {{ ansible_fqdn }}
+  include_role:
+    name: systemli.letsencrypt
+  vars:
+    - letsencrypt_cert:
+        name: "{{ ansible_fqdn }}"
+        domains:
+          - "{{ ansible_fqdn }}"
+        challenge: http
+        http_auth: standalone
+        post_hook: /usr/local/bin/pve-letsencrypt-post-hook.sh

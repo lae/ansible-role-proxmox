@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cp /etc/letsencrypt/live/{{ ansible_fqdn }}/privkey.pem   /etc/pve/local/pveproxy-ssl.key
+cp /etc/letsencrypt/live/{{ ansible_fqdn }}/fullchain.pem /etc/pve/local/pveproxy-ssl.pem
+service pveproxy restart
