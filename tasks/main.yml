@@ -60,12 +60,21 @@
     repo: "{{ pve_repository_line }}"
     filename: proxmox
     state: present
+  register: __pve_repo
 
-- name: Run dist-upgrade
+- name: Run apt-get dist-upgrade on repository changes
   apt:
     update_cache: yes
     cache_valid_time: 3600
-    upgrade: "{{ pve_upgrade }}"
+    upgrade: dist
+  when: __pve_repo.changed
+
+- name: Perform system upgrades
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    upgrade: yes
+  when: pve_run_system_upgrades
 
 - include: identify_needed_packages.yml
 
