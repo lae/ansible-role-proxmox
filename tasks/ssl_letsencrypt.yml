@@ -8,7 +8,7 @@
 
 - name: Request Let's Encrypt certificate for {{ ansible_fqdn }}
   include_role:
-    name: letsencrypt
+    name: systemli.letsencrypt
   vars:
     - letsencrypt_cert:
         name: "{{ ansible_fqdn }}"

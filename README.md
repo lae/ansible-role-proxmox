@@ -189,7 +189,7 @@ playbook, e.g. `files/pve01/lab-node01.key`. You could possibly just use host
 variables instead of files, if you prefer.
 
 `pve_ssl_letsencrypt` allows to obtain a Let's Encrypt SSL certificate for
-pvecluster. The Ansible role [systemli-letsencrypt](https://github.com/systemli/ansible-role-letsencrypt)
+pvecluster. The Ansible role [systemli.letsencrypt](https://galaxy.ansible.com/systemli/letsencrypt/)
 needs to be installed first in order to use this function.
 
 `pve_cluster_enabled` enables the role to perform all cluster management tasks.
