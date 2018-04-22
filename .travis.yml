@@ -11,7 +11,6 @@ env:
   - ANSIBLE_GIT_VERSION='devel' # 2.6.x development branch
   - ANSIBLE_VERSION='<2.6.0' # 2.5.x
   - ANSIBLE_VERSION='<2.5.0' # 2.4.x
-  - ANSIBLE_VERSION='<2.4.0' # 2.3.x
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
   elif [ "$ANSIBLE_VERSION" ]; then pip install "ansible${ANSIBLE_VERSION}";
