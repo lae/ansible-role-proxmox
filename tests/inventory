@@ -1,5 +1,5 @@
-[pve_5x]
+[pve5x]
 proxmox-5-[01:03].lxc
 
-[pve_4x]
+[pve4x]
 proxmox-4-[01:03].lxc
