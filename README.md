@@ -277,7 +277,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
       - name: Wait for server to come back online
         wait_for_connection:
           delay: 15
-      when: __configure_interfaces | changed
+      when: __configure_interfaces is changed
 
 - hosts: pve
   become: True

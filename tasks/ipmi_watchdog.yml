@@ -1,5 +1,5 @@
 ---
-- include: disable_nmi_watchdog.yml
+- import_tasks: disable_nmi_watchdog.yml
 
 - name: Load ipmi_watchdog module
   modprobe:
