@@ -12,7 +12,6 @@
   register: __pve_rmmod_softdog
 
 - block:
-
   - name: Stop watchdog-mux
     service:
       name: watchdog-mux
@@ -25,7 +24,7 @@
       name: softdog
       state: absent
 
-  when: __pve_rmmod_softdog|failed
+  when: __pve_rmmod_softdog is failed
 
 - name: Disable nmi_watchdog via GRUB config
   lineinfile:
@@ -38,5 +37,5 @@
   command: update-grub
   register: __pve_grub_update
   failed_when: ('error' in __pve_grub_update.stderr)
-  when: __pve_grub|changed
+  when: __pve_grub is changed
   tags: skiponlxc

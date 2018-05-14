@@ -26,7 +26,7 @@
     command: update-grub
     register: __pve_grub_update
     failed_when: ('error' in __pve_grub_update.stderr)
-    when: __pve_grub|changed
+    when: __pve_grub is changed
     tags: skiponlxc
 
   - name: Remove ipmi_watchdog modprobe configuration

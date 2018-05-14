@@ -15,7 +15,7 @@
     msg: "This host does not appear to be in the group {{ pve_group }}, did you specify the pve_group host variable correctly?"
   when: pve_cluster_enabled
 
-- include: ssh_cluster_config.yml
+- import_tasks: ssh_cluster_config.yml
 
 - name: Run handlers if needed (sshd reload)
   meta: flush_handlers
@@ -76,7 +76,7 @@
     upgrade: yes
   when: pve_run_system_upgrades
 
-- include: identify_needed_packages.yml
+- import_tasks: identify_needed_packages.yml
 
 - name: Install Proxmox VE and related packages
   apt:
@@ -108,41 +108,49 @@
   when:
     - "'pve-no-subscription' in pve_repository_line"
 
-- include: kernel_updates.yml
+- import_tasks: kernel_updates.yml
 
-- include: ipmi_watchdog.yml
+- import_tasks: ipmi_watchdog.yml
   when: pve_watchdog == 'ipmi'
 
-- include: zfs.yml
+- import_tasks: zfs.yml
   when: pve_zfs_enabled
 
-- include: kernel_module_cleanup.yml
+- import_tasks: kernel_module_cleanup.yml
 
-- include: pve_cluster_config.yml
+- import_tasks: pve_cluster_config.yml
   when: pve_cluster_enabled
 
 - name: Configure Proxmox groups
   proxmox_group:
-  args: "{{ item }}"
+    name: "{{ item.name }}"
+    comment: "{{ item.comment | default(omit) }}"
   with_items: "{{ pve_groups }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox user accounts
   proxmox_user:
-  args: "{{ item }}"
+    name: "{{ item.name }}"
+    email: "{{ item.email | default(omit) }}"
+    firstname: "{{ item.firstname | default(omit) }}"
+    lastname: "{{ item.lastname | default(omit) }}"
+    groups: "{{ item.groups | default([]) }}"
   with_items: "{{ pve_users }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox ACLs
   proxmox_acl:
-  args: "{{ item }}"
+    path: "{{ item.path }}"
+    roles: "{{ item.roles }}"
+    groups: "{{ item.groups | default([]) }}"
+    users: "{{ item.users | default([]) }}"
   with_items: "{{ pve_acls }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
-- include: ssl_config.yml
+- import_tasks: ssl_config.yml
   when:
     - pve_ssl_private_key is defined
     - pve_ssl_certificate is defined
 
-- include: ssl_letsencrypt.yml
+- import_tasks: ssl_letsencrypt.yml
   when: pve_ssl_letsencrypt
