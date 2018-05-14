@@ -1,5 +1,5 @@
 ---
-- hosts: proxmox
+- hosts: all
   tasks:
     - name: Ensure Proxmox Web UI returns a successful HTTP response
       uri:
