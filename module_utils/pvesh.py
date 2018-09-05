@@ -30,7 +30,7 @@ def run_command(handler, resource, **params):
     (result, stderr) = pipe.communicate()
     stderr = stderr.splitlines()
 
-    if stderr[0] == "200 OK":
+    if len(stderr) == 0:
         if not result:
             return {u"status": 200}
 
