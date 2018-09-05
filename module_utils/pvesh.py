@@ -21,7 +21,8 @@ def run_command(handler, resource, **params):
     command = [
         "/usr/bin/pvesh",
         handler,
-        resource]
+        resource,
+        "--output=json"]
     for parameter, value in params.iteritems():
         command += ["-{}".format(parameter), "{}".format(value)]
 
