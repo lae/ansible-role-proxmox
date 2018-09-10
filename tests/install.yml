@@ -16,8 +16,6 @@
     test_profiles:
       - profile: debian-stretch
         prefix: proxmox-5-
-      - profile: debian-jessie
-        prefix: proxmox-4-
     test_hosts_per_profile: 3
 
 # Run the following within the containers in the inventory

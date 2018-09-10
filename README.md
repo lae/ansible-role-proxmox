@@ -471,7 +471,7 @@ Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
 Jonas Meurer ([@mejo-](https://github.com/mejo-))
 
-[pve-cluster]: https://pve.proxmox.com/wiki/Proxmox_VE_4.x_Cluster
+[pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
