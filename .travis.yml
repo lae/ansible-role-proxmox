@@ -13,12 +13,9 @@ env:
   - ANSIBLE_VERSION='<2.5.0' # 2.4.x
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
-  elif [ "$ANSIBLE_VERSION" ]; then pip install "ansible${ANSIBLE_VERSION}";
-  else pip install ansible; fi;
+  else pip install "ansible${ANSIBLE_VERSION}"; fi;
   pip install jmespath
 - ansible --version
-# The following is needed for default Ansible 2.3 installations
-- 'sudo mkdir -p /etc/ansible/roles && sudo chown $(whoami): /etc/ansible/roles'
 - ansible-galaxy install lae.travis-lxc
 - ansible-playbook tests/install.yml -i tests/inventory
 - git archive --format tar.gz HEAD > lae.proxmox.tar.gz && ansible-galaxy install
