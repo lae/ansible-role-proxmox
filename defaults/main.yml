@@ -23,6 +23,9 @@ pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
 pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 # pve_cluster_ring1_addr: "another interface's IP address or hostname"
 # pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
+pve_acme_enabled: no
+# pve_acme_directory: "ACME directory to register on/get certificates from"
+# pve_acme_contact: "email address for Let's Encrypt"
 pve_groups: []
 pve_users: []
 pve_acls: []
