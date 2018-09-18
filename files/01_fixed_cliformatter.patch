@@ -1,0 +1,11 @@
+--- /usr/share/perl5/PVE/CLIFormatter.pm        2018-09-18 07:42:48.108555500 +0000
++++ /usr/share/perl5/PVE/CLIFormatter.pm.fixed  2018-09-18 07:42:39.464518627 +0000
+@@ -387,7 +387,7 @@
+ 
+     my $format = $options->{'output-format'} // 'text';
+ 
+-    return if $result_schema->{type} eq 'null';
++    return if exists $result_schema->{type} and $result_schema->{type} eq 'null';
+ 
+     if ($format eq 'yaml') {
+        print encode('UTF-8', CPAN::Meta::YAML::Dump($data));

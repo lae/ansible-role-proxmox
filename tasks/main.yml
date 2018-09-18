@@ -84,6 +84,13 @@
     state: latest
   with_items: "{{ __pve_install_packages }}"
 
+- name: Hotfix for error in PVE::CLIFormatter upstream
+  patch:
+    src: "01_fixed_cliformatter.patch"
+    basedir: /
+    strip: 1
+    backup: yes
+
 - block:
   - name: Remove automatically installed PVE Enterprise repo configuration
     apt_repository:
