@@ -13,7 +13,7 @@
 
   - name: Wait for server to come back online
     wait_for_connection:
-      delay: 15
+      delay: 60
   when:
     - pve_reboot_on_kernel_update
     - __pve_kernel_update.new_kernel_exists
