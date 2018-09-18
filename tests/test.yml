@@ -6,7 +6,7 @@
         url: "https://{{ inventory_hostname }}:8006"
 
     - name: Query PVE cluster status
-      shell: "pvesh get /cluster/status"
+      shell: "pvesh get /cluster/status --output=json"
       register: __pve_cluster
       changed_when: False
 
@@ -17,7 +17,7 @@
         query: "([?type=='cluster'].quorate)[0]"
 
     - name: Query PVE groups
-      shell: "pvesh get /access/groups"
+      shell: "pvesh get /access/groups --output=json"
       register: __pve_groups
       changed_when: False
 
@@ -30,7 +30,7 @@
       with_items: "{{ pve_groups }}"
 
     - name: Query PVE users
-      shell: "pvesh get /access/users"
+      shell: "pvesh get /access/users --output=json"
       register: __pve_users
       changed_when: False
 
@@ -43,7 +43,7 @@
       with_items: "{{ pve_users }}"
 
     - name: Query PVE ACLs
-      shell: "pvesh get /access/acl"
+      shell: "pvesh get /access/acl --output=json"
       register: __pve_acl
       changed_when: False
 
