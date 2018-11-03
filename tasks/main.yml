@@ -42,7 +42,7 @@
     # above, then we match against different IPs (e.g. NOT 10.0.3.17) that have
     # the hostname/fqdn we inserted a record for previously, taking care also to
     # detect word boundaries (\b wasn't working for some reason)
-    regexp: '^(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }} {{ hostvars[item].ansible_fqdn | regex_escape() }} {{ hostvars[item].ansible_hostname | regex_escape() }}( pvelocalhost)?)(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }})[\w:.]+(\s+.*)?\s({{ hostvars[item].ansible_fqdn | regex_escape() }}|{{ hostvars[item].ansible_hostname | regex_escape() }}{% if ansible_fqdn == hostvars[item].ansible_fqdn %}|pvelocalhost{% endif %})(\s+.*|\s*)$'
+    regexp: '^(?!{{ hostvars[item].pve_cluster_ring0_addr | regex_escape() }} {{ hostvars[item].ansible_fqdn | regex_escape() }} {{ hostvars[item].ansible_hostname | regex_escape() }}( pvelocalhost)?)(?!{{ hostvars[item].pve_cluster_ring0_addr | regex_escape() }})[\w:.]+(\s+.*)?\s({{ hostvars[item].ansible_fqdn | regex_escape() }}|{{ hostvars[item].ansible_hostname | regex_escape() }}{% if ansible_fqdn == hostvars[item].ansible_fqdn %}|pvelocalhost{% endif %})(\s+.*|\s*)$'
     state: absent
     backup: yes
   with_items: "{{ groups[pve_group] }}"
