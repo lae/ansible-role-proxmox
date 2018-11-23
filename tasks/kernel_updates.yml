@@ -24,11 +24,8 @@
 
 - name: Remove old Debian/PVE kernels
   apt:
-    name: "{{ item }}"
+    name: "{{ ['linux-image-amd64'] + __pve_kernel.old_packages }}"
     state: absent
     purge: yes
-  with_items: 
-    - linux-image-amd64
-    - "{{ __pve_kernel.old_packages }}"
   when:
     - pve_remove_old_kernels
