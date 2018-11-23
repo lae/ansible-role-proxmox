@@ -8,9 +8,9 @@ cache:
 matrix:
   fast_finish: true
 env:
-  - ANSIBLE_GIT_VERSION='devel' # 2.6.x development branch
-  - ANSIBLE_VERSION='<2.6.0' # 2.5.x
-  - ANSIBLE_VERSION='<2.5.0' # 2.4.x
+- ANSIBLE_GIT_VERSION='devel' # 2.8.x development branch
+- ANSIBLE_VERSION='<2.8.0' # 2.7.x
+- ANSIBLE_VERSION='<2.7.0' # 2.6.x
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
   else pip install "ansible${ANSIBLE_VERSION}"; fi;
@@ -30,8 +30,7 @@ script:
   (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; exit 1)'
 - ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -i inventory -v test.yml
 notifications:
-  webhooks: https://galaxy.ansible.com/api/v1/notifications/
-  irc:
-    on_success: change
-    channels:
-      secure: "uNnWy3ToabL7W4mP2jTqdbV3do408Sl4N53D9T3vvcpCOLrdHeSagq+Juto3q4Z2bF/zpwHp05y5pJU0N3Fsb4W1C2jUnGvbwEYFRK+cTUsMUT+rrcHByF2e/nMBi1GEPysGfXtNMlEIe+rlKNTCFvfngnp2lTmcs4QBtQh+eS1YQBr8mdizCDWi28FygMTma87VdQ10Af0XkXWHgVHYfh4MARGfkMmCWjZqBHaKV5xTZ7xVzndGN7T3XiehRnD44iQNT6PaYZFRqUWV8S8BROhwOZIlgwEX3t/gxiGKLOHoI/cubm2H8aKEhSMl18MUZxET7CK4vwVpEnlqTQihsLkkuM7zfvsUWEQA03ZsZDAAnnIykbfQDMVBexOfZwv/5xdX5qTy2aghr7c/+LUf8N86Hj+TDGfWBioNhuPYBj5lghw0a+p002kKjjmgr2tTZpghIdHzmRqjne2ZbcIH3lBMWftzDHtBxuUTAaxaGP75VqH0JF5lGUvZL49VPtb8tGff0BVi0+YuHdlDAoIL6ACC6qQlgyVEZhZ170QS0Ez9s+pkMa1rpj4BsxBKZog3TKEad4K+CcewarwCgCEGxG2S4E1ugeZoCVtP8Gr4CC/51axhbATCPqYSQnNXKXo6vP3Gw3VBOcKx/Ku8uR+Kcdj7oEoAcJRF5eZFMG1y5Wk="
+  webhooks:
+    urls:
+      - https://galaxy.ansible.com/api/v1/notifications/
+      - https://t2d.idolactiviti.es/notify
