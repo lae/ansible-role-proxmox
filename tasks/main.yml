@@ -80,9 +80,8 @@
 
 - name: Install Proxmox VE and related packages
   apt:
-    name: "{{ item }}"
+    name: "{{ __pve_install_packages }}"
     state: latest
-  with_items: "{{ __pve_install_packages }}"
 
 - block:
   - name: Remove automatically installed PVE Enterprise repo configuration
