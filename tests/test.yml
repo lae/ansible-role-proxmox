@@ -62,11 +62,11 @@
     - name: Construct storage list
       set_fact:
         sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
-      with_items: "{{ pve_storages }}"
+      with_items: "{{ pve_storage }}"
 
     - name: Check that PVE storages exist
       assert:
-        that: "sto_list is subset(__pve_storages.stdout | from_json | json_query(query))"
+        that: "sto_list is subset(__pve_storage.stdout | from_json | json_query(query))"
       vars:
         query: "[*].storage"
       run_once: True
