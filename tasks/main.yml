@@ -90,7 +90,7 @@
 - name: Install Proxmox VE and related packages
   apt:
     name: "{{ _pve_install_packages }}"
-    state: "{{ 'latest' if pve_run_proxmox_upgrades else 'installed' }}"
+    state: "{{ 'latest' if pve_run_proxmox_upgrades else 'present' }}"
   retries: 2
   register: _proxmox_install
   until: _proxmox_install is succeeded
