@@ -310,7 +310,6 @@ def main():
             if module.check_mode:
                 module.exit_json(**result)
             (changed, error) = storage.remove_storage()
-
     elif storage.state == 'present':
         if not storage.exists():
             result['changed'] = True
