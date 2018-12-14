@@ -62,7 +62,7 @@
     - name: Construct storage list
       set_fact:
         sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
-      with_items: "{{ pve_storage }}"
+      with_items: "{{ pve_storages }}"
 
     - name: Check that PVE storages exist
       assert:
