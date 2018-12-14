@@ -7,7 +7,7 @@ lae.proxmox
 Installs and configures a Proxmox 5.x cluster with the following features:
 
 - Ensures all hosts can connect to one another as root
-- Ability to create/manage groups, users, and access control lists
+- Ability to create/manage groups, users, access control lists and storage
 - Ability to create or add nodes to a PVE cluster
 - IPMI watchdog support
 - BYO HTTPS certificate support
@@ -167,6 +167,13 @@ pve_acls:
   - path: /
     roles: [ "Administrator" ]
     groups: [ "ops" ]
+pve_storages:
+  - name: localdir
+    type: dir
+    content: [ "images", "iso", "backup" ]
+    path: /plop
+    maxfiles: 4
+
 interfaces_template: "interfaces-{{ pve_group }}.j2"
 ```
 
@@ -200,6 +207,10 @@ are already in existing clusters with different names.
 `pve_groups`, `pve_users`, and `pve_acls` authorizes some local UNIX users (they
 must already exist) to access PVE and gives them the Administrator role as part
 of the `ops` group. Read the **User and ACL Management** section for more info.
+
+`pve_storages` allows to create different types of storage and configure them.
+The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
+Read the **Storage Management** section for more info.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
@@ -376,6 +387,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
+pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -465,6 +477,42 @@ pve_acls:
 
 Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
+## Storage Management
+
+You can use this role to manage storage within Proxmox VE (both in
+single server deployments and cluster deployments). For now, the only supported
+types are `dir`, `rbd` and `nfs`.
+Here are some examples.
+
+```
+pve_storages:
+  - name: dir1
+    type: dir
+    content: [ "images", "iso", "backup" ]
+    path: /ploup
+    disable: no
+    maxfiles: 4
+  - name: ceph1
+    type: rbd
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    username: admin
+    pool: rbd
+    krbd: yes
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
+  - name: nfs1
+    type: nfs
+    content: [ "images", "iso" ]
+    server: 192.168.122.2
+    export: /data
+```
+
+Refer to `library/proxmox_storage.py` [link][storage-module] for module
+documentation.
+
 ## Contributors
 
 Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)
@@ -477,3 +525,4 @@ Jonas Meurer ([@mejo-](https://github.com/mejo-))
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
+[storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
