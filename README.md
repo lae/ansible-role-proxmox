@@ -280,7 +280,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
       template:
         src: "{{ interfaces_template }}"
         dest: /etc/network/interfaces
-      register: __configure_interfaces
+      register: _configure_interfaces
 
     - block:
       - name: Reboot for networking changes
@@ -291,7 +291,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
       - name: Wait for server to come back online
         wait_for_connection:
           delay: 15
-      when: __configure_interfaces is changed
+      when: _configure_interfaces is changed
 
 - hosts: pve
   become: True
@@ -376,6 +376,7 @@ pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_run_system_upgrades: false # Let role perform system upgrades
+pve_run_proxmox_upgrades: true # Let role perform Proxmox VE upgrades
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository

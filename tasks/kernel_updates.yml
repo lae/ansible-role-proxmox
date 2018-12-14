@@ -2,7 +2,7 @@
 - name: Check for kernel update
   collect_kernel_info:
     lookup_packages: false
-  register: __pve_kernel_update
+  register: _pve_kernel_update
   when: pve_reboot_on_kernel_update
 
 - block:
@@ -16,15 +16,15 @@
       delay: 60
   when:
     - pve_reboot_on_kernel_update
-    - __pve_kernel_update.new_kernel_exists
+    - _pve_kernel_update.new_kernel_exists
 
 - name: Collect kernel package information
   collect_kernel_info:
-  register: __pve_kernel
+  register: _pve_kernel
 
 - name: Remove old Debian/PVE kernels
   apt:
-    name: "{{ ['linux-image-amd64'] + __pve_kernel.old_packages }}"
+    name: "{{ ['linux-image-amd64'] + _pve_kernel.old_packages }}"
     state: absent
     purge: yes
   when:

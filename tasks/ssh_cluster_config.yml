@@ -63,7 +63,7 @@
 - name: Check status of known hosts file
   stat:
     path: /etc/ssh/ssh_known_hosts
-  register: __pve_known_hosts_file
+  register: _pve_known_hosts_file
 
 - name: Add every host's host keys to global known_hosts
   blockinfile:
@@ -77,7 +77,7 @@
       {% endfor %}
       {% endfor %}
   when:
-    - "not (__pve_known_hosts_file.stat.islnk is defined and __pve_known_hosts_file.stat.islnk)"
+    - "not (_pve_known_hosts_file.stat.islnk is defined and _pve_known_hosts_file.stat.islnk)"
 
 - name: Add PVE-provided ciphers to SSH client config
   lineinfile:

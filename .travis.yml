@@ -14,7 +14,7 @@ env:
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
   else pip install "ansible${ANSIBLE_VERSION}"; fi;
-  pip install jmespath
+  pip install --pre ansible-lint; pip install jmespath
 - ansible --version
 - ansible-galaxy install lae.travis-lxc
 - ansible-playbook tests/install.yml -i tests/inventory
@@ -22,6 +22,7 @@ install:
   lae.proxmox.tar.gz,$(git rev-parse HEAD),lae.proxmox && rm lae.proxmox.tar.gz
 before_script: cd tests/
 script:
+- ansible-lint ../ || true
 - ansible-playbook -i inventory deploy.yml --syntax-check
 - ansible-playbook -i inventory -v deploy.yml --skip skiponlxc
 - 'ANSIBLE_STDOUT_CALLBACK=debug unbuffer ansible-playbook --skip skiponlxc -vv

@@ -3,16 +3,19 @@
 - name: Gather distribution specific variables
   include_vars: "debian-{{ ansible_distribution_release }}.yml"
 
-- assert:
+- name: Ensure that we have an IP address for all cluster hosts
+  assert:
     that:
       - "hostvars[item].ansible_default_ipv4.address is defined"
     msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
   with_items: "{{ groups[pve_group] }}"
 
-- assert:
+- name: Ensure this host is in the group specified
+  assert:
     that:
       - "inventory_hostname in groups[pve_group]"
-    msg: "This host does not appear to be in the group {{ pve_group }}, did you specify the pve_group host variable correctly?"
+    msg: "This host does not appear to be in the group {{ pve_group }}, \
+          did you specify the pve_group host variable correctly?"
   when: pve_cluster_enabled
 
 - import_tasks: ssh_cluster_config.yml
@@ -60,14 +63,17 @@
     repo: "{{ pve_repository_line }}"
     filename: proxmox
     state: present
-  register: __pve_repo
+  register: _pve_repo
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:
     update_cache: yes
     cache_valid_time: 3600
     upgrade: dist
-  when: __pve_repo.changed
+  when: _pve_repo is changed
+  retries: 2
+  register: _dist_upgrade
+  until: _dist_upgrade is succeeded
 
 - name: Perform system upgrades
   apt:
@@ -75,13 +81,19 @@
     cache_valid_time: 3600
     upgrade: yes
   when: pve_run_system_upgrades
+  retries: 2
+  register: _system_upgrade
+  until: _system_upgrade is succeeded
 
 - import_tasks: identify_needed_packages.yml
 
 - name: Install Proxmox VE and related packages
   apt:
-    name: "{{ __pve_install_packages }}"
-    state: latest
+    name: "{{ _pve_install_packages }}"
+    state: "{{ 'latest' if pve_run_proxmox_upgrades else 'installed' }}"
+  retries: 2
+  register: _proxmox_install
+  until: _proxmox_install is succeeded
 
 - block:
   - name: Remove automatically installed PVE Enterprise repo configuration

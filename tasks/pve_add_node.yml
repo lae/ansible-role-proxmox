@@ -1,18 +1,22 @@
 ---
-- set_fact:
-    __pve_current_node: "{{ item }}"
+- name: Identify what host we're working with (inside outer loop)
+  set_fact:
+    _pve_current_node: "{{ item }}"
 
 - name: Add node to Proxmox cluster
-  command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }}{{ ' -use_ssh' if ansible_distribution_release == 'stretch' else '' }} -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_ring1_addr is defined %} -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
+  command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }}\
+            {{ ' -use_ssh' if ansible_distribution_release == 'stretch' else '' }} \
+            -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_ring1_addr is defined %} \
+            -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
   args:
     creates: "{{ pve_cluster_conf }}"
   when:
-    - "inventory_hostname == __pve_current_node"
+    - "inventory_hostname == _pve_current_node"
 
 - name: Remove stale corosync lock file due to lack of quorum during initialization
   file:
     dest: "{{ pve_base_dir }}/priv/lock/file-corosync_conf"
     state: absent
   when:
-    - "inventory_hostname == __pve_current_node"
+    - "inventory_hostname == _pve_current_node"
     - "inventory_hostname == groups[pve_group][1]"
