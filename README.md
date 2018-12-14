@@ -46,8 +46,6 @@ Copy the following playbook to a file like `install_proxmox.yml`:
 
 Install this role and a role for configuring NTP:
 
-    # Changing ownership of the roles directory may be necessary:
-    sudo chown $(whoami): /etc/ansible/roles
     ansible-galaxy install lae.proxmox geerlingguy.ntp
 
 Now you can perform the installation:
@@ -63,6 +61,11 @@ file containing a list of hosts).
 
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
+
+## Support/Contributing
+
+For support or if you'd like to contribute to this role but want guidance, feel
+free to join this Discord server: https://discord.gg/cjqr6Fg
 
 ## Deploying a fully-featured PVE 5.x cluster
 
@@ -515,9 +518,10 @@ documentation.
 
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)
-Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
-Jonas Meurer ([@mejo-](https://github.com/mejo-))
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)  
+Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
+Jonas Meurer ([@mejo-](https://github.com/mejo-))  
+Fabian Brachere ([@Fbrachere](https://github.com/Fbrachere))  
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
