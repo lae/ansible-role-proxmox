@@ -54,6 +54,23 @@
         query: "length([])"
       run_once: True
 
+    - name: Query PVE storages
+      shell: "pvesh get /storage --output=json"
+      register: __pve_storage
+      changed_when: False
+
+    - name: Construct storage list
+      set_fact:
+        sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
+      with_items: "{{ pve_storages }}"
+
+    - name: Check that PVE storages exist
+      assert:
+        that: "sto_list is subset(__pve_storage.stdout | from_json | json_query(query))"
+      vars:
+        query: "[*].storage"
+      run_once: True
+
     - block:
       - name: pvedaemon service status
         shell: "journalctl --no-pager -xu pvedaemon.service"

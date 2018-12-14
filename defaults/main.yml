@@ -27,3 +27,4 @@ pve_ssl_letsencrypt: false
 pve_groups: []
 pve_users: []
 pve_acls: []
+pve_storages: []

@@ -144,6 +144,26 @@
   with_items: "{{ pve_acls }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
+- name: Configure Proxmox Storage
+  proxmox_storage:
+    name: "{{ item.name }}"
+    type: "{{ item.type }}"
+    disable: "{{ item.disable | default(False) }}"
+    path: "{{ item.path | default(omit) }}"
+    content: "{{ item.content | default([]) }}"
+    nodes: "{{ item.nodes | default(omit) }}"
+    username: "{{ item.username | default(omit) }}"
+    pool: "{{ item.pool | default(omit) }}"
+    monhost: "{{ item.monhost | default(omit) }}"
+    maxfiles: "{{ item.maxfiles | default(omit) }}"
+    krbd: "{{ item.krbd | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    server: "{{ item.server | default(omit) }}"
+    export: "{{ item.export | default(omit) }}"
+    options: "{{ item.options | default(omit) }}"
+  with_items: "{{ pve_storages }}"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+
 - import_tasks: ssl_config.yml
   when:
     - pve_ssl_private_key is defined
