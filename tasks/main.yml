@@ -173,6 +173,8 @@
     server: "{{ item.server | default(omit) }}"
     export: "{{ item.export | default(omit) }}"
     options: "{{ item.options | default(omit) }}"
+    vgname: "{{ item.vgname | default(omit) }}"
+    thinpool: "{{ item.thinpool | default(omit) }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 

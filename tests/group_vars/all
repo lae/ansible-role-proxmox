@@ -68,6 +68,15 @@ pve_storages: # This should create 2 different storages.
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+  - name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+  - name: lvmthin1
+    type: lvmthin
+    content: [ "images", "rootdir" ]
+    vgname: vg2
+    thinpool: data
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"
