@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -86,6 +86,14 @@ options:
         required: false
         description:
             - NFS mount options.
+    vgname:
+        required: false
+        description:
+            - LVM volume group name. This must point to an existing volume group.
+    thinpool:
+        required: false
+        description:
+            - The name of the LVM thin pool.
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -119,6 +127,19 @@ EXAMPLES = '''
     content: [ "images", "iso" ]
     server: 192.168.122.2
     export: /data
+- name: Create an LVM storage type
+  proxmox_storage:
+    name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+- name: Create an LVM-thin storage type
+  proxmox_storage:
+    name: lvmthin1
+    type: lvmthin
+    content: [ "images", "rootdir" ]
+    vgname: vg2
+    thinpool: data
 '''
 
 RETURN = '''
@@ -147,6 +168,8 @@ class ProxmoxStorage(object):
         self.server = module.params['server']
         self.export = module.params['export']
         self.options = module.params['options']
+        self.vgname = module.params['vgname']
+        self.thinpool = module.params['thinpool']
 
         try:
             self.existing_storages = pvesh.get("storage")
@@ -198,6 +221,10 @@ class ProxmoxStorage(object):
             args['export'] = self.export
         if self.options is not None:
             args['options'] = self.options
+        if self.vgname is not None:
+            args['vgname'] = self.vgname
+        if self.thinpool is not None:
+            args['thinpool'] = self.thinpool
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
@@ -270,7 +297,7 @@ def main():
         content=dict(type='list', required=True, aliases=['storagetype']),
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
-                  choices=["dir", "nfs", "rbd"]),
+                  choices=["dir", "nfs", "rbd", "lvm", "lvmthin"]),
         disable=dict(required=False, type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'], type='str'),
         path=dict(default=None, required=False, type='str'),
@@ -282,6 +309,8 @@ def main():
         export=dict(default=None, type='str', required=False),
         server=dict(default=None, type='str', required=False),
         options=dict(default=None, type='str', required=False),
+        vgname=dict(default=None, type='str', required=False),
+        thinpool=dict(default=None, type='str', required=False),
     )
 
     module = AnsibleModule(
@@ -291,6 +320,8 @@ def main():
             ["type", "dir", ["path", "content"]],
             ["type", "rbd", ["pool", "content", "monhost", "username"]],
             ["type", "nfs", ["server", "content", "export"]],
+            ["type", "lvm", ["vgname", "content"]],
+            ["type", "lvmthin", ["vgname", "thinpool", "content"]],
         ]
     )
     storage = ProxmoxStorage(module)

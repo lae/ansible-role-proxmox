@@ -485,7 +485,7 @@ Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd` and `nfs`.
+types are `dir`, `rbd`, `nfs`, `lvm` and `lvmthin`.
 Here are some examples.
 
 ```
@@ -512,6 +512,15 @@ pve_storages:
     content: [ "images", "iso" ]
     server: 192.168.122.2
     export: /data
+  - name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+  - name: lvmthin1
+    type: lvmthin
+    content: [ "images", "rootdir" ]
+    vgname: vg2
+    thinpool: data
 ```
 
 Refer to `library/proxmox_storage.py` [link][storage-module] for module
@@ -525,7 +534,7 @@ Jonas Meurer ([@mejo-](https://github.com/mejo-))
 Ondrej Flider ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
-Fabian Brachere ([@Fbrachere](https://github.com/Fbrachere))  
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))  
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
