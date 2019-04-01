@@ -3,7 +3,6 @@
   set_fact:
     _pve_install_packages:
       - proxmox-ve
-      - postfix
       - open-iscsi
       - ksm-control-daemon
       - systemd-sysv
