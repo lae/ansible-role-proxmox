@@ -71,6 +71,15 @@
         query: "[*].storage"
       run_once: True
 
+    - name: Read datacenter.cfg file
+      slurp:
+        src: "/etc/pve/datacenter.cfg"
+      register: datacenter_cfg
+
+    - name: Check datacenter.cfg content
+      assert:
+        that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
+
     - block:
       - name: pvedaemon service status
         shell: "journalctl --no-pager -xu pvedaemon.service"

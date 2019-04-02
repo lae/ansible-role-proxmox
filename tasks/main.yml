@@ -178,6 +178,37 @@
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
+- name: Check datacenter.cfg exists
+  stat:
+    path: "/etc/pve/datacenter.cfg"
+  register: _datacenter_cfg
+  when:
+    - not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
+
+- name: Create datacenter.cfg if it does not exist
+  file:
+    path: "/etc/pve/datacenter.cfg"
+    state: "touch"
+  when:
+    - not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
+    - not _datacenter_cfg.stat.exists
+
+- name: Configure datacenter.cfg
+  copy:
+    dest: "/etc/pve/datacenter.cfg"
+    owner: "root"
+    group: "www-data"
+    mode: "0640"
+    content: |
+      {% for k,v in pve_datacenter_cfg.items() %}
+      {{ k }}: {{ v }}
+      {% endfor %}
+  when:
+    - not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
+
 - import_tasks: ssl_config.yml
   when:
     - pve_ssl_private_key is defined
