@@ -130,6 +130,9 @@
 - import_tasks: pve_cluster_config.yml
   when: pve_cluster_enabled
 
+- import_tasks: ceph.yml
+  when: pve_ceph_enabled
+
 - name: Configure Proxmox groups
   proxmox_group:
     name: "{{ item.name }}"

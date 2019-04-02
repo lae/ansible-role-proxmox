@@ -1,0 +1,202 @@
+# This is an Ansible version of what "pveceph install" actually does
+- name: Configure Ceph package source
+  apt_repository:
+    repo: 'deb http://download.proxmox.com/debian/ceph-luminous stretch main'
+    filename: ceph.list
+    state: present
+
+- name: Install Ceph packages
+  apt:
+    name:
+      - ceph
+      - ceph-common
+      - ceph-mds
+      - ceph-fuse
+      - gdisk
+    install_recommends: false
+
+- name: Install custom Ceph systemd service
+  copy:
+    src: /usr/share/doc/pve-manager/examples/ceph.service
+    dest: /etc/systemd/system/ceph.service
+    remote_src: true
+    owner: root
+    group: root
+    mode: preserve
+  notify: 'restart ceph'
+
+- name: Enable Ceph
+  systemd:
+    name: ceph.service
+    enabled: true
+
+- name: Create initial Ceph config
+  command: 'pveceph init --network {{ pve_ceph_network }}'
+  args:
+    creates: /etc/ceph/ceph.conf
+  when: inventory_hostname == groups[pve_ceph_mon_group][0]
+
+- name: Create initial Ceph monitor
+  command: 'pveceph mon create'
+  args:
+    creates: '/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/'
+  register: _ceph_initial_mon
+  when: inventory_hostname == groups[pve_ceph_mon_group][0]
+
+- name: Fail if initial monitor creation failed
+  fail:
+    msg: 'Ceph intial monitor creation failed.'
+  when: hostvars[groups[pve_ceph_mon_group][0]]._ceph_initial_mon is failed
+
+- name: Create additional Ceph monitors
+  command: 'pveceph mon create'
+  args:
+    creates: '/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/'
+  when: not inventory_hostname == groups[pve_ceph_mon_group][0]
+
+- name: Create Ceph OSDs
+  command: >-
+    pveceph osd create {{ item.device }}
+    {{ ("block.db" in item) | ternary("--journal_dev", "") }} {{ item["block.db"] | default("") }}
+  args:
+    creates: '{{ item.device }}1'
+  with_items: '{{ pve_ceph_osds }}'
+
+- name: List Ceph CRUSH rules
+  command: 'ceph osd crush rule ls'
+  changed_when: false
+  register: ceph_crush
+  when: inventory_hostname == groups[pve_ceph_mon_group][0]
+
+- name: Create Ceph CRUSH rules
+  command: >-
+    ceph osd crush rule create-replicated
+    {{ item.name }} default host {{ item.class | default("") }}
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - item.name not in ceph_crush.stdout_lines
+  with_items: '{{ pve_ceph_crush_rules }}'
+
+- name: List Ceph Pools
+  command: ceph osd pool ls
+  changed_when: false
+  register: ceph_pools
+  when: inventory_hostname == groups[pve_ceph_mon_group][0]
+
+- name: Create Ceph Pools
+  command: >-
+    pveceph pool create {{ item.name }}
+    {% if 'storage' in item %}
+    --add_storages {{ item.storage }}
+    {% endif %}
+    {% if 'application' in item %}
+    --application {{ item.application }}
+    {% endif %}
+    {% if 'rule' in item %}
+    --crush_rule {{ item.rule }}
+    {% endif %}
+    {% if 'pgs' in item %}
+    --pg_num {{ item.pgs }}
+    {% endif %}
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - item.name not in ceph_pools.stdout_lines
+  with_items: '{{ pve_ceph_pools }}'
+
+- name: Create Ceph MDS servers
+  command: pveceph mds create
+  args:
+    creates: '/var/lib/ceph/mds/ceph-{{ ansible_hostname }}'
+  register: _ceph_mds_create
+  when: inventory_hostname in groups[pve_ceph_mds_group] and pve_ceph_fs
+
+- name: Wait for standby MDS
+  command: ceph mds stat -f json
+  register: _ceph_mds_stat
+  until: '(_ceph_mds_stat.stdout | from_json).fsmap.standbys | length > 0'
+  retries: 10
+  delay: 2
+  when: _ceph_mds_create is changed
+
+- name: List Ceph Filesystems
+  command: ceph fs ls -f json
+  changed_when: false
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - pve_ceph_fs | length > 0
+  register: ceph_fs
+
+- name: Create Ceph Filesystems
+  command: >-
+    pveceph fs create
+    --name {{ item.name }}
+    --add-storage {{ item.storage }}
+    --pg_num {{ item.pgs }}
+  register: ceph_fs_create
+  failed_when: ceph_fs_create.stderr
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - item.name not in (ceph_fs.stdout | from_json | map(attribute="name"))
+  with_items: '{{ pve_ceph_fs }}'
+
+- name: Get Ceph Filesystem pool CRUSH rules
+  command: 'ceph -f json osd pool get {{ item.0.name }}_{{ item.1 }} crush_rule'
+  changed_when: false
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - pve_ceph_fs | length > 0
+  register: ceph_fs_rule
+  loop: '{{ pve_ceph_fs | product(["data", "metadata"]) | list }}'
+
+- name: Set Ceph Filesystem pool CRUSH rules
+  command: >-
+    ceph osd pool set {{ item.item.0.name }}_{{ item.item.1 }} crush_rule {{ item.item.0.rule }}
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - item.item.0.rule != (item.stdout | from_json).crush_rule
+  loop: '{{ ceph_fs_rule.results }}'
+  loop_control:
+    label: '{{ item.item.0.name }}_{{ item.item.1 }}'
+
+- name: Create Ceph filesystem key
+  command: 'ceph auth get-or-create client.{{ item.name }} osd "allow rw pool={{ item.name }}_data" mon "allow r" mds "allow rw"'
+  register: ceph_fs_auth
+  changed_when: '"added key" in ceph_fs_auth.stdout'
+  when:
+    - inventory_hostname == groups[pve_ceph_mon_group][0]
+    - item.mountpoint is defined
+  loop: '{{ pve_ceph_fs }}'
+
+- name: Fetch Ceph filesystem key
+  command: 'ceph auth print-key client.{{ item.name }}'
+  args:
+    creates: '/etc/ceph/{{ item.name }}.secret'
+  register: ceph_fs_key
+  when: item.mountpoint is defined
+  loop: '{{ pve_ceph_fs }}'
+
+- name: Save Ceph filesystem key
+  copy:
+    dest: '/etc/ceph/{{ item.item.name }}.secret'
+    owner: 'root'
+    group: 'root'
+    mode: '0600'
+    content: '{{ item.stdout }}'
+  when: item is changed
+  loop: '{{ ceph_fs_key.results }}'
+  loop_control:
+    label: '{{ item.item }}'
+
+- name: Mount Ceph filesystems
+  mount:
+    path: '{{ item.mountpoint }}'
+    src: |-
+      {% for h in groups[pve_ceph_mon_group] -%}
+      {{ hostvars[h].ansible_all_ipv4_addresses | ipaddr(pve_ceph_network) | first -}}
+      {{ loop.last | ternary("", ",") -}}
+      {% endfor %}:/
+    fstype: 'ceph'
+    opts: 'name={{ item.name }},secretfile=/etc/ceph/{{ item.name }}.secret,_netdev'
+    state: 'mounted'
+  when: item.mountpoint is defined
+  loop: '{{ pve_ceph_fs }}'
