@@ -32,6 +32,7 @@ pve_cluster_clustername: "{{ pve_group }}"
 # pve_cluster_addr0: "{{ ansible_default_ipv4.address }}"
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 pve_datacenter_cfg: {}
+pve_cluster_ha_groups: []
 pve_ssl_letsencrypt: false
 pve_groups: []
 pve_users: []

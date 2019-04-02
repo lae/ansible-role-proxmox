@@ -435,6 +435,22 @@ pve_datacenter_cfg:
   keyboard: en-us
 ```
 
+You can also configure [HA manager groups][ha-group]:
+```
+pve_cluster_ha_groups: [] # List of HA groups to create in PVE.
+```
+
+This example creates a group "lab_node01" for resources assigned to the
+lab-node01 host:
+```
+pve_cluster_ha_groups:
+  - name: lab_node01
+    comment: "My HA group"
+    nodes: "lab-node01"
+    nofailback: 0
+    restricted: 0
+```
+
 All configuration options supported in the datacenter.cfg file are documented in the
 [Proxmox manual datacenter.cfg section][datacenter-cfg].
 
@@ -629,3 +645,4 @@ Michael Holasek ([@mholasek](https://github.com/mholasek))
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
 [ceph_volume]: https://github.com/ceph/ceph-ansible/blob/master/library/ceph_volume.py
+[ha-group]: https://pve.proxmox.com/wiki/High_Availability#ha_manager_groups

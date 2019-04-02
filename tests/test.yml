@@ -80,6 +80,24 @@
       assert:
         that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
 
+    - name: Query PVE HA groups
+      command: "pvesh get /cluster/ha/groups --output=json"
+      register: _ha_group_list
+      run_once: true
+
+    - name: Check PVE HA group configuration
+      assert:
+        that:
+          - item.name == ha_group.group
+          - item.comment == ha_group.comment
+          - item.nodes == ha_group.nodes
+          - item.restricted == ha_group.restricted
+          - "'nofailback' not in ha_group"
+      vars:
+        ha_group: '{{ _ha_group_list.stdout | from_json
+                      | json_query("[?group==''" + item.name + "'']") | first }}'
+      with_items: "{{ pve_cluster_ha_groups }}"
+
     - block:
       - name: pvedaemon service status
         shell: "journalctl --no-pager -xu pvedaemon.service"

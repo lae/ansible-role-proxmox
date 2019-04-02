@@ -15,6 +15,11 @@ pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes
 pve_datacenter_cfg:
   console: xtermjs
+pve_cluster_ha_groups:
+  - name: proxmox_5_01
+    comment: "Resources on proxmox-5-01"
+    nodes: proxmox-5-01
+    restricted: 1
 pve_groups:
   - name: Admins
     comment: Administrators of this PVE cluster
