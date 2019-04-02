@@ -37,6 +37,7 @@
   - name: Load softdog
     modprobe:
       name: softdog
+    tags: skiponlxc
 
   - name: Set PVE HA Manager watchdog configuration back to default
     copy:

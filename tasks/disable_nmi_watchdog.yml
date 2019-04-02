@@ -3,6 +3,7 @@
   modprobe:
     name: nmi_watchdog
     state: absent
+  tags: skiponlxc
 
 - name: Attempt to unload softdog live
   modprobe:
@@ -10,6 +11,7 @@
     state: absent
   ignore_errors: true
   register: _pve_rmmod_softdog
+  tags: skiponlxc
 
 - block:
   - name: Stop watchdog-mux
@@ -25,6 +27,7 @@
       state: absent
 
   when: _pve_rmmod_softdog is failed
+  tags: skiponlxc
 
 - name: Disable nmi_watchdog via GRUB config
   lineinfile:
