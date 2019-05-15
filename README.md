@@ -7,7 +7,7 @@ lae.proxmox
 Installs and configures a Proxmox 5.x cluster with the following features:
 
 - Ensures all hosts can connect to one another as root
-- Ability to create/manage groups, users, and access control lists
+- Ability to create/manage groups, users, access control lists and storage
 - Ability to create or add nodes to a PVE cluster
 - IPMI watchdog support
 - BYO HTTPS certificate support
@@ -46,8 +46,6 @@ Copy the following playbook to a file like `install_proxmox.yml`:
 
 Install this role and a role for configuring NTP:
 
-    # Changing ownership of the roles directory may be necessary:
-    sudo chown $(whoami): /etc/ansible/roles
     ansible-galaxy install lae.proxmox geerlingguy.ntp
 
 Now you can perform the installation:
@@ -63,6 +61,11 @@ file containing a list of hosts).
 
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
+
+## Support/Contributing
+
+For support or if you'd like to contribute to this role but want guidance, feel
+free to join this Discord server: https://discord.gg/cjqr6Fg
 
 ## Deploying a fully-featured PVE 5.x cluster
 
@@ -167,6 +170,13 @@ pve_acls:
   - path: /
     roles: [ "Administrator" ]
     groups: [ "ops" ]
+pve_storages:
+  - name: localdir
+    type: dir
+    content: [ "images", "iso", "backup" ]
+    path: /plop
+    maxfiles: 4
+
 interfaces_template: "interfaces-{{ pve_group }}.j2"
 ```
 
@@ -200,6 +210,10 @@ are already in existing clusters with different names.
 `pve_groups`, `pve_users`, and `pve_acls` authorizes some local UNIX users (they
 must already exist) to access PVE and gives them the Administrator role as part
 of the `ops` group. Read the **User and ACL Management** section for more info.
+
+`pve_storages` allows to create different types of storage and configure them.
+The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
+Read the **Storage Management** section for more info.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
@@ -266,7 +280,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
       template:
         src: "{{ interfaces_template }}"
         dest: /etc/network/interfaces
-      register: __configure_interfaces
+      register: _configure_interfaces
 
     - block:
       - name: Reboot for networking changes
@@ -277,7 +291,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
       - name: Wait for server to come back online
         wait_for_connection:
           delay: 15
-      when: __configure_interfaces is changed
+      when: _configure_interfaces is changed
 
 - hosts: pve
   become: True
@@ -362,6 +376,7 @@ pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_run_system_upgrades: false # Let role perform system upgrades
+pve_run_proxmox_upgrades: true # Let role perform Proxmox VE upgrades
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
@@ -376,6 +391,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
+pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -465,15 +481,65 @@ pve_acls:
 
 Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
+## Storage Management
+
+You can use this role to manage storage within Proxmox VE (both in
+single server deployments and cluster deployments). For now, the only supported
+types are `dir`, `rbd`, `nfs`, `lvm` and `lvmthin`.
+Here are some examples.
+
+```
+pve_storages:
+  - name: dir1
+    type: dir
+    content: [ "images", "iso", "backup" ]
+    path: /ploup
+    disable: no
+    maxfiles: 4
+  - name: ceph1
+    type: rbd
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    username: admin
+    pool: rbd
+    krbd: yes
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
+  - name: nfs1
+    type: nfs
+    content: [ "images", "iso" ]
+    server: 192.168.122.2
+    export: /data
+  - name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+  - name: lvmthin1
+    type: lvmthin
+    content: [ "images", "rootdir" ]
+    vgname: vg2
+    thinpool: data
+```
+
+Refer to `library/proxmox_storage.py` [link][storage-module] for module
+documentation.
+
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)
-Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
-Jonas Meurer ([@mejo-](https://github.com/mejo-))
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)  
+Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
+Jonas Meurer ([@mejo-](https://github.com/mejo-))  
+Ondrej Flider ([@SniperCZE](https://github.com/SniperCZE))  
+niko2 ([@niko2](https://github.com/niko2))  
+Christian Aublet ([@caublet](https://github.com/caublet))  
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))  
 
-[pve-cluster]: https://pve.proxmox.com/wiki/Proxmox_VE_4.x_Cluster
+[pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
+[storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py

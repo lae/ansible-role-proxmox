@@ -1,7 +1,7 @@
 ---
 - name: Stage packages needed for base PVE installation
   set_fact:
-    __pve_install_packages:
+    _pve_install_packages:
       - proxmox-ve
       - postfix
       - open-iscsi
@@ -10,14 +10,14 @@
 
 - name: Stage patch package if we need to patch the subscription message
   set_fact:
-    __pve_install_packages: "{{ __pve_install_packages | union(['patch']) }}"
+    _pve_install_packages: "{{ _pve_install_packages | union(['patch']) }}"
   when: "'pve-no-subscription' in pve_repository_line"
 
 - name: Stage ZFS packages if ZFS is enabled
   set_fact:
-    __pve_install_packages: "{{ __pve_install_packages | union(['zfsutils-linux', 'zfs-initramfs', 'zfs-zed']) }}"
+    _pve_install_packages: "{{ _pve_install_packages | union(['zfsutils-linux', 'zfs-initramfs', 'zfs-zed']) }}"
   when: pve_zfs_enabled
 
 - name: Stage any extra packages the user has specified
   set_fact:
-    __pve_install_packages: "{{ __pve_install_packages | union(pve_extra_packages) }}"
+    _pve_install_packages: "{{ _pve_install_packages | union(pve_extra_packages) }}"

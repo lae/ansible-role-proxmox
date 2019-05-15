@@ -21,7 +21,8 @@ def run_command(handler, resource, **params):
     command = [
         "/usr/bin/pvesh",
         handler,
-        resource]
+        resource,
+        "--output=json"]
     for parameter, value in params.iteritems():
         command += ["-{}".format(parameter), "{}".format(value)]
 
@@ -29,7 +30,7 @@ def run_command(handler, resource, **params):
     (result, stderr) = pipe.communicate()
     stderr = stderr.splitlines()
 
-    if stderr[0] == "200 OK":
+    if len(stderr) == 0:
         if not result:
             return {u"status": 200}
 

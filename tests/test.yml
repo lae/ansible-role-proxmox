@@ -6,52 +6,69 @@
         url: "https://{{ inventory_hostname }}:8006"
 
     - name: Query PVE cluster status
-      shell: "pvesh get /cluster/status"
-      register: __pve_cluster
+      shell: "pvesh get /cluster/status --output=json"
+      register: _pve_cluster
       changed_when: False
 
     - name: Check that this node is within the cluster and it is in quorum
       assert:
-        that: "(__pve_cluster.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_cluster.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "([?type=='cluster'].quorate)[0]"
 
     - name: Query PVE groups
-      shell: "pvesh get /access/groups"
-      register: __pve_groups
+      shell: "pvesh get /access/groups --output=json"
+      register: _pve_groups
       changed_when: False
 
     - name: Check that PVE groups exist
       assert:
-        that: "(__pve_groups.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_groups.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?groupid=='{{ item.name }}'])"
       run_once: True
       with_items: "{{ pve_groups }}"
 
     - name: Query PVE users
-      shell: "pvesh get /access/users"
-      register: __pve_users
+      shell: "pvesh get /access/users --output=json"
+      register: _pve_users
       changed_when: False
 
     - name: Check that PVE users exist
       assert:
-        that: "(__pve_users.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_users.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?userid=='{{ item.name }}'])"
       run_once: True
       with_items: "{{ pve_users }}"
 
     - name: Query PVE ACLs
-      shell: "pvesh get /access/acl"
-      register: __pve_acl
+      shell: "pvesh get /access/acl --output=json"
+      register: _pve_acl
       changed_when: False
 
     - name: Check that PVE ACLs exist
       assert:
-        that: "(__pve_acl.stdout | from_json | json_query(query)) == 3"
+        that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
       vars:
         query: "length([])"
+      run_once: True
+
+    - name: Query PVE storages
+      shell: "pvesh get /storage --output=json"
+      register: _pve_storage
+      changed_when: False
+
+    - name: Construct storage list
+      set_fact:
+        sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
+      with_items: "{{ pve_storages }}"
+
+    - name: Check that PVE storages exist
+      assert:
+        that: "sto_list is subset(_pve_storage.stdout | from_json | json_query(query))"
+      vars:
+        query: "[*].storage"
       run_once: True
 
     - block:

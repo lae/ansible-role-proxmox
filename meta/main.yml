@@ -1,6 +1,6 @@
 galaxy_info:
   author: Musee Ullah
-  description: Installs and configures Proxmox 5.x and 4.x (for clustering)
+  description: Installs and configures Proxmox 5.x (for clustering)
   company: FireEye, Inc.
   license: MIT
 
@@ -9,7 +9,6 @@ galaxy_info:
   platforms:
   - name: Debian
     versions:
-    - jessie
     - stretch
 
   galaxy_tags:

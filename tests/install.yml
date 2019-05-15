@@ -16,9 +16,12 @@
     test_profiles:
       - profile: debian-stretch
         prefix: proxmox-5-
-      - profile: debian-jessie
-        prefix: proxmox-4-
     test_hosts_per_profile: 3
+    container_config:
+      - "lxc.apparmor.profile = unconfined"
+      - "lxc.mount.auto = proc:rw sys:rw cgroup-full:rw"
+      - "lxc.cgroup.devices.allow = a *:* rmw"
+      - "lxc.mount.entry = /lib/modules/{{ ansible_kernel }} lib/modules/{{ ansible_kernel }} none bind,create=dir,ro 0 0"
 
 # Run the following within the containers in the inventory
 - hosts: all
