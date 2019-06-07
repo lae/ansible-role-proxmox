@@ -154,7 +154,7 @@
     groups: "{{ item.groups | default([]) }}"
     users: "{{ item.users | default([]) }}"
   with_items: "{{ pve_acls }}"
-  when: "not pve_cluster_enabled|bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox Storage
   proxmox_storage:
