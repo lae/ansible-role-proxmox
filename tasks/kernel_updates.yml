@@ -3,7 +3,7 @@
   collect_kernel_info:
     lookup_packages: false
   register: _pve_kernel_update
-  when: pve_reboot_on_kernel_update
+  when: "pve_reboot_on_kernel_update | bool"
 
 - block:
   - name: Reboot for kernel update
@@ -15,7 +15,7 @@
     wait_for_connection:
       delay: 60
   when:
-    - pve_reboot_on_kernel_update
+    - "pve_reboot_on_kernel_update | bool"
     - _pve_kernel_update.new_kernel_exists
 
 - name: Collect kernel package information
@@ -28,4 +28,4 @@
     state: absent
     purge: yes
   when:
-    - pve_remove_old_kernels
+    - "pve_remove_old_kernels | bool"
