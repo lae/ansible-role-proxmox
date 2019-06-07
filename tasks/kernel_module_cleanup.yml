@@ -12,7 +12,7 @@
   file:
     dest: /etc/modules-load.d/zfs.conf
     state: absent
-  when: not pve_zfs_enabled | bool
+  when: "not pve_zfs_enabled | bool"
 
 - block:
   - name: Re-enable nmi_watchdog via GRUB config
