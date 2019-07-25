@@ -5,7 +5,7 @@
 
 - name: Add node to Proxmox cluster
   command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }}\
-            {{ ' -use_ssh' if ansible_distribution_release == 'stretch' else '' }} \
+            {{ ' -use_ssh' if (ansible_distribution_release == 'stretch' || ansible_distribution_release == 'buster') else '' }} \
             -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_ring1_addr is defined %} \
             -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
   args:
