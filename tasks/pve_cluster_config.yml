@@ -44,6 +44,19 @@
   when:
     - "_pve_found_clusters is not defined"
     - "inventory_hostname == groups[pve_group][0]"
+    - "ansible_distribution_release == 'stretch'"
+
+- name: Initialize a Proxmox cluster
+  command: "pvecm create {{ pve_cluster_clustername }} \
+            -link0 {{ pve_cluster_link0_addr }}\
+            {% if pve_cluster_link1_addr is defined %} \
+            -link1 {{ pve_cluster_link1_addr }}{% endif %}"
+  args:
+    creates: "{{ pve_cluster_conf }}"
+  when:
+    - "_pve_found_clusters is not defined"
+    - "inventory_hostname == groups[pve_group][0]"
+    - "ansible_distribution_release == 'buster'"
 
 - name: Wait for quorum on initialization node
   proxmox_query:
