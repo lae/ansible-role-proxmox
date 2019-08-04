@@ -16,6 +16,14 @@ pve_watchdog_ipmi_timeout: 10
 pve_zfs_enabled: no
 # pve_zfs_options: "parameters to pass to zfs module"
 # pve_zfs_zed_email: "email address for zfs events"
+pve_ceph_enabled: false
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_mon_group: "{{ pve_group }}"
+pve_ceph_mds_group: "{{ pve_group }}"
+pve_ceph_osds: []
+pve_ceph_pools: []
+pve_ceph_fs: []
+pve_ceph_crush_rules: []
 # pve_ssl_private_key: "contents of private key"
 # pve_ssl_certificate: "contents of certificate"
 pve_cluster_enabled: no
