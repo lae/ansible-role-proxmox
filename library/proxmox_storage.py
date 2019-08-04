@@ -38,7 +38,7 @@ options:
         required: true
         aliases: [ "storagecontent" ]
         type: list
-        choices: [ "images", "rootdir", "vztmpl", "backup", "iso" ]
+        choices: [ "images", "rootdir", "vztmpl", "backup", "iso", "snippets" ]
         description:
             - Contents supported by the storage, not all storage
             types support all content types.

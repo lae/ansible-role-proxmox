@@ -3,7 +3,6 @@
   set_fact:
     _pve_install_packages:
       - proxmox-ve
-      - postfix
       - open-iscsi
       - ksm-control-daemon
       - systemd-sysv
@@ -16,7 +15,7 @@
 - name: Stage ZFS packages if ZFS is enabled
   set_fact:
     _pve_install_packages: "{{ _pve_install_packages | union(['zfsutils-linux', 'zfs-initramfs', 'zfs-zed']) }}"
-  when: pve_zfs_enabled
+  when: "pve_zfs_enabled | bool"
 
 - name: Stage any extra packages the user has specified
   set_fact:

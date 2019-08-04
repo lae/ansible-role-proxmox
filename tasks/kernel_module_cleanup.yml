@@ -5,14 +5,14 @@
     state: absent
   when: >
     (pve_zfs_options is not defined) or
-    (pve_zfs_options is defined and not pve_zfs_options) or
-    (not pve_zfs_enabled)
+    (pve_zfs_options is defined and not pve_zfs_options | bool) or
+    (not pve_zfs_enabled | bool)
 
 - name: Disable loading of ZFS module on init
   file:
     dest: /etc/modules-load.d/zfs.conf
     state: absent
-  when: not pve_zfs_enabled
+  when: "not pve_zfs_enabled | bool"
 
 - block:
   - name: Re-enable nmi_watchdog via GRUB config

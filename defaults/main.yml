@@ -16,14 +16,27 @@ pve_watchdog_ipmi_timeout: 10
 pve_zfs_enabled: no
 # pve_zfs_options: "parameters to pass to zfs module"
 # pve_zfs_zed_email: "email address for zfs events"
+pve_ceph_enabled: false
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_mon_group: "{{ pve_group }}"
+pve_ceph_mds_group: "{{ pve_group }}"
+pve_ceph_osds: []
+pve_ceph_pools: []
+pve_ceph_fs: []
+pve_ceph_crush_rules: []
 # pve_ssl_private_key: "contents of private key"
 # pve_ssl_certificate: "contents of certificate"
 pve_cluster_enabled: no
 pve_cluster_clustername: "{{ pve_group }}"
+# PVE 5.x (Debian Stretch) clustering options
 pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
 pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 # pve_cluster_ring1_addr: "another interface's IP address or hostname"
 # pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
+# PVE 6.x (Debian Buster) clustering options
+pve_cluster_link0_addr: "{{ ansible_default_ipv4.address }}"
+# pve_cluster_link1_addr: "another interface's IP address or hostname"
+pve_datacenter_cfg: {}
 pve_ssl_letsencrypt: false
 pve_groups: []
 pve_users: []
