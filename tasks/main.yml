@@ -102,8 +102,8 @@
       filename: pve-enterprise
       state: absent
     with_items:
-      - "deb https://enterprise.proxmox.com/debian stretch pve-enterprise"
-      - "deb https://enterprise.proxmox.com/debian/pve stretch pve-enterprise"
+      - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
+      - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
 
   - name: Remove subscription check wrapper function in web UI
     patch:
