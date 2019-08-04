@@ -401,6 +401,7 @@ pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificat
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
+pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -420,6 +421,15 @@ pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
 # pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
 
 ```
+
+You can set options in the datacenter.cfg configuration file:
+```
+pve_datacenter_cfg:
+  keyboard: en-us
+```
+
+All configuration options supported in the datacenter.cfg file are documented in the
+[Proxmox manual datacenter.cfg section][datacenter-cfg].
 
 ## Dependencies
 
@@ -593,3 +603,4 @@ Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
+[datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
