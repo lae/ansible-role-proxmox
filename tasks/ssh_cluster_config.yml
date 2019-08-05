@@ -35,6 +35,7 @@
       {% for host in groups[pve_group] %}
       Host {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }} {{ hostvars[host].ansible_default_ipv4.address }}
           IdentityFile /root/.ssh/id_rsa
+          Port {{ pve_ssh_port }}
       {% endfor %}
 
 - name: Allow root logins from PVE cluster hosts
