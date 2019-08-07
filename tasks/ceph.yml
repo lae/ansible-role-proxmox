@@ -1,7 +1,7 @@
 # This is an Ansible version of what "pveceph install" actually does
 - name: Configure Ceph package source
   apt_repository:
-    repo: 'deb http://download.proxmox.com/debian/ceph-luminous stretch main'
+    repo: '{{ pve_ceph_repository_line }}'
     filename: ceph.list
     state: present
 
@@ -24,11 +24,15 @@
     group: root
     mode: preserve
   notify: 'restart ceph'
+  when:
+    - "ansible_distribution_release == 'stretch'"
 
 - name: Enable Ceph
   systemd:
     name: ceph.service
     enabled: true
+  when:
+  - "ansible_distribution_release == 'stretch'"
 
 - name: Create initial Ceph config
   command: 'pveceph init --network {{ pve_ceph_network }}'
