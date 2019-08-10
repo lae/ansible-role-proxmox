@@ -217,7 +217,7 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
 Read the **Storage Management** section for more info.
 
-'pve_ssh_port' allows you to change the SSH service port. If your SSH is listing
+`pve_ssh_port` allows you to change the SSH service port. If your SSH is listing
 on a different port then 22, please set this variable. If a new node is joining
 the cluster, the PVE cluster needs to communicate once via SSH.
 
