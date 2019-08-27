@@ -65,12 +65,20 @@
     state: present
   register: _pve_repo
 
+- name: Add Proxmox Ceph repository
+  apt_repository:
+    repo: '{{ pve_ceph_repository_line }}'
+    filename: ceph
+    state: present
+  register: _pve_ceph_repo
+  when: "pve_ceph_enabled | bool"
+
 - name: Run apt-get dist-upgrade on repository changes
   apt:
     update_cache: yes
     cache_valid_time: 3600
     upgrade: dist
-  when: _pve_repo is changed
+  when: _pve_repo is changed or _pve_ceph_repo is changed
   retries: 2
   register: _dist_upgrade
   until: _dist_upgrade is succeeded

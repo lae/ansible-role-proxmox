@@ -1,20 +1,4 @@
 # This is an Ansible version of what "pveceph install" actually does
-- name: Configure Ceph package source
-  apt_repository:
-    repo: '{{ pve_ceph_repository_line }}'
-    filename: ceph
-    state: present
-
-- name: Install Ceph packages
-  apt:
-    name:
-      - ceph
-      - ceph-common
-      - ceph-mds
-      - ceph-fuse
-      - gdisk
-    install_recommends: false
-
 - name: Install custom Ceph systemd service
   copy:
     src: /usr/share/doc/pve-manager/examples/ceph.service
