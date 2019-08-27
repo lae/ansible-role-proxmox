@@ -26,10 +26,10 @@ script:
 - ansible-lint ../ || true
 - ansible-playbook -i inventory deploy.yml --syntax-check
 - ansible-playbook -i inventory -v deploy.yml --skip skiponlxc
-- 'ANSIBLE_STDOUT_CALLBACK=debug unbuffer ansible-playbook --skip skiponlxc -vv
-  -i inventory deploy.yml > idempotency.log 2>&1 || (e=$?; cat idempotency.log; exit $e)'
+- 'ANSIBLE_STDOUT_CALLBACK=debug ANSIBLE_DISPLAY_SKIPPED_HOSTS=no ANSIBLE_DISPLAY_OK_HOSTS=no
+  unbuffer ansible-playbook --skip skiponlxc -vv -i inventory deploy.yml &> idempotency.log'
 - 'grep -A1 "PLAY RECAP" idempotency.log | grep -qP "changed=0 .*failed=0 .*" &&
-  (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; exit 1)'
+  (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; cat idempotency.log; exit 1)'
 - ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -i inventory -v test.yml
 notifications:
   webhooks:
