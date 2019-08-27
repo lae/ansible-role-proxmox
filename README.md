@@ -4,7 +4,7 @@
 lae.proxmox
 ===========
 
-Installs and configures a Proxmox 5.x cluster with the following features:
+Installs and configures a Proxmox 5.x/6.x cluster with the following features:
 
 - Ensures all hosts can connect to one another as root
 - Ability to create/manage groups, users, access control lists and storage
@@ -177,6 +177,7 @@ pve_storages:
     content: [ "images", "iso", "backup" ]
     path: /plop
     maxfiles: 4
+pve_ssh_port: 22
 
 interfaces_template: "interfaces-{{ pve_group }}.j2"
 ```
@@ -215,6 +216,10 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 `pve_storages` allows to create different types of storage and configure them.
 The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
 Read the **Storage Management** section for more info.
+
+`pve_ssh_port` allows you to change the SSH service port. If your SSH is listing
+on a different port then 22, please set this variable. If a new node is joining
+the cluster, the PVE cluster needs to communicate once via SSH.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
@@ -388,6 +393,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_options: "" # modprobe parameters to pass to zfs module on boot/modprobe
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
+pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-nautilus buster main" # apt-repository configuration. Will be automatically set for 5.x and 6.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph cluster network
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
 pve_ceph_mds_group: "{{ pve_group }}" # Host group containing all Ceph metadata server hosts
