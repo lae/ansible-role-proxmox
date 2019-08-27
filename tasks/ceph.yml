@@ -2,7 +2,7 @@
 - name: Configure Ceph package source
   apt_repository:
     repo: '{{ pve_ceph_repository_line }}'
-    filename: ceph.list
+    filename: ceph
     state: present
 
 - name: Install Ceph packages
