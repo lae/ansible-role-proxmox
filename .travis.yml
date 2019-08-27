@@ -15,7 +15,7 @@ env:
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
   else pip install "ansible${ANSIBLE_VERSION}"; fi;
-  pip install --pre ansible-lint; pip install jmespath
+  pip install --pre ansible-lint; pip install jmespath netaddr
 - ansible --version
 - ansible-galaxy install lae.travis-lxc,v0.8.1
 - ansible-playbook tests/install.yml -i tests/inventory

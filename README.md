@@ -340,9 +340,9 @@ For example:
 This will ask for a sudo password, then login to the `admin1` user (using public
 key auth - add `-k` for pw) and run the playbook.
 
-That's it! You should now have a fully deployed Proxmox cluster. You may want to
-create Ceph storage on it afterward, which this role does not (yet?) do, and
-other tasks possibly, but the hard part is mostly complete.
+That's it! You should now have a fully deployed Proxmox cluster. You may want
+to create Ceph storage on it afterwards (see Ceph for more info) and other
+tasks possibly, but the hard part is mostly complete.
 
 
 ## Example Playbook
@@ -553,6 +553,10 @@ documentation.
 
 ## Ceph configuration
 
+*This section could use a little more love. If you are actively using this role
+to manage your PVE Ceph cluster, please feel free to flesh this section more
+thoroughly and open a pull request! See issue #68.*
+
 This role can configure the Ceph storage system on your Proxmox hosts.
 
 ```
@@ -591,6 +595,9 @@ pve_ceph_fs:
     storage: false
     mountpoint: /srv/proxmox/backup
 ```
+
+`pve_ceph_network` by default uses the `ipaddr` filter, which requires the
+`netaddr` library to be installed and usable by your Ansible controller.
 
 ## Contributors
 
