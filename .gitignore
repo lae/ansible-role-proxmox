@@ -2,7 +2,7 @@
 *.*~*
 *.bak
 
-ansible.cfg
+/ansible.cfg
 *.retry
 /.project
 /.pydevproject
