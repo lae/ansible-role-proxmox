@@ -557,6 +557,12 @@ documentation.
 to manage your PVE Ceph cluster, please feel free to flesh this section more
 thoroughly and open a pull request! See issue #68.*
 
+**PVE Ceph management with this role is experimental.** While users have
+successfully used this role to deploy PVE Ceph, it is not fully tested in CI
+(due to a lack of usable block devices to use as OSDs in Travis CI). Please
+deploy a test environment with your configuration first prior to prod, and
+report any issues if you run into any.
+
 This role can configure the Ceph storage system on your Proxmox hosts.
 
 ```
