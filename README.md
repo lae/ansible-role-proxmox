@@ -594,13 +594,16 @@ pve_ceph_fs:
 
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)  
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
+Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
 Jonas Meurer ([@mejo-](https://github.com/mejo-))  
 Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
-Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))  
+Michael Holasek ([@mholasek](https://github.com/mholasek))  
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
