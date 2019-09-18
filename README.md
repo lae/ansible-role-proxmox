@@ -597,7 +597,7 @@ pve_ceph_fs:
 Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)  
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
 Jonas Meurer ([@mejo-](https://github.com/mejo-))  
-Ondrej Flider ([@SniperCZE](https://github.com/SniperCZE))  
+Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
 Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))  
