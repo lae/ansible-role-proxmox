@@ -46,13 +46,31 @@
     creates: '/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/'
   when: inventory_hostname != groups[pve_ceph_mon_group][0]
 
-- name: Create Ceph OSDs
-  command: >-
-    pveceph osd create {{ item.device }}
-    {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
-  args:
-    creates: '{{ item.device }}1'
-  with_items: '{{ pve_ceph_osds }}'
+- block:
+  - name: Check if OSD already exist
+    shell: "ceph-volume lvm list | grep devices | awk '{print $2}'"
+    register: _existing_pve_ceph_osds_tmp
+
+  - name: Initialize osd var
+    set_fact:
+      _existing_pve_ceph_osds: []
+
+  - name: Build list of existing OSD's
+    set_fact:
+      _existing_pve_ceph_osds: "{{ _existing_pve_ceph_osds  + [{'device': item}] }}"
+    loop: "{{ _existing_pve_ceph_osds_tmp.stdout_lines }}"
+
+  - name: Check which OSD's needs to be created
+    set_fact:
+      pve_ceph_osds: "{{ pve_ceph_osds | difference(_existing_pve_ceph_osds) }}"
+
+  - name: Create Ceph OSDs
+    command: >-
+      pveceph osd create {{ item.device }}
+      {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
+    with_items: "{{ pve_ceph_osds }}"
+  
+  tags: create_osd
 
 - block:
   - name: List Ceph CRUSH rules
@@ -179,5 +197,5 @@
     fstype: 'ceph'
     opts: 'name={{ item.name }},secretfile=/etc/ceph/{{ item.name }}.secret,_netdev'
     state: 'mounted'
-  when: item.mountpoint is defined
+    when: item.mountpoint is defined
   loop: '{{ pve_ceph_fs }}'
