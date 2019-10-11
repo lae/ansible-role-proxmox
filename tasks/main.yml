@@ -26,25 +26,57 @@
   blockinfile:
     dest: /etc/hosts
     marker: "# {mark} ANSIBLE MANAGED: Proxmox Cluster Hosts"
-    content: |
-      {% for host in groups[pve_group] %}
-      {{ hostvars[host].pve_cluster_addr0 }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}{% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
+    content: "\
+      {% for host in groups[pve_group] %}\
+        {{ hostvars[host].pve_cluster_addr0 }}
+        {{ hostvars[host].ansible_fqdn }}
+        {{ hostvars[host].ansible_hostname }}\
+        {% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
 
-      {% endfor %}
+
+      {% endfor %}"
 
 - name: Remove conflicting lines in hosts files
   lineinfile:
     dest: /etc/hosts
     # expanded, this turns out to be, for example:
-    # regexp: '^(?!10\.0\.3\.17 test01\.lxc test01( pvelocalhost)?)(?!10\.0\.3\.17)[\w:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
+    # regexp: "^(?!10\.0\.3\.17\\ test01\.lxc\\ test01\\ pvelocalhost)(?!10\.0\.3\.17)[0-9a-f:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
     # basically first we ignore lines that match from the host enumeration task
     # above, then we match against different IPs (e.g. NOT 10.0.3.17) that have
     # the hostname/fqdn we inserted a record for previously, taking care also to
     # detect word boundaries (\b wasn't working for some reason)
-    regexp: '^(?!{{ hostvars[item].pve_cluster_addr0 | regex_escape() }} {{ hostvars[item].ansible_fqdn | regex_escape() }} {{ hostvars[item].ansible_hostname | regex_escape() }}( pvelocalhost)?)(?!{{ hostvars[item].pve_cluster_addr0 | regex_escape() }})[\w:.]+(\s+.*)?\s({{ hostvars[item].ansible_fqdn | regex_escape() }}|{{ hostvars[item].ansible_hostname | regex_escape() }}{% if ansible_fqdn == hostvars[item].ansible_fqdn %}|pvelocalhost{% endif %})(\s+.*|\s*)$'
+    regexp: "\
+      ^(?!\
+        {{ _correct_line | regex_escape() }}\
+      )\
+      {# Ignore lines starting with the current cluster host #}\
+      (?!{{ _correct_ip | regex_escape() }})\
+      {# Match an IPv4/v6 address at the start #}\
+      [0-9a-f:.]\
+      {# Match any hostnames, surrounded by whitespace #}\
+      +(\\s+.*)?\\s\
+      (\
+        {{ _match_hosts | map('regex_escape') | join('|') }}\
+      )\
+      (\\s+.*|\\s*)$"
     state: absent
     backup: yes
-  with_items: "{{ groups[pve_group] }}"
+  loop: "{{ groups[pve_group] }}"
+  vars:
+    _correct_line: "\
+      {{ hostvars[item].pve_cluster_addr0 }}
+      {{ hostvars[item].ansible_fqdn }}
+      {{ hostvars[item].ansible_hostname }}\
+      {% if ansible_fqdn == hostvars[item].ansible_fqdn %} pvelocalhost{% endif %}"
+    _correct_ip: "{{ hostvars[item].pve_cluster_addr0 }}"
+    _match_hosts: >-
+      [
+        "{{ hostvars[item].ansible_fqdn }}",
+        "{{ hostvars[item].ansible_hostname }}",
+        {% if ansible_fqdn == hostvars[item].ansible_fqdn %}
+          "pvelocalhost"
+        {% endif %}
+      ]
 
 - name: Trust Proxmox' packaging key
   apt_key:
