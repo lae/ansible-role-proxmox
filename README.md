@@ -418,18 +418,18 @@ pve_cluster_enabled: no # Set this to yes to configure hosts to be clustered tog
 pve_cluster_clustername: "{{ pve_group }}" # Should be set to the name of the PVE cluster
 ```
 
-Information about the following can be found in the PVE Documentation in the
-[Cluster Manager][pvecm-network] chapter.
+The following variables are used to provide networking information to corosync.
+These are known as ring0_addr/ring1_addr or link0_addr/link1_addr, depending on
+PVE version. They should be IPv4 or IPv6 addresses. For more information, refer
+to the [Cluster Manager][pvecm-network] chapter in the PVE Documentation.
 
 ```
-pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
-pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
-# pve_cluster_ring1_addr: "another interface's IP address or hostname"
-# pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
-
+# pve_cluster_addr0: "{{ ansible_default_ipv4.address }}"
+# pve_cluster_addr1: "another interface's IP address or hostname"
 ```
 
 You can set options in the datacenter.cfg configuration file:
+
 ```
 pve_datacenter_cfg:
   keyboard: en-us
