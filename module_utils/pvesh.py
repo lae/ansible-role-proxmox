@@ -4,6 +4,8 @@ import subprocess
 import json
 import re
 
+from ansible.module_utils._text import to_text
+
 class ProxmoxShellError(Exception):
     """Exception raised when an unexpected response code is thrown from pvesh."""
     def __init__(self, response):
@@ -23,12 +25,13 @@ def run_command(handler, resource, **params):
         handler,
         resource,
         "--output=json"]
-    for parameter, value in params.iteritems():
+    for parameter, value in params.items():
         command += ["-{}".format(parameter), "{}".format(value)]
 
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (result, stderr) = pipe.communicate()
-    stderr = stderr.splitlines()
+    result = to_text(result)
+    stderr = to_text(stderr).splitlines()
 
     if len(stderr) == 0:
         if not result:

@@ -4,6 +4,7 @@ import re
 import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 def main():
     module = AnsibleModule(
@@ -51,7 +52,7 @@ def main():
 
     # This will likely output a path that considers the boot partition as /
     # e.g. /vmlinuz-4.4.44-1-pve
-    booted_kernel = subprocess.check_output(["grep", "-o", "-P", "(?<=BOOT_IMAGE=).*?(?= )", "/proc/cmdline"]).strip()
+    booted_kernel = to_text(subprocess.check_output(["grep", "-o", "-P", "(?<=BOOT_IMAGE=).*?(?= )", "/proc/cmdline"]).strip())
 
     booted_kernel_package = ""
     old_kernel_packages = []
@@ -59,9 +60,9 @@ def main():
     if params['lookup_packages']:
         for kernel in kernels:
             if kernel.split("/")[-1] == booted_kernel.split("/")[-1]:
-                booted_kernel_package = subprocess.check_output(["dpkg-query", "-S", kernel]).split(":")[0]
+                booted_kernel_package = to_text(subprocess.check_output(["dpkg-query", "-S", kernel])).split(":")[0]
             elif kernel != latest_kernel:
-                old_kernel_packages.append(subprocess.check_output(["dpkg-query", "-S", kernel]).split(":")[0])
+                old_kernel_packages.append(to_text(subprocess.check_output(["dpkg-query", "-S", kernel])).split(":")[0])
 
     # returns True if we're not booted into the latest kernel
     new_kernel_exists = booted_kernel.split("/")[-1] != latest_kernel.split("/")[-1]
