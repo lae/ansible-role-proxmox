@@ -9,6 +9,7 @@ pve_run_system_upgrades: true
 pve_watchdog: ipmi
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
+pve_ceph_enabled: yes
 pve_ssl_private_key: "{{ lookup('file', ssl_host_key_path) }}"
 pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes

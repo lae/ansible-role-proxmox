@@ -4,26 +4,19 @@
     _pve_current_node: "{{ item }}"
 
 - name: Add node to Proxmox cluster
-  command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }} \
-            -use_ssh \
-            -ring0_addr {{ pve_cluster_ring0_addr }}{% if pve_cluster_ring1_addr is defined %} \
-            -ring1_addr {{ pve_cluster_ring1_addr }}{% endif %}"
+  command: >-
+    pvecm add {{ hostvars[groups[pve_group][0]].pve_cluster_addr0 }} -use_ssh
+    {{ addr0_flag }} {{ pve_cluster_addr0 }}
+    {% if pve_cluster_addr1 is defined %}
+    {{ addr1_flag }} {{ pve_cluster_addr1 }}
+    {% endif %}
   args:
     creates: "{{ pve_cluster_conf }}"
+  vars:
+    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
+    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
   when:
     - "inventory_hostname == _pve_current_node"
-    - "ansible_distribution_release == 'stretch'"
-
-- name: Add node to Proxmox cluster
-  command: "pvecm add {{ hostvars[groups[pve_group][0]]['ansible_default_ipv4']['address'] }} \
-            -use_ssh \
-            -link0 {{ pve_cluster_link0_addr }}{% if pve_cluster_link1_addr is defined %} \
-            -link1 {{ pve_cluster_link1_addr }}{% endif %}"
-  args:
-    creates: "{{ pve_cluster_conf }}"
-  when:
-    - "inventory_hostname == _pve_current_node"
-    - "ansible_distribution_release == 'buster'"
 
 - name: Remove stale corosync lock file due to lack of quorum during initialization
   file:

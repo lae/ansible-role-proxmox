@@ -36,7 +36,6 @@
       copy:
         src: "{{ ssl_ca_cert_path }}"
         dest: /usr/local/share/ca-certificates/test-ca.crt
-      become: True
     - name: Insert bogus lines in /etc/hosts
       lineinfile:
         path: /etc/hosts
@@ -46,7 +45,6 @@
         - "10.22.33.44    {{ ansible_hostname }} {{ ansible_fqdn }}"
     - name: Update CA certificate store
       shell: update-ca-certificates
-      become: True
     - block:
       - name: Create host SSL private key
         shell: "openssl genrsa -out {{ ssl_host_key_path }} 2048"

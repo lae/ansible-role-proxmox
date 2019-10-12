@@ -33,7 +33,7 @@
     marker: "# {mark}: PVE host configuration options (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
-      Host {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }} {{ hostvars[host].ansible_default_ipv4.address }}
+      Host {{ hostvars[host].pve_cluster_ssh_addrs | join(" ") }}
           IdentityFile /root/.ssh/id_rsa
           Port {{ pve_ssh_port }}
       {% endfor %}
@@ -44,7 +44,7 @@
     marker: "# {mark}: Allow root logins from PVE hosts (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
-      Match Address {{ hostvars[host].ansible_default_ipv4.address }}
+      Match Address {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }}
       PermitRootLogin prohibit-password
       {% endfor %}
     validate: "/usr/sbin/sshd -t -f %s"
@@ -74,7 +74,7 @@
     content: |
       {% for host in groups[pve_group] %}
       {% for keytype in ['rsa', 'ed25519', 'ecdsa'] %}
-      {{ hostvars[host].ansible_fqdn }},{{ hostvars[host].ansible_hostname }},{{ hostvars[host].ansible_default_ipv4.address }} {{ ' '.join(lookup('file', pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub').split()[:-1]) }}
+      {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }} {{ ' '.join(lookup('file', pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub').split()[:-1]) }}
       {% endfor %}
       {% endfor %}
   when:

@@ -2,4 +2,3 @@
 pve_release_key: proxmox-ve-release-5.x.asc
 pve_release_key_id: 0D9A1950E2EF0603
 pve_ssh_ciphers: "aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com"
-pve_ceph_repo: "deb http://download.proxmox.com/debian/ceph-luminous stretch main"

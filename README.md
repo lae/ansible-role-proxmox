@@ -340,9 +340,9 @@ For example:
 This will ask for a sudo password, then login to the `admin1` user (using public
 key auth - add `-k` for pw) and run the playbook.
 
-That's it! You should now have a fully deployed Proxmox cluster. You may want to
-create Ceph storage on it afterward, which this role does not (yet?) do, and
-other tasks possibly, but the hard part is mostly complete.
+That's it! You should now have a fully deployed Proxmox cluster. You may want
+to create Ceph storage on it afterwards (see Ceph for more info) and other
+tasks possibly, but the hard part is mostly complete.
 
 
 ## Example Playbook
@@ -394,7 +394,8 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-nautilus buster main" # apt-repository configuration. Will be automatically set for 5.x and 6.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph cluster network
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
+# pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
 pve_ceph_mds_group: "{{ pve_group }}" # Host group containing all Ceph metadata server hosts
 pve_ceph_osds: [] # List of OSD disks
@@ -417,18 +418,18 @@ pve_cluster_enabled: no # Set this to yes to configure hosts to be clustered tog
 pve_cluster_clustername: "{{ pve_group }}" # Should be set to the name of the PVE cluster
 ```
 
-Information about the following can be found in the PVE Documentation in the
-[Cluster Manager][pvecm-network] chapter.
+The following variables are used to provide networking information to corosync.
+These are known as ring0_addr/ring1_addr or link0_addr/link1_addr, depending on
+PVE version. They should be IPv4 or IPv6 addresses. For more information, refer
+to the [Cluster Manager][pvecm-network] chapter in the PVE Documentation.
 
 ```
-pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
-pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
-# pve_cluster_ring1_addr: "another interface's IP address or hostname"
-# pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
-
+# pve_cluster_addr0: "{{ ansible_default_ipv4.address }}"
+# pve_cluster_addr1: "another interface's IP address or hostname"
 ```
 
 You can set options in the datacenter.cfg configuration file:
+
 ```
 pve_datacenter_cfg:
   keyboard: en-us
@@ -553,11 +554,22 @@ documentation.
 
 ## Ceph configuration
 
+*This section could use a little more love. If you are actively using this role
+to manage your PVE Ceph cluster, please feel free to flesh this section more
+thoroughly and open a pull request! See issue #68.*
+
+**PVE Ceph management with this role is experimental.** While users have
+successfully used this role to deploy PVE Ceph, it is not fully tested in CI
+(due to a lack of usable block devices to use as OSDs in Travis CI). Please
+deploy a test environment with your configuration first prior to prod, and
+report any issues if you run into any.
+
 This role can configure the Ceph storage system on your Proxmox hosts.
 
 ```
 pve_ceph_enabled: true
 pve_ceph_network: '172.10.0.0/24'
+pve_ceph_cluster_network: '172.10.1.0/24'
 pve_ceph_osds:
   # OSD with everything on the same device
   - device: /dev/sdc
@@ -592,15 +604,21 @@ pve_ceph_fs:
     mountpoint: /srv/proxmox/backup
 ```
 
+`pve_ceph_network` by default uses the `ipaddr` filter, which requires the
+`netaddr` library to be installed and usable by your Ansible controller.
+
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>)  
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
+Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
 Jonas Meurer ([@mejo-](https://github.com/mejo-))  
-Ondrej Flider ([@SniperCZE](https://github.com/SniperCZE))  
+Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
-Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere))  
+Michael Holasek ([@mholasek](https://github.com/mholasek))  
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html

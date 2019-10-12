@@ -1,13 +1,12 @@
 ---
 # tasks file for ansible-role-proxmox
-- name: Gather distribution specific variables
-  include_vars: "debian-{{ ansible_distribution_release }}.yml"
+- import_tasks: load_variables.yml
 
-- name: Ensure that we have an IP address for all cluster hosts
+- name: Ensure that facts are present for all cluster hosts
   assert:
     that:
-      - "hostvars[item].ansible_default_ipv4.address is defined"
-    msg: "Missing IP address and other information for {{ item }}. Have you gathered its facts?"
+      - "hostvars[item].ansible_facts"
+    msg: "Could not load facts for {{ item }}. Please run your playbook against all hosts in {{ pve_group }}."
   with_items: "{{ groups[pve_group] }}"
 
 - name: Ensure this host is in the group specified
@@ -27,25 +26,57 @@
   blockinfile:
     dest: /etc/hosts
     marker: "# {mark} ANSIBLE MANAGED: Proxmox Cluster Hosts"
-    content: |
-      {% for host in groups[pve_group] %}
-      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}{% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
+    content: "\
+      {% for host in groups[pve_group] %}\
+        {{ hostvars[host].pve_cluster_addr0 }}
+        {{ hostvars[host].ansible_fqdn }}
+        {{ hostvars[host].ansible_hostname }}\
+        {% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
 
-      {% endfor %}
+
+      {% endfor %}"
 
 - name: Remove conflicting lines in hosts files
   lineinfile:
     dest: /etc/hosts
     # expanded, this turns out to be, for example:
-    # regexp: '^(?!10\.0\.3\.17 test01\.lxc test01( pvelocalhost)?)(?!10\.0\.3\.17)[\w:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
+    # regexp: "^(?!10\.0\.3\.17\\ test01\.lxc\\ test01\\ pvelocalhost)(?!10\.0\.3\.17)[0-9a-f:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
     # basically first we ignore lines that match from the host enumeration task
     # above, then we match against different IPs (e.g. NOT 10.0.3.17) that have
     # the hostname/fqdn we inserted a record for previously, taking care also to
     # detect word boundaries (\b wasn't working for some reason)
-    regexp: '^(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }} {{ hostvars[item].ansible_fqdn | regex_escape() }} {{ hostvars[item].ansible_hostname | regex_escape() }}( pvelocalhost)?)(?!{{ hostvars[item].ansible_default_ipv4.address | regex_escape() }})[\w:.]+(\s+.*)?\s({{ hostvars[item].ansible_fqdn | regex_escape() }}|{{ hostvars[item].ansible_hostname | regex_escape() }}{% if ansible_fqdn == hostvars[item].ansible_fqdn %}|pvelocalhost{% endif %})(\s+.*|\s*)$'
+    regexp: "\
+      ^(?!\
+        {{ _correct_line | regex_escape() }}\
+      )\
+      {# Ignore lines starting with the current cluster host #}\
+      (?!{{ _correct_ip | regex_escape() }})\
+      {# Match an IPv4/v6 address at the start #}\
+      [0-9a-f:.]\
+      {# Match any hostnames, surrounded by whitespace #}\
+      +(\\s+.*)?\\s\
+      (\
+        {{ _match_hosts | map('regex_escape') | join('|') }}\
+      )\
+      (\\s+.*|\\s*)$"
     state: absent
     backup: yes
-  with_items: "{{ groups[pve_group] }}"
+  loop: "{{ groups[pve_group] }}"
+  vars:
+    _correct_line: "\
+      {{ hostvars[item].pve_cluster_addr0 }}
+      {{ hostvars[item].ansible_fqdn }}
+      {{ hostvars[item].ansible_hostname }}\
+      {% if ansible_fqdn == hostvars[item].ansible_fqdn %} pvelocalhost{% endif %}"
+    _correct_ip: "{{ hostvars[item].pve_cluster_addr0 }}"
+    _match_hosts: >-
+      [
+        "{{ hostvars[item].ansible_fqdn }}",
+        "{{ hostvars[item].ansible_hostname }}",
+        {% if ansible_fqdn == hostvars[item].ansible_fqdn %}
+          "pvelocalhost"
+        {% endif %}
+      ]
 
 - name: Trust Proxmox' packaging key
   apt_key:
@@ -65,12 +96,20 @@
     state: present
   register: _pve_repo
 
+- name: Add Proxmox Ceph repository
+  apt_repository:
+    repo: '{{ pve_ceph_repository_line }}'
+    filename: ceph
+    state: present
+  register: _pve_ceph_repo
+  when: "pve_ceph_enabled | bool"
+
 - name: Run apt-get dist-upgrade on repository changes
   apt:
     update_cache: yes
     cache_valid_time: 3600
     upgrade: dist
-  when: _pve_repo is changed
+  when: _pve_repo is changed or _pve_ceph_repo is changed
   retries: 2
   register: _dist_upgrade
   until: _dist_upgrade is succeeded
@@ -79,7 +118,7 @@
   apt:
     update_cache: yes
     cache_valid_time: 3600
-    upgrade: yes
+    upgrade: dist
   when: "pve_run_system_upgrades | bool"
   retries: 2
   register: _system_upgrade
