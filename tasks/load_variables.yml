@@ -1,0 +1,43 @@
+---
+- name: Gather distribution specific variables
+  include_vars: "debian-{{ ansible_distribution_release }}.yml"
+
+- block:
+  # Per Proxmox documentation, bindnet_addr is expected to be an IP address and
+  # ring_addr can be either hostname or IP, but this role has always used an IP
+  # address. Thus, we're deprecating them. See below references.
+  # https://pve.proxmox.com/wiki/Separate_Cluster_Network#Setup_at_Cluster_Creation
+  # https://git.proxmox.com/?p=pve-cluster.git;a=blob;f=data/PVE/Corosync.pm;h=8b5c91e0da084da4e9ba7423176872a0c16ef5af;hb=refs/heads/stable-5#l209
+  - name: LEGACY - Define pve_cluster_addr0 from bindnet0_addr/ring0_addr
+    set_fact:
+      pve_cluster_addr0: "{{ pve_cluster_bindnet0_addr | default(pve_cluster_ring0_addr) }}"
+    when: pve_cluster_ring0_addr is defined and ansible_distribution_release == 'stretch'
+
+  - name: LEGACY - Define pve_cluster_addr0 from link0_addr
+    set_fact:
+      pve_cluster_addr0: "{{ pve_cluster_link0_addr }}"
+    when: pve_cluster_link0_addr is defined and ansible_distribution_release == 'buster'
+  when: pve_cluster_addr0 is not defined
+
+- block:
+  - name: LEGACY - Define pve_cluster_addr1 from bindnet1_addr/ring1_addr
+    set_fact:
+      pve_cluster_addr1: "{{ pve_cluster_bindnet1_addr | default(pve_cluster_ring1_addr) }}"
+    when: pve_cluster_ring1_addr is defined and ansible_distribution_release == 'stretch'
+
+  - name: LEGACY - Define pve_cluster_addr1 from link1_addr
+    set_fact:
+      pve_cluster_addr1: "{{ pve_cluster_link1_addr }}"
+    when: pve_cluster_link1_addr is defined and ansible_distribution_release == 'buster'
+  when: pve_cluster_addr1 is not defined
+
+- name: Define pve_cluster_addr0 if not provided
+  set_fact:
+    pve_cluster_addr0: "{{ pve_cluster_addr0 | default(_pve_cluster_addr0) }}"
+
+- name: Calculate list of SSH addresses
+  set_fact:
+    pve_cluster_ssh_addrs: >-
+      ["{{ ansible_fqdn }}", "{{ ansible_hostname }}",
+      "{{ pve_cluster_addr0 }}",
+      {% if pve_cluster_addr1 is defined %}"{{ pve_cluster_addr1 }}"{% endif %}]
