@@ -628,3 +628,4 @@ Michael Holasek ([@mholasek](https://github.com/mholasek))
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
+[ceph_volume]: https://github.com/ceph/ceph-ansible/blob/master/library/ceph_volume.py
