@@ -150,7 +150,7 @@
       basedir: /
       strip: 1
       backup: yes
-    ignore_errors: False
+    ignore_errors: True
     when:
       - "pve_remove_subscription_warning | bool"
 
