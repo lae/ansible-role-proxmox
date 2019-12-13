@@ -121,6 +121,12 @@
       {% if 'pgs' in item %}
       --pg_num {{ item.pgs }}
       {% endif %}
+      {% if 'size' in item %}
+      --size {{ item.size }}
+      {% endif %}
+      {% if 'min_size' in item %}
+      --min_size {{ item.min_size }}
+      {% endif %}
     when: item.name not in _ceph_pools.stdout_lines
     with_items: '{{ pve_ceph_pools }}'
 
