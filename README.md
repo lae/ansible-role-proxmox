@@ -435,6 +435,22 @@ pve_datacenter_cfg:
   keyboard: en-us
 ```
 
+You can also configure [HA manager groups][ha-group]:
+```
+pve_cluster_ha_groups: [] # List of HA groups to create in PVE.
+```
+
+This example creates a group "lab_node01" for resources assigned to the
+lab-node01 host:
+```
+pve_cluster_ha_groups:
+  - name: lab_node01
+    comment: "My HA group"
+    nodes: "lab-node01"
+    nofailback: 0
+    restricted: 0
+```
+
 All configuration options supported in the datacenter.cfg file are documented in the
 [Proxmox manual datacenter.cfg section][datacenter-cfg].
 
@@ -564,7 +580,8 @@ successfully used this role to deploy PVE Ceph, it is not fully tested in CI
 deploy a test environment with your configuration first prior to prod, and
 report any issues if you run into any.
 
-This role can configure the Ceph storage system on your Proxmox hosts.
+This role can configure the Ceph storage system on your Proxmox hosts. The
+following definitions show some of the configurations that are possible.
 
 ```
 pve_ceph_enabled: true
@@ -590,13 +607,16 @@ pve_ceph_pools:
     rule: ssd
     application: rbd
     storage: true
+# This Ceph pool uses custom size/replication values
   - name: hdd
     pgs: 32
     rule: hdd
     application: rbd
     storage: true
-# A CephFS filesystem not defined as a Proxmox storage
+    size: 2
+    min-size: 1
 pve_ceph_fs:
+# A CephFS filesystem not defined as a Proxmox storage
   - name: backup
     pgs: 64
     rule: hdd
@@ -628,3 +648,5 @@ Michael Holasek ([@mholasek](https://github.com/mholasek))
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
+[ceph_volume]: https://github.com/ceph/ceph-ansible/blob/master/library/ceph_volume.py
+[ha-group]: https://pve.proxmox.com/wiki/High_Availability#ha_manager_groups

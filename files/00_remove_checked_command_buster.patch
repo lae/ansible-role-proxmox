@@ -1,0 +1,41 @@
+diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+--- /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js	2019-12-17 11:02:52.000000000 +0000
++++ /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js	2020-01-18 16:29:37.362953621 +0000
+@@ -6016,7 +6016,7 @@
+ 	var update_btn = new Ext.Button({
+ 	    text: gettext('Refresh'),
+ 	    handler: function() {
+-		Proxmox.Utils.checked_command(function() { apt_command('update'); });
++		apt_command('update');
+ 	    }
+ 	});
+ 
+diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pvemanagerlib.js
+--- /usr/share/pve-manager/js/pvemanagerlib.js	2019-12-16 14:12:19.000000000 +0000
++++ /usr/share/pve-manager/js/pvemanagerlib.js	2020-01-18 16:26:07.187536513 +0000
+@@ -19024,7 +19024,7 @@
+ 	var version_btn = new Ext.Button({
+ 	    text: gettext('Package versions'),
+ 	    handler: function(){
+-		Proxmox.Utils.checked_command(function() { me.showVersions(); });
++		me.showVersions();
+ 	    }
+ 	});
+ 
+@@ -19288,7 +19288,7 @@
+ 		{
+ 		    text: gettext('System Report'),
+ 		    handler: function() {
+-			Proxmox.Utils.checked_command(function (){ me.showReport(); });
++			me.showReport();
+ 		    }
+ 		}
+ 	    ],
+@@ -40472,7 +40472,6 @@
+ 		handler: function(data) {
+ 		    me.login = null;
+ 		    me.updateLoginData(data);
+-		    Proxmox.Utils.checked_command(function() {}); // display subscription status
+ 		}
+ 	    });
+ 	}

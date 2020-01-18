@@ -46,13 +46,47 @@
     creates: '/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/'
   when: inventory_hostname != groups[pve_ceph_mon_group][0]
 
-- name: Create Ceph OSDs
-  command: >-
-    pveceph osd create {{ item.device }}
-    {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
-  args:
-    creates: '{{ item.device }}1'
-  with_items: '{{ pve_ceph_osds }}'
+- block:
+  - name: Get existing ceph volumes
+    ceph_volume:
+      action: list
+      data: "{{ item.device }}"
+    register: _ceph_volume_data
+    loop: '{{ pve_ceph_osds }}'
+    tags: ceph_volume
+
+  - name: Initialize osd variables
+    set_fact:
+      _existing_ceph_volumes_tmp: []
+      _existing_ceph_volumes: []
+    tags: ceph_volume
+
+  - name: Determine ceph volumes Step1
+    set_fact:
+      _existing_ceph_volumes_tmp: "{{ _existing_ceph_volumes_tmp + item.stdout | from_json | json_query('*[].devices[]') }}"
+    with_items: "{{ _ceph_volume_data.results }}"
+    tags: ceph_volume
+
+  - name: Determine ceph volumes Step2
+    set_fact:
+      _existing_ceph_volumes: "{{ _existing_ceph_volumes + [{'device': item}] }}"
+    with_items: "{{ _existing_ceph_volumes_tmp }}"
+    tags: ceph_volume
+
+  - name: Change osd list (remove existing osds from the list) 
+    set_fact:
+      pve_ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
+    tags: ceph_volume
+
+  - name: Create Ceph OSDs
+    command: >-
+      pveceph osd create {{ item.device }}
+      {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
+    args:
+      creates: '{{ item.device }}1'
+    with_items: '{{ pve_ceph_osds_diff }}'
+
+  tags: create_osd  
 
 - block:
   - name: List Ceph CRUSH rules
@@ -86,6 +120,12 @@
       {% endif %}
       {% if 'pgs' in item %}
       --pg_num {{ item.pgs }}
+      {% endif %}
+      {% if 'size' in item %}
+      --size {{ item.size }}
+      {% endif %}
+      {% if 'min_size' in item %}
+      --min_size {{ item.min_size }}
       {% endif %}
     when: item.name not in _ceph_pools.stdout_lines
     with_items: '{{ pve_ceph_pools }}'

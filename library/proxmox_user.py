@@ -53,10 +53,6 @@ options:
         required: false
         description:
             - Optionally sets the user's last name in PVE.
-    firstname:
-        required: false
-        description:
-            - Optionally sets the user's first name in PVE.
     password:
         required: false
         description:
@@ -243,10 +239,10 @@ def main():
             groups=dict(default=None, type='list'),
             comment=dict(default=None, type='str'),
             email=dict(default=None, type='str'),
-            expire=dict(default=0, type='int'),
             firstname=dict(default=None, type='str'),
             lastname=dict(default=None, type='str'),
-            password=dict(default=None, type='str', no_log=True)
+            password=dict(default=None, type='str', no_log=True),
+            expire=dict(default=0, type='int')
         ),
         supports_check_mode=True
     )
