@@ -564,7 +564,8 @@ successfully used this role to deploy PVE Ceph, it is not fully tested in CI
 deploy a test environment with your configuration first prior to prod, and
 report any issues if you run into any.
 
-This role can configure the Ceph storage system on your Proxmox hosts.
+This role can configure the Ceph storage system on your Proxmox hosts. The
+following definitions show some of the configurations that are possible.
 
 ```
 pve_ceph_enabled: true
@@ -590,13 +591,16 @@ pve_ceph_pools:
     rule: ssd
     application: rbd
     storage: true
+# This Ceph pool uses custom size/replication values
   - name: hdd
     pgs: 32
     rule: hdd
     application: rbd
     storage: true
-# A CephFS filesystem not defined as a Proxmox storage
+    size: 2
+    min-size: 1
 pve_ceph_fs:
+# A CephFS filesystem not defined as a Proxmox storage
   - name: backup
     pgs: 64
     rule: hdd
