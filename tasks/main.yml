@@ -146,7 +146,7 @@
 
   - name: Remove subscription check wrapper function in web UI
     patch:
-      src: "00_remove_checked_command.patch"
+      src: "00_remove_checked_command_{{ ansible_distribution_release }}.patch"
       basedir: /
       strip: 1
       backup: yes
