@@ -18,6 +18,8 @@
   when: "pve_cluster_enabled | bool"
 
 - import_tasks: ssh_cluster_config.yml
+  when:
+    - "pve_manage_ssh | bool and pve_cluster_enabled | bool"
 
 - name: Run handlers if needed (sshd reload)
   meta: flush_handlers
