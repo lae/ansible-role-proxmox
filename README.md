@@ -217,9 +217,15 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
 Read the **Storage Management** section for more info.
 
-`pve_ssh_port` allows you to change the SSH service port. If your SSH is listing
-on a different port then 22, please set this variable. If a new node is joining
-the cluster, the PVE cluster needs to communicate once via SSH.
+`pve_ssh_port` allows you to change the SSH port. If your SSH is listening on
+a port other than the default 22, please set this variable. If a new node is
+joining the cluster, the PVE cluster needs to communicate once via SSH.
+
+`pve_manage_ssh` (default true) allows you to disable any changes this module
+would make to your SSH server config. This is useful if you use another role
+to manage your SSH server. Note that setting this to false is not officially
+supported, you're on your own to replicate the changes normally made in
+ssh_cluster_config.yml.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
