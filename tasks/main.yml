@@ -32,8 +32,7 @@
       {% for host in groups[pve_group] %}\
         {{ hostvars[host].pve_cluster_addr0 }}
         {{ hostvars[host].ansible_fqdn }}
-        {{ hostvars[host].ansible_hostname }}\
-        {% if ansible_fqdn == hostvars[host].ansible_fqdn %} pvelocalhost{% endif %}
+        {{ hostvars[host].ansible_hostname }}
 
 
       {% endfor %}"
@@ -42,7 +41,7 @@
   lineinfile:
     dest: /etc/hosts
     # expanded, this turns out to be, for example:
-    # regexp: "^(?!10\.0\.3\.17\\ test01\.lxc\\ test01\\ pvelocalhost)(?!10\.0\.3\.17)[0-9a-f:.]+(\s+.*)?\s(test01\.lxc|test01|pvelocalhost)(\s+.*|\s*)$'
+    # regexp: "^(?!10\.0\.3\.17\\ test01\.lxc\\ test01)(?!10\.0\.3\.17)[0-9a-f:.]+(\s+.*)?\s(test01\.lxc|test01)(\s+.*|\s*)$'
     # basically first we ignore lines that match from the host enumeration task
     # above, then we match against different IPs (e.g. NOT 10.0.3.17) that have
     # the hostname/fqdn we inserted a record for previously, taking care also to
@@ -68,16 +67,12 @@
     _correct_line: "\
       {{ hostvars[item].pve_cluster_addr0 }}
       {{ hostvars[item].ansible_fqdn }}
-      {{ hostvars[item].ansible_hostname }}\
-      {% if ansible_fqdn == hostvars[item].ansible_fqdn %} pvelocalhost{% endif %}"
+      {{ hostvars[item].ansible_hostname }}"
     _correct_ip: "{{ hostvars[item].pve_cluster_addr0 }}"
     _match_hosts: >-
       [
         "{{ hostvars[item].ansible_fqdn }}",
-        "{{ hostvars[item].ansible_hostname }}",
-        {% if ansible_fqdn == hostvars[item].ansible_fqdn %}
-          "pvelocalhost"
-        {% endif %}
+        "{{ hostvars[item].ansible_hostname }}"
       ]
 
 - name: Trust Proxmox' packaging key
