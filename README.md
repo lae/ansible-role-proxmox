@@ -305,7 +305,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
           delay: 15
       when: _configure_interfaces is changed
 
-- hosts: pve
+- hosts: pve01
   become: True
   roles:
     - lae.proxmox
@@ -373,7 +373,7 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
         - {
             role: lae.proxmox,
             pve_group: pve01,
-            pve_cluster_enabled: yes
+            pve_cluster_enabled: yes,
             pve_reboot_on_kernel_update: true,
             pve_watchdog: ipmi
           }
