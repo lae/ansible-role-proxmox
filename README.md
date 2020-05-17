@@ -262,6 +262,8 @@ iface enp2s0f1 inet static
     netmask 255.255.255.0
 ```
 
+Defining the DNS servers and domain in the `interfaces` file [assumes that the `resolvconf` program has been installed](https://wiki.debian.org/NetworkConfiguration#Defining_the_.28DNS.29_Nameservers). As this is not included in the default Proxmox distribution, you may want instead to skip the `dns-nameservers` and `dns-search` entries in your interface template and instead use an Ansible role to configure `/etc/resolv.conf` for your site.
+
 You might not be familiar with the `dig` lookup, but basically here we're doing
 an A record lookup for each machine (e.g. lab-node01.local) for the first
 interface (and configuring it as a bridge we'll use for VM interfaces), and then
