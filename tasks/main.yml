@@ -163,6 +163,13 @@
 
 - import_tasks: kernel_module_cleanup.yml
 
+- name: "[TEMPFIX] Fix cluster joins on PVE 6"
+  patch:
+    src: "01_pass_correct_format_for_linkX.patch"
+    basedir: /
+    strip: 1
+  when: ansible_distribution_release == 'buster'
+
 - import_tasks: pve_cluster_config.yml
   when: "pve_cluster_enabled | bool"
 
