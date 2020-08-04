@@ -1,23 +1,32 @@
 ---
 language: python
+python:
+  - "2.7"
+  - "3.6"
 sudo: required
-dist: trusty
+dist: bionic
 cache:
   directories: [ '$HOME/lxc' ]
   pip: true
+env:
+  - ANSIBLE_VERSION='~=2.9.0'
 matrix:
   fast_finish: true
-env:
-- ANSIBLE_GIT_VERSION='devel' # 2.9.x development branch
-- ANSIBLE_VERSION='<2.9.0' # 2.8.x
-- ANSIBLE_VERSION='<2.8.0' # 2.7.x
-- ANSIBLE_VERSION='<2.7.0' # 2.6.x
+  include:
+# FIXME: Ansible 2.10.x going through major restructuring.
+# https://groups.google.com/forum/#!msg/ansible-project/eXsoOKEd0Mk/XTgbnPWbCAAJ
+#    - python: '3.6'
+#      env: ANSIBLE_GIT_VERSION='devel' # 2.10.x development branch
+    - python: '3.6'
+      env: ANSIBLE_VERSION='~=2.8.0'
+    - python: '3.6'
+      env: ANSIBLE_VERSION='~=2.7.0'
 install:
 - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
   else pip install "ansible${ANSIBLE_VERSION}"; fi;
   pip install --pre ansible-lint; pip install jmespath netaddr
 - ansible --version
-- ansible-galaxy install lae.travis-lxc,v0.8.1
+- ansible-galaxy install lae.travis-lxc,v0.9.0
 - ansible-playbook tests/install.yml -i tests/inventory
 - git archive --format tar.gz HEAD > lae.proxmox.tar.gz && ansible-galaxy install
   lae.proxmox.tar.gz,$(git rev-parse HEAD),lae.proxmox && rm lae.proxmox.tar.gz
