@@ -74,7 +74,9 @@
     content: |
       {% for host in groups[pve_group] %}
       {% for keytype in ['rsa', 'ed25519', 'ecdsa'] %}
-      {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }} {{ ' '.join(lookup('file', pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub').split()[:-1]) }}
+      {%- set _keyfile = pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub' -%}
+      {%- set _key = ' '.join(lookup('file', _keyfile).split()[:-1]) -%}
+      {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }} {{ _key }}
       {% endfor %}
       {% endfor %}
   when:

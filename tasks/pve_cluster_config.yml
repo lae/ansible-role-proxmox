@@ -67,3 +67,37 @@
   when:
     - "_pve_active_cluster is not defined"
     - "inventory_hostname != groups[pve_group][0]"
+
+- name: Check for PVE cluster HA groups
+  proxmox_query:
+    query: "/cluster/ha/groups"
+  register: _ha_group_list
+  when: "inventory_hostname == groups[pve_group][0]"
+
+- name: Create PVE cluster HA groups
+  command: >-
+    ha-manager groupadd {{ item.name }}
+    -comment "{{ item.comment | default('') }}"
+    -nodes "{{ item.nodes }}"
+    {% if 'nofailback' in item %}
+    -nofailback {{ item.nofailback }}
+    {% endif %}
+    {% if 'restricted' in item %}
+    -restricted {{ item.restricted }}
+    {% endif %}
+  when:
+    - "inventory_hostname == groups[pve_group][0]"
+    - item.name not in _ha_group_list.response | json_query("[*].group")
+  with_items: "{{ pve_cluster_ha_groups }}"
+
+- name: Update PVE cluster HA groups
+  command: >-
+    ha-manager groupset {{ item.0.name }} -{{ item.1 }} "{{ item.0[item.1] }}"
+  when:
+    - "inventory_hostname == groups[pve_group][0]"
+    - item.0.name in _ha_group_list.response | json_query("[*].group")
+    - item.1 in item.0
+    - item.0[item.1] != _ha_group_list.response
+                        | json_query("[?group=='" + item.0.name + "']." + item.1) | first
+  loop: "{{ pve_cluster_ha_groups
+            | product(['comment', 'nodes', 'nofailback', 'restricted']) | list }}"

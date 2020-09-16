@@ -217,9 +217,15 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
 Read the **Storage Management** section for more info.
 
-`pve_ssh_port` allows you to change the SSH service port. If your SSH is listing
-on a different port then 22, please set this variable. If a new node is joining
-the cluster, the PVE cluster needs to communicate once via SSH.
+`pve_ssh_port` allows you to change the SSH port. If your SSH is listening on
+a port other than the default 22, please set this variable. If a new node is
+joining the cluster, the PVE cluster needs to communicate once via SSH.
+
+`pve_manage_ssh` (default true) allows you to disable any changes this module
+would make to your SSH server config. This is useful if you use another role
+to manage your SSH server. Note that setting this to false is not officially
+supported, you're on your own to replicate the changes normally made in
+ssh_cluster_config.yml.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
@@ -299,7 +305,7 @@ Finally, let's write our playbook. `site.yml` will look something like this:
           delay: 15
       when: _configure_interfaces is changed
 
-- hosts: pve
+- hosts: pve01
   become: True
   roles:
     - lae.proxmox
@@ -367,7 +373,7 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
         - {
             role: lae.proxmox,
             pve_group: pve01,
-            pve_cluster_enabled: yes
+            pve_cluster_enabled: yes,
             pve_reboot_on_kernel_update: true,
             pve_watchdog: ipmi
           }
@@ -433,6 +439,22 @@ You can set options in the datacenter.cfg configuration file:
 ```
 pve_datacenter_cfg:
   keyboard: en-us
+```
+
+You can also configure [HA manager groups][ha-group]:
+```
+pve_cluster_ha_groups: [] # List of HA groups to create in PVE.
+```
+
+This example creates a group "lab_node01" for resources assigned to the
+lab-node01 host:
+```
+pve_cluster_ha_groups:
+  - name: lab_node01
+    comment: "My HA group"
+    nodes: "lab-node01"
+    nofailback: 0
+    restricted: 0
 ```
 
 All configuration options supported in the datacenter.cfg file are documented in the
@@ -564,7 +586,8 @@ successfully used this role to deploy PVE Ceph, it is not fully tested in CI
 deploy a test environment with your configuration first prior to prod, and
 report any issues if you run into any.
 
-This role can configure the Ceph storage system on your Proxmox hosts.
+This role can configure the Ceph storage system on your Proxmox hosts. The
+following definitions show some of the configurations that are possible.
 
 ```
 pve_ceph_enabled: true
@@ -590,13 +613,16 @@ pve_ceph_pools:
     rule: ssd
     application: rbd
     storage: true
+# This Ceph pool uses custom size/replication values
   - name: hdd
     pgs: 32
     rule: hdd
     application: rbd
     storage: true
-# A CephFS filesystem not defined as a Proxmox storage
+    size: 2
+    min-size: 1
 pve_ceph_fs:
+# A CephFS filesystem not defined as a Proxmox storage
   - name: backup
     pgs: 64
     rule: hdd
@@ -629,3 +655,4 @@ Michael Holasek ([@mholasek](https://github.com/mholasek))
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
 [ceph_volume]: https://github.com/ceph/ceph-ansible/blob/master/library/ceph_volume.py
+[ha-group]: https://pve.proxmox.com/wiki/High_Availability#ha_manager_groups

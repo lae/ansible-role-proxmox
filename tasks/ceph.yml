@@ -73,7 +73,7 @@
     with_items: "{{ _existing_ceph_volumes_tmp }}"
     tags: ceph_volume
 
-  - name: Change osd list (remove existing osds from the list) 
+  - name: Change osd list (remove existing osds from the list)
     set_fact:
       pve_ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
     tags: ceph_volume
@@ -86,7 +86,7 @@
       creates: '{{ item.device }}1'
     with_items: '{{ pve_ceph_osds_diff }}'
 
-  tags: create_osd  
+  tags: create_osd
 
 - block:
   - name: List Ceph CRUSH rules
