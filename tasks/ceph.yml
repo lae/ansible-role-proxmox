@@ -97,7 +97,7 @@
   - name: Create Ceph CRUSH rules
     command: >-
       ceph osd crush rule create-replicated
-      {{ item.name }} default host {{ item.class | default("") }}
+      {{ item.name }} default {{ item.type | default ("host") }} {{ item.class | default("") }}
     when: item.name not in _ceph_crush.stdout_lines
     with_items: '{{ pve_ceph_crush_rules }}'
 
