@@ -54,6 +54,7 @@
     register: _ceph_volume_data
     loop: '{{ pve_ceph_osds }}'
     tags: ceph_volume
+    changed_when: false #This is merely a getter function and no change ever takes place
 
   - name: Initialize osd variables
     set_fact:
