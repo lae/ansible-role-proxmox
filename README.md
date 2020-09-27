@@ -600,11 +600,19 @@ pve_ceph_osds:
   - device: /dev/sdd
     block.db: /dev/sdb1
 # Crush rules for different storage classes
+# By default 'type' is set to host, you can find valid types at (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
+# listed under 'TYPES AND BUCKETS'
 pve_ceph_crush_rules:
+  - name: replicated_rule
+    type: osd # This is an example of how you can override a pre-existing rule
   - name: ssd
     class: ssd
+    type: osd
+    min-size: 2
+    max-size: 8
   - name: hdd
     class: hdd
+    type: host
 # 2 Ceph pools for VM disks which will also be defined as Proxmox storages
 # Using different CRUSH rules
 pve_ceph_pools:
