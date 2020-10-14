@@ -596,9 +596,16 @@ pve_ceph_cluster_network: '172.10.1.0/24'
 pve_ceph_osds:
   # OSD with everything on the same device
   - device: /dev/sdc
+  # encrypted OSD with everything on the same device
+  - device: /dev/sdc
+    encrypted: 1
   # OSD with block.db/WAL on another device
   - device: /dev/sdd
     block.db: /dev/sdb1
+  # encrypted OSD with block.db/WAL on another device
+  - device: /dev/sdd
+    block.db: /dev/sdb1
+    encrypted: 1
 # Crush rules for different storage classes
 # By default 'type' is set to host, you can find valid types at (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
 # listed under 'TYPES AND BUCKETS'

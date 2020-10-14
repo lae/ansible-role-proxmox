@@ -81,6 +81,7 @@
   - name: Create Ceph OSDs
     command: >-
       pveceph osd create {{ item.device }}
+      {% if "encrypted" in item %}--encrypted {{ item["encrypted"] }}{% endif %}
       {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
     args:
       creates: '{{ item.device }}1'
