@@ -596,16 +596,16 @@ pve_ceph_cluster_network: '172.10.1.0/24'
 pve_ceph_osds:
   # OSD with everything on the same device
   - device: /dev/sdc
-  # encrypted OSD with everything on the same device
-  - device: /dev/sdc
-    encrypted: 1
   # OSD with block.db/WAL on another device
   - device: /dev/sdd
     block.db: /dev/sdb1
+  # encrypted OSD with everything on the same device
+  - device: /dev/sdc
+    encrypted: true
   # encrypted OSD with block.db/WAL on another device
   - device: /dev/sdd
     block.db: /dev/sdb1
-    encrypted: 1
+    encrypted: true
 # Crush rules for different storage classes
 # By default 'type' is set to host, you can find valid types at (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
 # listed under 'TYPES AND BUCKETS'
@@ -643,6 +643,8 @@ pve_ceph_fs:
 
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
+
+`pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
 
 ## Contributors
 
