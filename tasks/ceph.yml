@@ -54,6 +54,7 @@
     register: _ceph_volume_data
     loop: '{{ pve_ceph_osds }}'
     tags: ceph_volume
+    changed_when: false #Merely gets the list of ceph volumes so never changes anything
 
   - name: Initialize osd variables
     set_fact:
@@ -100,6 +101,49 @@
       {{ item.name }} default {{ item.type | default ("host") }} {{ item.class | default("") }}
     when: item.name not in _ceph_crush.stdout_lines
     with_items: '{{ pve_ceph_crush_rules }}'
+
+  - name: Download and decompress crushmap
+    command: "{{ item }}"
+    with_items:
+      - ceph osd getcrushmap -o crush_map_compressed
+      - crushtool -d crush_map_compressed -o crush_map_decompressed
+    changed_when: false #This is just getting information for us to possibly edit, don't mislead user with 'changed'
+
+  - name: Modify crushmap for rules that should be updated
+    replace:
+      path: crush_map_decompressed
+      regexp: >-
+        rule\s+{{ item.name }}\s+{(?:(?P<space>\s+)id\s+(?P<id>[^\s]+)|\s+type\s+(?P<r_type>[^\s]+)|\s+min_size[ ](?P<min>[^\s]+)|\s+max_size\s+(?P<max>[^\s]+)|\s+step\s+take\s+default(?:\n|\s+class\s+(?P<class>[^\n]*))|\s+step\s+(?P<choose>chooseleaf|choose).*?type\s+(?P<type>[^\s]+))+(?:.|\n)*?}
+      replace: >-
+        rule {{item.name}} {
+        \g<space>id \g<id>
+        \g<space>type \g<r_type>
+        \g<space>min_size {{ (pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].min_size | default("\g<min>") | trim }}
+        \g<space>max_size {{ (pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].max_size | default("\g<max>") | trim }}
+        {%- if ((pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].class | default(False)) -%}
+          \g<space>step take default class {{ (pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].class }}
+        {%- else -%}
+          \g<space>step take default\g<class>
+        {%- endif -%}
+        \g<space>step \g<choose> firstn 0 type {{ (pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].type | default("\g<type>") | trim }}
+        \g<space>step emit\n}
+    loop: '{{ pve_ceph_crush_rules }}'
+    register: _crushmap
+
+  - name: Compress and upload changed crushmap
+    command: "{{ item }}"
+    with_items:
+      - crushtool -c crush_map_decompressed -o new_crush_map_compressed
+      - ceph osd setcrushmap -i new_crush_map_compressed
+    when: _crushmap.changed
+
+  - name: Cleanup temp files from generating new crushmap
+    file:
+      path:
+        - crush_map_compressed
+        - crush_map_decompressed
+        - new_crush_map_compressed
+      state: absent
 
   - name: List Ceph Pools
     command: ceph osd pool ls
