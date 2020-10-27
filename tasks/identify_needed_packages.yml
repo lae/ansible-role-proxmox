@@ -6,6 +6,7 @@
       - open-iscsi
       - ksm-control-daemon
       - systemd-sysv
+      - ifupdown2
 
 - name: Stage patch package if we need to patch the subscription message
   set_fact:
