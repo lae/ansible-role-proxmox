@@ -77,6 +77,11 @@
       ]
   when: "pve_cluster_enabled | bool"
 
+- name: Ensure gpg is installed
+  apt:
+    name: gpg
+    state: present
+
 - name: Trust Proxmox' packaging key
   apt_key:
     data: "{{ lookup('file', pve_release_key) }}"
