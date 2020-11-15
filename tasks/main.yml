@@ -36,6 +36,7 @@
 
 
       {% endfor %}"
+  when: "pve_cluster_enabled | bool"
 
 - name: Remove conflicting lines in hosts files
   lineinfile:
@@ -74,6 +75,12 @@
         "{{ hostvars[item].ansible_fqdn }}",
         "{{ hostvars[item].ansible_hostname }}"
       ]
+  when: "pve_cluster_enabled | bool"
+
+- name: Ensure gpg is installed
+  apt:
+    name: gpg
+    state: present
 
 - name: Trust Proxmox' packaging key
   apt_key:
@@ -168,7 +175,9 @@
     src: "01_pass_correct_format_for_linkX.patch"
     basedir: /
     strip: 1
-  when: ansible_distribution_release == 'buster'
+  when:
+    - ansible_distribution_release == 'buster'
+    - pve_cluster_enabled | bool
 
 - import_tasks: pve_cluster_config.yml
   when: "pve_cluster_enabled | bool"

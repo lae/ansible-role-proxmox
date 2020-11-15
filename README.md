@@ -249,8 +249,6 @@ iface vmbr0 inet static
     address {{ lookup('dig', ansible_fqdn) }}
     gateway 10.4.0.1
     netmask 255.255.255.0
-    dns-nameservers 10.2.2.4 10.3.2.4
-    dns-search local
     bridge_ports enp2s0f0
     bridge_stp off
     bridge_fd 0
@@ -460,6 +458,10 @@ pve_cluster_ha_groups:
 All configuration options supported in the datacenter.cfg file are documented in the
 [Proxmox manual datacenter.cfg section][datacenter-cfg].
 
+In order for live reloading of network interfaces to work via the PVE web UI,
+you need to install the `ifupdown2` package. Note that this will remove
+`ifupdown`. You can specify this using the `pve_extra_packages` role variable.
+
 ## Dependencies
 
 This role does not install NTP, so you should configure NTP yourself, e.g. with
@@ -599,12 +601,27 @@ pve_ceph_osds:
   # OSD with block.db/WAL on another device
   - device: /dev/sdd
     block.db: /dev/sdb1
+  # encrypted OSD with everything on the same device
+  - device: /dev/sdc
+    encrypted: true
+  # encrypted OSD with block.db/WAL on another device
+  - device: /dev/sdd
+    block.db: /dev/sdb1
+    encrypted: true
 # Crush rules for different storage classes
+# By default 'type' is set to host, you can find valid types at (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
+# listed under 'TYPES AND BUCKETS'
 pve_ceph_crush_rules:
+  - name: replicated_rule
+    type: osd # This is an example of how you can override a pre-existing rule
   - name: ssd
     class: ssd
+    type: osd
+    min-size: 2
+    max-size: 8
   - name: hdd
     class: hdd
+    type: host
 # 2 Ceph pools for VM disks which will also be defined as Proxmox storages
 # Using different CRUSH rules
 pve_ceph_pools:
@@ -632,6 +649,8 @@ pve_ceph_fs:
 
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
+
+`pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
 
 ## Contributors
 
