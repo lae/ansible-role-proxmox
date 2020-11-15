@@ -249,8 +249,6 @@ iface vmbr0 inet static
     address {{ lookup('dig', ansible_fqdn) }}
     gateway 10.4.0.1
     netmask 255.255.255.0
-    dns-nameservers 10.2.2.4 10.3.2.4
-    dns-search local
     bridge_ports enp2s0f0
     bridge_stp off
     bridge_fd 0
