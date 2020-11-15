@@ -458,6 +458,10 @@ pve_cluster_ha_groups:
 All configuration options supported in the datacenter.cfg file are documented in the
 [Proxmox manual datacenter.cfg section][datacenter-cfg].
 
+In order for live reloading of network interfaces to work via the PVE web UI,
+you need to install the `ifupdown2` package. Note that this will remove
+`ifupdown`. You can specify this using the `pve_extra_packages` role variable.
+
 ## Dependencies
 
 This role does not install NTP, so you should configure NTP yourself, e.g. with
