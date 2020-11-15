@@ -415,6 +415,7 @@ pve_groups: [] # List of group definitions to manage in PVE. See section on User
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
+pve_domains_cfg: {} # List of realms to use as authentication sources in the PVE domains.cfg config file.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -459,6 +460,36 @@ pve_cluster_ha_groups:
 
 All configuration options supported in the datacenter.cfg file are documented in the
 [Proxmox manual datacenter.cfg section][datacenter-cfg].
+
+You can set realms / domains as authentication sources in the `domains.cfg` configuration file.
+If this file is not present, only the `Linux PAM` and `Proxmox VE authentication server` realms
+are available. Supported types are `pam`, `pve`, `ad` and `ldap`.
+One realm should have the `default: 1` property to mark it as the default:
+
+```
+pve_domains_cfg:
+    - name: pam
+      type: pam
+      comment: Linux PAM standard authentication
+    - name: pve
+      type: pve
+      comment: Proxmox VE authentication server
+    - name: AD
+      type: ad
+      comment: Active Directory authentication
+      domain: yourdomain.com
+      server1: dc01.yourdomain.com
+      default: 1
+      secure: 1
+      server2: dc02.yourdomain.com
+    - name: LDAP
+      type: ldap
+      base_dn: CN=Users,dc=yourdomain,dc=com
+      server1: ldap1.yourdomain.com
+      user_attr: uid
+      secure: 1
+      server2: ldap2.yourdomain.com
+```
 
 ## Dependencies
 
