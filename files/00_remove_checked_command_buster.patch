@@ -1,7 +1,46 @@
 diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
 --- /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
 +++ /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-@@ -7446,7 +7446,7 @@
+@@ -444,38 +444,6 @@
+ 	Ext.Ajax.request(newopts);
+     },
+ 
+-    checked_command: function(orig_cmd) {
+-	Proxmox.Utils.API2Request(
+-	    {
+-		url: '/nodes/localhost/subscription',
+-		method: 'GET',
+-		failure: function(response, opts) {
+-		    Ext.Msg.alert(gettext('Error'), response.htmlStatus);
+-		},
+-		success: function(response, opts) {
+-		    let res = response.result;
+-		    if (res === null || res === undefined || !res || res
+-			.data.status.toLowerCase() !== 'active') {
+-			Ext.Msg.show({
+-			    title: gettext('No valid subscription'),
+-			    icon: Ext.Msg.WARNING,
+-			    message: Proxmox.Utils.getNoSubKeyHtml(res.data.url),
+-			    buttons: Ext.Msg.OK,
+-			    callback: function(btn) {
+-				if (btn !== 'ok') {
+-				    return;
+-				}
+-				orig_cmd();
+-			    },
+-			});
+-		    } else {
+-			orig_cmd();
+-		    }
+-		},
+-	    },
+-	);
+-    },
+-
+     assemble_field_data: function(values, data) {
+         if (!Ext.isObject(data)) {
+ 	    return;
+@@ -8006,7 +7974,7 @@
  	let update_btn = new Ext.Button({
  	    text: gettext('Refresh'),
  	    handler: function() {
@@ -13,15 +52,7 @@ diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/j
 diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pvemanagerlib.js
 --- /usr/share/pve-manager/js/pvemanagerlib.js
 +++ /usr/share/pve-manager/js/pvemanagerlib.js
-@@ -3151,7 +3151,6 @@
- 		handler: function(data) {
- 		    me.login = null;
- 		    me.updateLoginData(data);
--		    Proxmox.Utils.checked_command(function() {}); // display subscription status
- 		}
- 	    });
- 	}
-@@ -28330,7 +28329,7 @@
+@@ -33794,7 +33794,7 @@
  		{
  		    text: gettext('System Report'),
  		    handler: function() {
@@ -30,7 +61,7 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
  		    },
  		},
  	    ],
-@@ -28428,7 +28427,7 @@
+@@ -33892,7 +33892,7 @@
  	var version_btn = new Ext.Button({
  	    text: gettext('Package versions'),
  	    handler: function(){
@@ -38,3 +69,12 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
 +		me.showVersions();
  	    }
  	});
+ 
+@@ -45136,7 +45136,6 @@
+ 		handler: function(data) {
+ 		    me.login = null;
+ 		    me.updateLoginData(data);
+-		    Proxmox.Utils.checked_command(function() {}); // display subscription status
+ 		}
+ 	    });
+ 	}
