@@ -35,7 +35,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Allow Admins group Administrator access to /
+- name: Create a role for monitoring with given privileges
   proxmox_role:
     name: "monitoring"
     privileges: [ "Sys.Modify", "Sys.Audit", "Datastore.Audit", "VM.Monitor", "VM.Audit" ]
@@ -45,6 +45,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
 
@@ -66,9 +67,16 @@ class ProxmoxRole(object):
         constituents = []
 
         self.roles = []
-        for role in self.existing_roles:
-          self.roles.append(role.roleid)
-          
+        for existing_role in self.existing_roles:
+          self.roles.append(existing_role.get('roleid'))
+
+    def lookup(self):
+        self.roles = []
+        for existing_role in self.existing_roles:
+          if existing_role.get('roleid') == self.name:
+            return existing_role
+        
+        return None
 
     def exists(self):
         if self.name not in self.roles:
@@ -82,16 +90,45 @@ class ProxmoxRole(object):
         args['privs'] = ','.join(self.privileges)
 
         return args
+    
+    def remove_role(self):
+        try:
+            pvesh.delete("access/roles/{}".format(self.name))
+            return (True, None)
+        except ProxmoxShellError as e:
+            return (False, e.message)
 
-    def set_role(self, delete=0):
-        args = self.prepare_acl_args()
+    def create_role(self):
+        new_role = self.prepare_role_args()
 
         try:
-            pvesh.set("access/roles", delete=delete, **args)
-            return None
+            pvesh.create("access/roles", **new_role)
+            return (True, None)
         except ProxmoxShellError as e:
-            return e.message
+            return (False, e.message)
 
+    def modify_role(self):
+        existing_role = self.lookup()
+        modified_role = self.prepare_role_args()
+        updated_fields = []
+        error = None
+
+        for key in modified_role:
+          updated_fields.append(key)
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=bool(updated_fields), expected_changes=updated_fields)
+
+        if not updated_fields:
+            # No changes necessary
+            return (updated_fields, error)
+
+        try:
+            pvesh.set("access/roles/{}".format(self.name), **modified_role)
+        except ProxmoxShellError as e:
+            error = e.message
+
+        return (updated_fields, error)
 def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
     module = AnsibleModule(
@@ -105,29 +142,36 @@ def main():
 
     role = ProxmoxRole(module)
 
+    changed = False
     error = None
     result = {}
+    result['name'] = role.name
     result['state'] = role.state
     result['changed'] = False
 
     if role.state == 'absent':
         if role.exists():
-            result['changed'] = True
             if module.check_mode:
-                module.exit_json(**result)
+                module.exit_json(changed=True)
 
-            error = role.set_role(delete=1)
-    elif acl.state == 'present':
+            (changed, error) = role.remove_role()
+    elif role.state == 'present':
         if not role.exists():
-            result['changed'] = True
             if module.check_mode:
-                module.exit_json(**result)
+                module.exit_json(changed=True)
 
-            error = role.set_role()
+            (changed, error) = role.create_role()
+        else:
+            (updated_fields, error) = role.modify_role()
+
+            if updated_fields:
+                changed = True
+                result['updated_fields'] = updated_fields
 
     if error is not None:
-        module.fail_json(path=acl.path, msg=error)
+        module.fail_json(name=role.name, msg=error)
 
+    result['changed'] = changed
     module.exit_json(**result)
 
 if __name__ == '__main__':
