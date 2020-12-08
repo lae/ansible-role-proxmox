@@ -52,7 +52,7 @@ class ProxmoxRole(object):
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
-        self.privs = module.params['privs']
+        self.privileges = module.params['privileges']
         self.state = module.params['state']
 
         try:
@@ -78,8 +78,8 @@ class ProxmoxRole(object):
 
     def prepare_role_args(self):
         args = {}
-        args['name'] = self.name
-        args['privs'] = ','.join(self.privs)
+        args['roleid'] = self.name
+        args['privs'] = ','.join(self.privileges)
 
         return args
 
@@ -97,7 +97,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(type='str', required=True),
-            privs=dict(type='list', required=True),
+            privileges=dict(type='list', required=True),
             state=dict(default='present', choices=['present', 'absent'], type='str')
         ),
         supports_check_mode=True
