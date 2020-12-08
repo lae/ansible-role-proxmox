@@ -1,5 +1,5 @@
----
 # defaults file for ansible-role-proxmox
+---
 pve_group: proxmox
 pve_fetch_directory: fetch
 pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
@@ -34,9 +34,14 @@ pve_cluster_clustername: "{{ pve_group }}"
 pve_datacenter_cfg: {}
 pve_cluster_ha_groups: []
 pve_ssl_letsencrypt: false
+# additional roles for your cluster (f.e. for monitoring)
+pve_roles: []
+# additional groups
 pve_groups: []
+# additional users (except root)
 pve_users: []
 pve_acls: []
 pve_storages: []
+# SSH port for communication between cluster nodes
 pve_ssh_port: 22
 pve_manage_ssh: true
