@@ -64,8 +64,6 @@ class ProxmoxRole(object):
         self.parse_roles()
 
     def parse_roles(self):
-        constituents = []
-
         self.roles = []
         for existing_role in self.existing_roles:
           self.roles.append(existing_role.get('roleid'))
@@ -74,7 +72,10 @@ class ProxmoxRole(object):
         self.roles = []
         for existing_role in self.existing_roles:
           if existing_role.get('roleid') == self.name:
-            return existing_role
+            args = {}
+            args['roleid'] = existing_role.get('roleid')
+            args['privs'] = ','.join(sorted(existing_role.get('privs').split(',')))
+            return args
         
         return None
 
@@ -84,10 +85,11 @@ class ProxmoxRole(object):
 
         return True
 
-    def prepare_role_args(self):
+    def prepare_role_args(self, appendKey=True):
         args = {}
-        args['roleid'] = self.name
-        args['privs'] = ','.join(self.privileges)
+        if appendKey:
+          args['roleid'] = self.name
+        args['privs'] = ','.join(sorted(self.privileges))
 
         return args
     
@@ -109,12 +111,23 @@ class ProxmoxRole(object):
 
     def modify_role(self):
         existing_role = self.lookup()
-        modified_role = self.prepare_role_args()
+        modified_role = self.prepare_role_args(appendKey=False)
         updated_fields = []
         error = None
 
         for key in modified_role:
-          updated_fields.append(key)
+            if key not in existing_role:
+                updated_fields.append(key)
+            else:
+                new_value = modified_role.get(key)
+                old_value = existing_role.get(key)
+                if isinstance(old_value, list):
+                    old_value = str(old_value.sort())
+                if isinstance(new_value, list):
+                    new_value = str(new_value.sort())
+                    
+                if new_value != old_value:
+                    updated_fields.append(key)
 
         if self.module.check_mode:
             self.module.exit_json(changed=bool(updated_fields), expected_changes=updated_fields)
@@ -129,6 +142,7 @@ class ProxmoxRole(object):
             error = e.message
 
         return (updated_fields, error)
+
 def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
     module = AnsibleModule(
