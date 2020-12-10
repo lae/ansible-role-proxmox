@@ -122,9 +122,9 @@ class ProxmoxRole(object):
                 new_value = modified_role.get(key)
                 old_value = existing_role.get(key)
                 if isinstance(old_value, list):
-                    old_value = str(old_value.sort())
+                    old_value = ','.join(sorted(old_value))
                 if isinstance(new_value, list):
-                    new_value = str(new_value.sort())
+                    new_value = ','.join(sorted(new_value))
                     
                 if new_value != old_value:
                     updated_fields.append(key)
