@@ -409,6 +409,7 @@ pve_ceph_crush_rules: [] # List of CRUSH rules to create
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
 pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
+pve_roles: [] # Added more roles with specific privileges. See section on User Management.
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
@@ -513,10 +514,19 @@ pve_users:
 Refer to `library/proxmox_user.py` [link][user-module] and
 `library/proxmox_group.py` [link][group-module] for module documentation.
 
-For managing ACLs, a similar module is employed, but the main difference is that
-most of the parameters only accept lists (subject to change):
+For managing roles and ACLs, a similar module is employed, but the main
+difference is that most of the parameters only accept lists (subject to
+change):
 
 ```
+pve_roles:
+  - name: Monitoring
+    privileges:
+      - "Sys.Modify"
+      - "Sys.Audit"
+      - "Datastore.Audit"
+      - "VM.Monitor"
+      - "VM.Audit"
 pve_acls:
   - path: /
     roles: [ "Administrator" ]
@@ -529,7 +539,8 @@ pve_acls:
       - test_users
 ```
 
-Refer to `library/proxmox_acl.py` [link][acl-module] for module documentation.
+Refer to `library/proxmox_role.py` [link][user-module] and 
+`library/proxmox_acl.py` [link][acl-module] for module documentation.
 
 ## Storage Management
 
