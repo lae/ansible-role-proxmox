@@ -20,6 +20,14 @@ pve_cluster_ha_groups:
     comment: "Resources on proxmox-5-01"
     nodes: proxmox-5-01
     restricted: 1
+pve_roles:
+  - name: Monitoring
+    privileges:
+      - "Sys.Modify"
+      - "Sys.Audit"
+      - "Datastore.Audit"
+      - "VM.Monitor"
+      - "VM.Audit"
 pve_groups:
   - name: Admins
     comment: Administrators of this PVE cluster

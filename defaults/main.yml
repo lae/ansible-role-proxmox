@@ -34,6 +34,8 @@ pve_cluster_clustername: "{{ pve_group }}"
 pve_datacenter_cfg: {}
 pve_cluster_ha_groups: []
 pve_ssl_letsencrypt: false
+# additional roles for your cluster (f.e. for monitoring)
+pve_roles: []
 pve_groups: []
 pve_users: []
 pve_acls: []
