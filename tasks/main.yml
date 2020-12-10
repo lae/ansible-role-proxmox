@@ -253,7 +253,7 @@
     path: "/etc/pve/datacenter.cfg"
   register: _datacenter_cfg
   when:
-    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
     - pve_datacenter_cfg | length > 0
 
 - name: Create datacenter.cfg if it does not exist
