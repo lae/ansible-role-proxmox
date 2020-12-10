@@ -199,7 +199,7 @@
     state: "{{ item.state | default('present') }}"
     comment: "{{ item.comment | default(omit) }}"
   with_items: "{{ pve_groups }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox user accounts
   proxmox_user:
@@ -214,7 +214,7 @@
     password: "{{ item.password | default(omit) }}"
     expire: "{{ item.expire | default(omit) }}"
   with_items: "{{ pve_users }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox ACLs
   proxmox_acl:
@@ -224,7 +224,7 @@
     groups: "{{ item.groups | default([]) }}"
     users: "{{ item.users | default([]) }}"
   with_items: "{{ pve_acls }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox Storage
   proxmox_storage:
@@ -246,24 +246,24 @@
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
   with_items: "{{ pve_storages }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
 
 - name: Check datacenter.cfg exists
   stat:
     path: "/etc/pve/datacenter.cfg"
   register: _datacenter_cfg
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
-    - "pve_datacenter_cfg | length > 0"
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
 
 - name: Create datacenter.cfg if it does not exist
   file:
     path: "/etc/pve/datacenter.cfg"
     state: "touch"
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
-    - "pve_datacenter_cfg | length > 0"
-    - "not _datacenter_cfg.stat.exists | bool"
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
+    - not _datacenter_cfg.stat.exists
 
 - name: Configure datacenter.cfg
   copy:
@@ -276,8 +276,8 @@
       {{ k }}: {{ v }}
       {% endfor %}
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
-    - "pve_datacenter_cfg | length > 0"
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_datacenter_cfg | length > 0
 
 - import_tasks: ssl_config.yml
   when:
