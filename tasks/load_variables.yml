@@ -41,3 +41,19 @@
       ["{{ ansible_fqdn }}", "{{ ansible_hostname }}",
       "{{ pve_cluster_addr0 }}",
       {% if pve_cluster_addr1 is defined %}"{{ pve_cluster_addr1 }}"{% endif %}]
+
+- block:
+  # validate acme account
+    - name: Ensure ACME is not enabled when an SSL key/certificate is provided
+      fail:
+        msg: "You cannot use ACME/Let's Encrypt while using your own private key/certificate."
+      when:
+        - "pve_ssl_private_key is defined"
+
+    - name: Ensure contact email is specified when using Let's Encrypt
+      fail:
+        msg: "Please set pve_acme_contact to a valid email."
+      when:
+        - "pve_acme_contact is not defined"
+  when:
+    - "pve_acme_enabled | bool"
