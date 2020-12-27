@@ -394,6 +394,7 @@ pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
 pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS packages
 # pve_zfs_options: "" # modprobe parameters to pass to zfs module on boot/modprobe
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
+pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
@@ -540,14 +541,14 @@ pve_acls:
       - test_users
 ```
 
-Refer to `library/proxmox_role.py` [link][user-module] and 
+Refer to `library/proxmox_role.py` [link][user-module] and
 `library/proxmox_acl.py` [link][acl-module] for module documentation.
 
 ## Storage Management
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs` ,`lvm` and `lvmthin`.
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, and `zfspool`.
 Here are some examples.
 
 ```
@@ -591,6 +592,27 @@ pve_storages:
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+  - name: zfs1
+    type: zfspool
+    content: [ "images", "rootdir" ]
+    pool: rpool/data
+    sparse: true
+```
+
+Some Notes on ZFS:
+Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
+If you want to store the other content types on a ZFS volume, you need to specify
+them with type `dir`, path `/<POOL>/<VOLUME>` and add an entry in
+`pve_zfs_create_volumes`. This example adds a `iso` storage on a ZFS pool:
+
+```
+pve_zfs_create_volumes:
+  - rpool/iso
+pve_storages:
+  - name: iso
+    type: dir
+    path: /rpool/iso
+    content: [ "iso" ]
 ```
 
 Refer to `library/proxmox_storage.py` [link][storage-module] for module

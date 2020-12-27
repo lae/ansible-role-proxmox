@@ -257,6 +257,13 @@
   when: item.type == "zfspool"
   tags: storage
 
+- name: Create ZFS Volumes specified by user
+  zfs:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ pve_zfs_create_volumes }}"
+  tags: storage
+
 - name: Configure Proxmox Storage
   proxmox_storage:
     name: "{{ item.name }}"
