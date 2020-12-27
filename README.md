@@ -590,7 +590,6 @@ pve_storages:
     sparse: true
 ```
 
-Some Notes on ZFS:
 Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
 If you want to store the other content types on a ZFS volume, you need to specify
 them with type `dir`, path `/<POOL>/<VOLUME>` and add an entry in
