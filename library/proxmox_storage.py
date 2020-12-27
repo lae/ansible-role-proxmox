@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "zfspool" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -54,7 +54,7 @@ options:
     pool:
         required: false
         description:
-            - Ceph pool name.
+            - Ceph/ZFS pool name.
     monhost:
         required: false
         type: list
@@ -94,6 +94,10 @@ options:
         required: false
         description:
             - The name of the LVM thin pool.
+    sparse:
+        required: false
+        description:
+            - Use ZFS thin-provisioning.
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -140,6 +144,13 @@ EXAMPLES = '''
     content: [ "images", "rootdir" ]
     vgname: vg2
     thinpool: data
+- name: Create a ZFS storage type
+  proxmox_storage:
+    name: zfs1
+    type: zfspool
+    content: [ "images", "rootdir" ]
+    pool: rpool/data
+    sparse: true
 '''
 
 RETURN = '''
