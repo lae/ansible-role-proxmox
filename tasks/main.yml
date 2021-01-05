@@ -254,7 +254,7 @@
     name: "{{ item.pool }}"
     state: present
   with_items: "{{ pve_storages }}"
-  when: item.type == "zfspool"
+  when: "item.type == 'zfspool'"
   tags: storage
 
 - name: Create ZFS Volumes specified by user
