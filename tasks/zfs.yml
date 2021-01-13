@@ -24,4 +24,4 @@
     regexp: '^#?ZED_EMAIL_ADDR='
   notify:
     - restart zfs-zed
-  when: pve_zfs_zed_email is defined
+  when: "pve_zfs_zed_email is defined"

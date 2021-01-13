@@ -1,5 +1,5 @@
----
 # tasks file for ansible-role-proxmox
+---
 - import_tasks: load_variables.yml
 
 - name: Ensure that facts are present for all cluster hosts
@@ -139,31 +139,30 @@
   until: _proxmox_install is succeeded
 
 - block:
-  - name: Remove automatically installed PVE Enterprise repo configuration
-    apt_repository:
-      repo: "{{ item }}"
-      filename: pve-enterprise
-      state: absent
-    with_items:
-      - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
-      - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+    - name: Remove automatically installed PVE Enterprise repo configuration
+      apt_repository:
+        repo: "{{ item }}"
+        filename: pve-enterprise
+        state: absent
+      with_items:
+        - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
+        - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
 
-  - name: Remove subscription check wrapper function in web UI
-    patch:
-      src: "00_remove_checked_command_{{ ansible_distribution_release }}.patch"
-      basedir: /
-      strip: 1
-      backup: yes
-    when:
-      - "pve_remove_subscription_warning | bool"
-
+    - name: Remove subscription check wrapper function in web UI
+      patch:
+        src: "00_remove_checked_command_{{ ansible_distribution_release }}.patch"
+        basedir: /
+        strip: 1
+        backup: yes
+      when:
+        - "pve_remove_subscription_warning | bool"
   when:
     - "'pve-no-subscription' in pve_repository_line"
 
 - import_tasks: kernel_updates.yml
 
 - import_tasks: ipmi_watchdog.yml
-  when: pve_watchdog == 'ipmi'
+  when: "pve_watchdog == 'ipmi'"
 
 - import_tasks: zfs.yml
   when: "pve_zfs_enabled | bool"
@@ -176,8 +175,8 @@
     basedir: /
     strip: 1
   when:
-    - ansible_distribution_release == 'buster'
-    - pve_cluster_enabled | bool
+    - "ansible_distribution_release == 'buster'"
+    - "pve_cluster_enabled | bool"
 
 - import_tasks: pve_cluster_config.yml
   when: "pve_cluster_enabled | bool"
@@ -199,7 +198,7 @@
     state: "{{ item.state | default('present') }}"
     comment: "{{ item.comment | default(omit) }}"
   with_items: "{{ pve_groups }}"
-  when: "not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox user accounts
   proxmox_user:
@@ -214,7 +213,7 @@
     password: "{{ item.password | default(omit) }}"
     expire: "{{ item.expire | default(omit) }}"
   with_items: "{{ pve_users }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
 - name: Configure Proxmox ACLs
   proxmox_acl:
@@ -224,7 +223,7 @@
     groups: "{{ item.groups | default([]) }}"
     users: "{{ item.users | default([]) }}"
   with_items: "{{ pve_acls }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
 - name: Create ZFS Pools
   zfs:
@@ -262,7 +261,7 @@
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
   with_items: "{{ pve_storages }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
   tags: storage
 
 - name: Check datacenter.cfg exists
@@ -270,17 +269,17 @@
     path: "/etc/pve/datacenter.cfg"
   register: _datacenter_cfg
   when:
-    - not pve_cluster_enabled or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
-    - pve_datacenter_cfg | length > 0
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "pve_datacenter_cfg | length > 0"
 
 - name: Create datacenter.cfg if it does not exist
   file:
     path: "/etc/pve/datacenter.cfg"
     state: "touch"
   when:
-    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
-    - pve_datacenter_cfg | length > 0
-    - not _datacenter_cfg.stat.exists
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "pve_datacenter_cfg | length > 0"
+    - "not _datacenter_cfg.stat.exists"
 
 - name: Configure datacenter.cfg
   copy:
@@ -293,13 +292,13 @@
       {{ k }}: {{ v }}
       {% endfor %}
   when:
-    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
-    - pve_datacenter_cfg | length > 0
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "pve_datacenter_cfg | length > 0"
 
 - import_tasks: ssl_config.yml
   when:
-    - pve_ssl_private_key is defined
-    - pve_ssl_certificate is defined
+    - "pve_ssl_private_key is defined"
+    - "pve_ssl_certificate is defined"
 
 - import_tasks: ssl_letsencrypt.yml
   when: "pve_ssl_letsencrypt | bool"

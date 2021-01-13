@@ -104,16 +104,16 @@
       with_items: "{{ pve_cluster_ha_groups }}"
 
     - block:
-      - name: pvedaemon service status
-        shell: "journalctl --no-pager -xu pvedaemon.service"
-        changed_when: False
-      - name: pve-cluster service status
-        shell: "journalctl --no-pager -xu pve-cluster.service"
-        changed_when: False
-      - name: pveproxy service status
-        shell: "journalctl --no-pager -xu pveproxy.service"
-        changed_when: False
-      - name: hosts file
-        shell: "cat /etc/hosts"
-        changed_when: False
+        - name: pvedaemon service status
+          shell: "journalctl --no-pager -xu pvedaemon.service"
+          changed_when: False
+        - name: pve-cluster service status
+          shell: "journalctl --no-pager -xu pve-cluster.service"
+          changed_when: False
+        - name: pveproxy service status
+          shell: "journalctl --no-pager -xu pveproxy.service"
+          changed_when: False
+        - name: hosts file
+          shell: "cat /etc/hosts"
+          changed_when: False
       ignore_errors: yes

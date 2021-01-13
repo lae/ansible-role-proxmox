@@ -5,18 +5,12 @@
   register: _pve_kernel_update
   when: "pve_reboot_on_kernel_update | bool"
 
-- block:
-  - name: Reboot for kernel update
-    shell: "sleep 5 && shutdown -r now 'PVE kernel update detected by Ansible'"
-    async: 1
-    poll: 0
-
-  - name: Wait for server to come back online
-    wait_for_connection:
-      delay: 60
+- name: Reboot for kernel update
+  reboot:
+    msg: "PVE kernel update detected by Ansible"
   when:
     - "pve_reboot_on_kernel_update | bool"
-    - _pve_kernel_update.new_kernel_exists
+    - "_pve_kernel_update.new_kernel_exists"
 
 - name: Collect kernel package information
   collect_kernel_info:
