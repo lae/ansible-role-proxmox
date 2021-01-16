@@ -19,7 +19,7 @@ install:
   else pip install "ansible${ANSIBLE_VERSION}"; fi;
   pip install --pre ansible-lint; pip install jmespath netaddr
 - ansible --version
-- ansible-galaxy install lae.travis-lxc,v0.10.0
+- ansible-galaxy install lae.travis-lxc,v0.10.1
 - ansible-playbook tests/install.yml -i tests/inventory
 - git archive --format tar.gz HEAD > lae.proxmox.tar.gz && ansible-galaxy install
   lae.proxmox.tar.gz,$(git rev-parse HEAD),lae.proxmox && rm lae.proxmox.tar.gz
