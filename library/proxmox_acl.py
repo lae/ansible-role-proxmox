@@ -99,7 +99,7 @@ class ProxmoxACL(object):
             for constituent in constituents:
                 self.acls.append({
                     "path": self.path,
-                    "propagate": "1", # possibly make this configurable in the module later
+                    "propagate": 1, # possibly make this configurable in the module later
                     "roleid": role,
                     "type": constituent[0],
                     "ugid": constituent[1]
