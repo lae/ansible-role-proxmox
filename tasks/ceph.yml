@@ -87,7 +87,7 @@
     args:
       creates: '{{ item.device }}1'
     with_items: '{{ pve_ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'].version | version_compare('6.2.0','<=')
+    when: ansible_facts.packages['proxmox-ve'].version is version('6.2.0','<=')
   
   
   - name: Create Ceph OSDs
@@ -99,7 +99,7 @@
     args:
       creates: '{{ item.device }}1'
     with_items: '{{ pve_ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'].version | version_compare('6.2.0','>')
+    when: ansible_facts.packages['proxmox-ve'].version is version('6.2.0','>')
   
   tags: create_osd
 
