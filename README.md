@@ -654,7 +654,8 @@ pve_ceph_fs:
 
 Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
 Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
-Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc
+Richard Scott ([@zenntrix]https://github.com/zenntrix)) - Ceph support
 Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
 Jonas Meurer ([@mejo-](https://github.com/mejo-))  

@@ -2,6 +2,10 @@
 # tasks file for ansible-role-proxmox
 - import_tasks: load_variables.yml
 
+- name: Gether package facts
+  package_facts:
+    manager: auto
+
 - name: Ensure that facts are present for all cluster hosts
   assert:
     that:
