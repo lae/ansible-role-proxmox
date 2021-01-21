@@ -96,9 +96,9 @@
       action: create
       data: "{{ item.device }}"
       db: "{{ item['block.db'] | default(omit) }}"
-      db_size: "{{ item['block.db.size'] | default(omit) }}"
+      block_db_size: "{{ item['block.db.size'] | default(omit) }}"
       wal: "{{ item['block.wal'] | default(omit) }}"
-      wal_size: "{{ item['block.wal.size'] | default(omit) }}"
+      block_wal_size: "{{ item['block.wal.size'] | default(omit) }}"
       dmcrypt: "{{ item.encrypted | default(omit) | bool }}"
     with_items: '{{ _ceph_osds_diff }}'
   
