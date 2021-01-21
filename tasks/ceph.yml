@@ -91,30 +91,16 @@
     debug:
       var: _ceph_osds_diff
 
-
   - name: Create Ceph OSDs
-    command: >-
-      pveceph osd create {{ item.device }}
-      {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
-      {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
-    args:
-      creates: '{{ item.device }}1'
+    ceph_volume:
+      action: create
+      data: "{{ item.device }}"
+      db: "{{ item['block.db'] | default(omit) }}"
+      db_size: "{{ item['block.db.size'] | default(omit) }}"
+      wal: "{{ item['block.wal'] | default(omit) }}"
+      wal_size: "{{ item['block.wal.size'] | default(omit) }}"
+      dmcrypt: "{{ item.encryted | bool }}"
     with_items: '{{ _ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.1.0','<')
-  
-  
-  - name: Create Ceph OSDs
-    command: >-
-      pveceph osd create {{ item.device }}
-      {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
-      {% if "block.db" in item %}--db_dev {{ item["block.db"] }}{% endif %}
-      {% if "block.db.size" in item %}--db_size {{ item["block.db.size"] }}{% endif %}
-      {% if "block.wal" in item %}--wal_dev {{ item["block.wal"] }}{% endif %}
-      {% if "block.wal.size" in item %}--wal_size {{ item["block.wal.size"] }}{% endif %}
-    args:
-      creates: '{{ item.device }}1'
-    with_items: '{{ _ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.1.0','>=')
   
   tags: create_osd
 
