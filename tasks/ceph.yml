@@ -99,7 +99,7 @@
       db_size: "{{ item['block.db.size'] | default(omit) }}"
       wal: "{{ item['block.wal'] | default(omit) }}"
       wal_size: "{{ item['block.wal.size'] | default(omit) }}"
-      dmcrypt: "{{ item.encryted | bool }}"
+      dmcrypt: "{{ item.encrypted | default(omit) | bool }}"
     with_items: '{{ _ceph_osds_diff }}'
   
   tags: create_osd
