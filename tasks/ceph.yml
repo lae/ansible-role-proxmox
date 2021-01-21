@@ -74,6 +74,11 @@
     with_items: "{{ _existing_ceph_volumes_tmp }}"
     tags: ceph_volume
 
+  - name: Print list of existing ceph volumes
+    debug:
+      var: _existing_ceph_volumes
+
+
   - name: Change osd list (remove existing osds from the list)
     set_fact:
       pve_ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
@@ -87,7 +92,7 @@
     args:
       creates: '{{ item.device }}1'
     with_items: '{{ pve_ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.2.0','<=')
+    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.1.0','<')
   
   
   - name: Create Ceph OSDs
@@ -98,11 +103,10 @@
       {% if "block.db.size" in item %}--db_size {{ item["block.db.size"] }}{% endif %}
       {% if "block.wal" in item %}--wal_dev {{ item["block.wal"] }}{% endif %}
       {% if "block.wal.size" in item %}--wal_size {{ item["block.wal.size"] }}{% endif %}
-
     args:
       creates: '{{ item.device }}1'
     with_items: '{{ pve_ceph_osds_diff }}'
-    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.2.0','>')
+    when: ansible_facts.packages['proxmox-ve'][0].version is version('6.1.0','>=')
   
   tags: create_osd
 
