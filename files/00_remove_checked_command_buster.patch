@@ -64,10 +64,10 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
 @@ -33892,7 +33892,7 @@
  	var version_btn = new Ext.Button({
  	    text: gettext('Package versions'),
- 	    handler: function(){
+ 	    handler: function() {
 -		Proxmox.Utils.checked_command(function() { me.showVersions(); });
 +		me.showVersions();
- 	    }
+ 	    },
  	});
  
 @@ -45136,7 +45136,6 @@
@@ -75,6 +75,6 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
  		    me.login = null;
  		    me.updateLoginData(data);
 -		    Proxmox.Utils.checked_command(function() {}); // display subscription status
- 		}
+ 		},
  	    });
  	}
