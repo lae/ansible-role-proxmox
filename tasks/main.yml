@@ -8,6 +8,7 @@
       - "hostvars[item].ansible_facts"
     msg: "Could not load facts for {{ item }}. Please run your playbook against all hosts in {{ pve_group }}."
   with_items: "{{ groups[pve_group] }}"
+  when: "pve_cluster_enabled | bool"
 
 - name: Ensure this host is in the group specified
   assert:
