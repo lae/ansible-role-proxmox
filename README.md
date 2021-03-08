@@ -649,6 +649,13 @@ pve_ceph_pools:
     storage: true
     size: 2
     min-size: 1
+# This Ceph pool uses custom autoscale mode : "off" | "on" | "warn"> (default = "warn")
+  - name: vm-storage,
+    pgs: 128,
+    rule: replicated_rule,
+    application: rbd,
+    autoscale_mode: "on",
+    storage: true,
 pve_ceph_fs:
 # A CephFS filesystem not defined as a Proxmox storage
   - name: backup
