@@ -20,6 +20,7 @@ pve_ceph_enabled: false
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'stretch' %}ceph-luminous stretch{% else %}ceph-nautilus buster{% endif %} main"
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
 pve_ceph_mon_group: "{{ pve_group }}"
+pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
 pve_ceph_mds_group: "{{ pve_group }}"
 pve_ceph_osds: []
 pve_ceph_pools: []
