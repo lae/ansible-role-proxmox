@@ -185,7 +185,7 @@ interfaces_template: "interfaces-{{ pve_group }}.j2"
 `pve_group` is set to the group name of our cluster, `pve01` - it will be used
 for the purposes of ensuring all hosts within that group can connect to each
 other and are clustered together. Note that the PVE cluster name will be set to
-this group name as well, unless otherwise specified by `pve_clustername`.
+this group name as well, unless otherwise specified by `pve_cluster_clustername`.
 Leaving this undefined will default to `proxmox`.
 
 `pve_fetch_directory` will be used to download the host public key and root user's
