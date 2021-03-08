@@ -37,7 +37,7 @@
 
 
       {% endfor %}"
-  when: "pve_cluster_enabled | bool"
+  when: "pve_manage_hosts_enabled | bool"
 
 - name: Remove conflicting lines in hosts files
   lineinfile:
@@ -76,7 +76,7 @@
         "{{ hostvars[item].ansible_fqdn }}",
         "{{ hostvars[item].ansible_hostname }}"
       ]
-  when: "pve_cluster_enabled | bool"
+  when: "pve_manage_hosts_enabled | bool"
 
 - name: Ensure gpg is installed
   apt:
@@ -135,6 +135,7 @@
   apt:
     name: "{{ _pve_install_packages }}"
     state: "{{ 'latest' if pve_run_proxmox_upgrades else 'present' }}"
+    update_cache: yes
   retries: 2
   register: _proxmox_install
   until: _proxmox_install is succeeded
@@ -155,6 +156,7 @@
         basedir: /
         strip: 1
         backup: yes
+      ignore_errors: yes
       when:
         - "pve_remove_subscription_warning | bool"
   when:

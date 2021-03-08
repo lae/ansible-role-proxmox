@@ -30,6 +30,7 @@ pve_ceph_crush_rules: []
 # pve_ssl_certificate: "contents of certificate"
 pve_cluster_enabled: no
 pve_cluster_clustername: "{{ pve_group }}"
+pve_manage_hosts_enabled: yes
 # pve_cluster_addr0: "{{ ansible_default_ipv4.address }}"
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 pve_datacenter_cfg: {}
