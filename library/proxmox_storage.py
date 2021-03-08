@@ -318,7 +318,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ["type", "dir", ["path", "content"]],
-            ["type", "rbd", ["pool", "content", "monhost", "username"]],
+            ["type", "rbd", ["pool", "content"]],
             ["type", "nfs", ["server", "content", "export"]],
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
