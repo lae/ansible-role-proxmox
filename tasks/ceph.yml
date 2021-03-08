@@ -161,6 +161,9 @@
         {% if 'rule' in item %}
         --crush_rule {{ item.rule }}
         {% endif %}
+        {% if 'autoscale_mode' in item %}
+        --pg_autoscale_mode {{ item.autoscale_mode }}
+        {% endif %}
         {% if 'pgs' in item %}
         --pg_num {{ item.pgs }}
         {% endif %}
