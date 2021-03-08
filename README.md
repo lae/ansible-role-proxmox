@@ -421,6 +421,7 @@ To enable clustering with this role, configure the following variables appropria
 ```
 pve_cluster_enabled: no # Set this to yes to configure hosts to be clustered together
 pve_cluster_clustername: "{{ pve_group }}" # Should be set to the name of the PVE cluster
+pve_manage_hosts_enabled : yes # Set this to no to NOT configure hosts file (case of using vpn and hosts file is already configured)
 ```
 
 The following variables are used to provide networking information to corosync.
