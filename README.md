@@ -401,6 +401,7 @@ pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-nautilus 
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
+pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}" # Host group containing all Ceph manager hosts
 pve_ceph_mds_group: "{{ pve_group }}" # Host group containing all Ceph metadata server hosts
 pve_ceph_osds: [] # List of OSD disks
 pve_ceph_pools: [] # List of pools to create
