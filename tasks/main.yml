@@ -154,6 +154,8 @@
 
 - name: Install Proxmox VE and related packages
   apt:
+    update_cache: yes
+    cache_valid_time: 3600
     name: "{{ _pve_install_packages }}"
     state: "{{ 'latest' if pve_run_proxmox_upgrades else 'present' }}"
   retries: 2
