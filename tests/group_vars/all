@@ -93,6 +93,17 @@ pve_storages: # This should create 2 different storages.
     content: [ "images", "rootdir" ]
     vgname: vg2
     thinpool: data
+  - name: zfs1
+    type: zfspool
+    content: [ "images", "rootdir" ]
+    pool: rpool/zfs1
+    sparse: true
+  - name: zfs2
+    type: dir
+    content: [ "iso", "vztmpl", "backup" ]
+    path: /rpool/zfs2
+pve_zfs_create_volumes:
+  - rpool/zfs2
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"
