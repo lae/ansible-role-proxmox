@@ -548,7 +548,7 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `lvm` and `lvmthin`.
+types are `dir`, `rbd`, `nfs`, `cephfs` ,`lvm` and `lvmthin`.
 Here are some examples.
 
 ```
@@ -584,6 +584,14 @@ pve_storages:
     content: [ "images", "rootdir" ]
     vgname: vg2
     thinpool: data
+  - name: cephfs1
+    type: cephfs
+    content: [ "snippets", "vztmpl", "iso" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
 ```
 
 Refer to `library/proxmox_storage.py` [link][storage-module] for module

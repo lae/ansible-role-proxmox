@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -140,6 +140,16 @@ EXAMPLES = '''
     content: [ "images", "rootdir" ]
     vgname: vg2
     thinpool: data
+- name: Create an CephFS storage type
+  proxmox_storage:
+    name: cephfs1
+    type: cephfs
+    content: [ "snippets", "vztmpl", "iso" ]
+    nodes: [ "proxmox1", "proxmox2"]
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
 '''
 
 RETURN = '''
@@ -297,7 +307,7 @@ def main():
         content=dict(type='list', required=True, aliases=['storagetype']),
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
-                  choices=["dir", "nfs", "rbd", "lvm", "lvmthin"]),
+                  choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs"]),
         disable=dict(required=False, type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'], type='str'),
         path=dict(default=None, required=False, type='str'),
@@ -317,6 +327,7 @@ def main():
         argument_spec=module_args,
         supports_check_mode=True,
         required_if=[
+            ["type", "cephfs", ["content"]],
             ["type", "dir", ["path", "content"]],
             ["type", "rbd", ["pool", "content"]],
             ["type", "nfs", ["server", "content", "export"]],
