@@ -107,7 +107,9 @@
     filename: ceph
     state: present
   register: _pve_ceph_repo
-  when: "pve_ceph_enabled | bool"
+  when: 
+    - "pve_ceph_enabled | bool"
+    - "inventory_hostname in groups[pve_ceph_nodes]"
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:
@@ -183,7 +185,9 @@
   when: "pve_cluster_enabled | bool"
 
 - import_tasks: ceph.yml
-  when: "pve_ceph_enabled | bool"
+  when: 
+    - "pve_ceph_enabled | bool"
+    - "inventory_hostname in groups[pve_ceph_nodes]"
 
 - name: Configure Proxmox roles
   proxmox_role:
