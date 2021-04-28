@@ -680,6 +680,8 @@ pve_ceph_fs:
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
 
+`pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify on which nodes install Ceph (e.g. if you don't want to install Ceph on all your nodes).
+
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
 
 ## Contributors
