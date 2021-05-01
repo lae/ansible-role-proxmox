@@ -107,9 +107,7 @@
     filename: ceph
     state: present
   register: _pve_ceph_repo
-  when:
-    - "pve_ceph_enabled | bool"
-    - "inventory_hostname in groups[pve_ceph_nodes]"
+  when: "pve_ceph_enabled | bool"
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:
