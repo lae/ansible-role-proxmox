@@ -148,7 +148,6 @@ Now for the flesh of your playbook, `pve01`'s group variables. Create a file
 ```
 ---
 pve_group: pve01
-pve_fetch_directory: "fetch/{{ pve_group }}/"
 pve_watchdog: ipmi
 pve_ssl_private_key: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.key') }}"
 pve_ssl_certificate: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.pem') }}"
@@ -187,10 +186,6 @@ for the purposes of ensuring all hosts within that group can connect to each
 other and are clustered together. Note that the PVE cluster name will be set to
 this group name as well, unless otherwise specified by `pve_cluster_clustername`.
 Leaving this undefined will default to `proxmox`.
-
-`pve_fetch_directory` will be used to download the host public key and root user's
-public key from all hosts within `pve_group`. These are then uploaded to each
-host into the appropriate configuration files.
 
 `pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
 manager to use it. Leave this undefined if you don't want to configure it.
@@ -381,7 +376,6 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
 pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
