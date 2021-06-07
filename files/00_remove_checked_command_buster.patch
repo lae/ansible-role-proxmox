@@ -1,8 +1,8 @@
 diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
 --- /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
 +++ /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-@@ -444,38 +444,6 @@
- 	Ext.Ajax.request(newopts);
+@@ -458,38 +458,6 @@
+	);
      },
  
 -    checked_command: function(orig_cmd) {
@@ -40,7 +40,7 @@ diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/j
      assemble_field_data: function(values, data) {
          if (!Ext.isObject(data)) {
  	    return;
-@@ -8006,7 +7974,7 @@
+@@ -11219,7 +11187,7 @@
  	let update_btn = new Ext.Button({
  	    text: gettext('Refresh'),
  	    handler: function() {
@@ -52,7 +52,7 @@ diff -ur /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/j
 diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pvemanagerlib.js
 --- /usr/share/pve-manager/js/pvemanagerlib.js
 +++ /usr/share/pve-manager/js/pvemanagerlib.js
-@@ -33794,7 +33794,7 @@
+@@ -34331,7 +34331,7 @@
  		{
  		    text: gettext('System Report'),
  		    handler: function() {
@@ -61,7 +61,7 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
  		    },
  		},
  	    ],
-@@ -33892,7 +33892,7 @@
+@@ -34446,7 +34446,7 @@
  	var version_btn = new Ext.Button({
  	    text: gettext('Package versions'),
  	    handler: function() {
@@ -70,11 +70,11 @@ diff -ur /usr/share/pve-manager/js/pvemanagerlib.js /usr/share/pve-manager/js/pv
  	    },
  	});
  
-@@ -45136,7 +45136,6 @@
+@@ -47634,7 +47634,6 @@
  		handler: function(data) {
  		    me.login = null;
  		    me.updateLoginData(data);
--		    Proxmox.Utils.checked_command(function() {}); // display subscription status
+-		    Proxmox.Utils.checked_command(Ext.emptyFn); // display subscription status
  		},
  	    });
  	}
