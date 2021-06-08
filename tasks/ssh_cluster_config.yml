@@ -14,16 +14,14 @@
     ssh_key_comment: "root@{{ inventory_hostname_short }}"
 
 - name: Fetch root SSH public key
-  fetch:
+  slurp:
     src: /root/.ssh/id_rsa.pub
-    dest: "{{ pve_fetch_directory }}/{{ inventory_hostname }}/root_rsa.pub"
-    fail_on_missing: yes
-    flat: yes
+  register: proxmox_root_id_rsa_pub
 
 - name: Authorize all hosts' root SSH public keys
   authorized_key:
     user: root
-    key: "{{ lookup('file', pve_fetch_directory + '/' + item + '/root_rsa.pub') }}"
+    key: "{{ hostvars[item].proxmox_root_id_rsa_pub.content | b64decode }}"
   with_items: "{{ groups[pve_group] }}"
 
 - name: Configure SSH clients for connecting to PVE cluster hosts
@@ -52,10 +50,9 @@
     - reload sshd configuration
 
 - name: Fetch SSH public host keys
-  fetch:
+  slurp:
     src: "/etc/ssh/{{ item }}"
-    dest: "{{ pve_fetch_directory }}/{{ inventory_hostname }}/{{ item }}"
-    flat: yes
+  register: proxmox_ssh_public_host_keys
   with_items:
     - ssh_host_rsa_key.pub
     - ssh_host_ed25519_key.pub
@@ -73,9 +70,8 @@
     marker: "# {mark}: PVE host keys (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
-      {% for keytype in ['rsa', 'ed25519', 'ecdsa'] %}
-      {%- set _keyfile = pve_fetch_directory + '/' + host + '/ssh_host_' + keytype + '_key.pub' -%}
-      {%- set _key = ' '.join(lookup('file', _keyfile).split()[:-1]) -%}
+      {% for _key_slurp in hostvars[host].proxmox_ssh_public_host_keys.results %}
+      {%- set _key = ' '.join((_key_slurp.content | b64decode).split()[:-1]) -%}
       {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }} {{ _key }}
       {% endfor %}
       {% endfor %}
