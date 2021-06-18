@@ -83,6 +83,7 @@
     dest: /etc/hosts
     regexp: "^\\h*[0-9\\.]+.*({{ ansible_fqdn | regex_escape() }}|{{ ansible_hostname | regex_escape() }}).*$"
     line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
+    backup: yes
   when: "not pve_cluster_enabled | bool and pve_manage_hosts_enabled | bool"
 
 - name: Ensure gpg is installed
