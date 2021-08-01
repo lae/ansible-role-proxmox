@@ -13,8 +13,8 @@
   args:
     creates: "{{ pve_cluster_conf }}"
   vars:
-    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
-    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
+    addr0_flag: "{{ (ansible_distribution_major_version >= '10') | ternary('-link0', '-ring0_addr') }}"
+    addr1_flag: "{{ (ansible_distribution_major_version >= '10') | ternary('-link1', '-ring1_addr') }}"
   when:
     - "inventory_hostname == _pve_current_node"
 
