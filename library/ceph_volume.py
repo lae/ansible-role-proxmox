@@ -371,8 +371,8 @@ def prepare_or_create_osd(module, action, container_image):
     journal = module.params.get('journal', None)
     journal_vg = module.params.get('journal_vg', None)
     db = module.params.get('db', None)
-    db_vg = module.params.get('db_vg', None)
     block_db_size = module.params.get('block_db_size', None)
+    db_vg = module.params.get('db_vg', None)
     wal = module.params.get('wal', None)
     wal_size = modules.params.get('wal_size', None)
     block_wal_size = module.params.get('block_wal_size', None)
@@ -527,7 +527,7 @@ def run_module():
         osds_per_device=dict(type='int', required=False, default=1),
         journal_size=dict(type='str', required=False, default='5120'),
         block_db_size=dict(type='str', required=False, default='-1'),
-        block_wal_size=dict(type-'str', required=False, default='-1'),
+        block_wal_size=dict(type='str', required=False, default='-1'),
         block_db_devices=dict(type='list', required=False, default=[]),
         wal_devices=dict(type='list', required=False, default=[]),
         report=dict(type='bool', required=False, default=False),
