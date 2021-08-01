@@ -43,7 +43,9 @@
   command: 'pveceph mon create'
   args:
     creates: '/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/'
-  when: "inventory_hostname != groups[pve_ceph_mon_group][0]"
+  when: 
+  - "inventory_hostname != groups[pve_ceph_mon_group][0]"
+  - "inventory_hostname in groups[pve_ceph_mon_group]"
 
 - name: Create additional Ceph managers
   command: 'pveceph mgr create'
