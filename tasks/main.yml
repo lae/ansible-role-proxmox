@@ -2,6 +2,10 @@
 ---
 - import_tasks: load_variables.yml
 
+- name: Gather package facts
+  package_facts:
+    manager: auto
+
 - name: Ensure that facts are present for all cluster hosts
   assert:
     that:

@@ -114,6 +114,13 @@ options:
             - Only applicable if action is 'batch'.
         required: false
         default: -1
+    block_wal_size:
+        description:
+            - The size in bytes of bluestore block wal lvs.
+            - The default of -1 means to create them as big as possible.
+            - Only applicable if action is 'batch'.
+        required: false
+        default: -1
     report:
         description:
             - If provided the --report flag will be passed to 'ceph-volume lvm batch'.
@@ -365,7 +372,10 @@ def prepare_or_create_osd(module, action, container_image):
     journal_vg = module.params.get('journal_vg', None)
     db = module.params.get('db', None)
     db_vg = module.params.get('db_vg', None)
+    block_db_size = module.params.get('block_db_size', None)
     wal = module.params.get('wal', None)
+    wal_size = modules.params.get('wal_size', None)
+    block_wal_size = module.params.get('block_wal_size', None)
     wal_vg = module.params.get('wal_vg', None)
     crush_device_class = module.params.get('crush_device_class', None)
     dmcrypt = module.params.get('dmcrypt', None)
@@ -385,9 +395,15 @@ def prepare_or_create_osd(module, action, container_image):
         db = get_db(db, db_vg)
         cmd.extend(['--block.db', db])
 
+    if objectstore == 'bluestore' and block_db_size != '-1':
+        cmd.extend(['--block.db-size', block_db_size])
+
     if wal:
         wal = get_wal(wal, wal_vg)
         cmd.extend(['--block.wal', wal])
+
+    if objectstore == 'bluestore' and block_wal_size != '-1':
+        cmd.extend(['--block.wal-size', block_wal_size])
 
     if crush_device_class:
         cmd.extend(['--crush-device-class', crush_device_class])
@@ -511,6 +527,7 @@ def run_module():
         osds_per_device=dict(type='int', required=False, default=1),
         journal_size=dict(type='str', required=False, default='5120'),
         block_db_size=dict(type='str', required=False, default='-1'),
+        block_wal_size=dict(type-'str', required=False, default='-1'),
         block_db_devices=dict(type='list', required=False, default=[]),
         wal_devices=dict(type='list', required=False, default=[]),
         report=dict(type='bool', required=False, default=False),

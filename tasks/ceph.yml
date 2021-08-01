@@ -81,17 +81,20 @@
 
     - name: Change osd list (remove existing osds from the list)
       set_fact:
-        pve_ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
+        _ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
       tags: ceph_volume
 
     - name: Create Ceph OSDs
-      command: >-
-        pveceph osd create {{ item.device }}
-        {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
-        {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
-      args:
-        creates: '{{ item.device }}1'
-      with_items: '{{ pve_ceph_osds_diff }}'
+      ceph_volume:
+        action: create
+        data: "{{ item.device }}"
+        db: "{{ item['block.db'] | default(omit) }}"
+        block_db_size: "{{ item['block.db.size'] | default(omit) }}"
+        wal: "{{ item['block.wal'] | default(omit) }}"
+        block_wal_size: "{{ item['block.wal.size'] | default(omit) }}"
+        dmcrypt: "{{ item.encrypted | default(omit) | bool }}"
+      with_items: '{{ _ceph_osds_diff }}'
+
   tags: create_osd
 
 - block:
