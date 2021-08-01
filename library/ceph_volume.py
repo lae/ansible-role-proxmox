@@ -374,7 +374,7 @@ def prepare_or_create_osd(module, action, container_image):
     block_db_size = module.params.get('block_db_size', None)
     db_vg = module.params.get('db_vg', None)
     wal = module.params.get('wal', None)
-    wal_size = modules.params.get('wal_size', None)
+    wal_size = module.params.get('wal_size', None)
     block_wal_size = module.params.get('block_wal_size', None)
     wal_vg = module.params.get('wal_vg', None)
     crush_device_class = module.params.get('crush_device_class', None)
