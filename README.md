@@ -383,6 +383,7 @@ pve_run_system_upgrades: false # Let role perform system upgrades
 pve_run_proxmox_upgrades: true # Let role perform Proxmox VE upgrades
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
+pve_reboot_on_kernel_update_delay: 60 # Number of seconds to wait before and after a reboot process to proceed with next task in cluster mode
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".

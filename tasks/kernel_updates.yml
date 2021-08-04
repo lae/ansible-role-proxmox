@@ -1,22 +1,34 @@
 ---
-- name: Check for kernel update
+- name: "Check for kernel update"
   collect_kernel_info:
     lookup_packages: false
   register: _pve_kernel_update
   when: "pve_reboot_on_kernel_update | bool"
 
-- name: Reboot for kernel update
+- name: "Reboot for kernel update in single node mode"
   reboot:
     msg: "PVE kernel update detected by Ansible"
   when:
     - "pve_reboot_on_kernel_update | bool"
     - "_pve_kernel_update.new_kernel_exists"
+    - "not pve_cluster_enabled | bool"
 
-- name: Collect kernel package information
+- name: "Reboot for kernel update in cluster mode"
+  throttle: 1
+  reboot:
+    msg: "PVE kernel update detected by Ansible"
+    pre_reboot_delay: "{{ pve_reboot_on_kernel_update_delay }}"
+    post_reboot_delay: "{{ pve_reboot_on_kernel_update_delay }}"
+  when:
+    - "pve_reboot_on_kernel_update | bool"
+    - "_pve_kernel_update.new_kernel_exists"
+    - "pve_cluster_enabled | bool"
+
+- name: "Collect kernel package information"
   collect_kernel_info:
   register: _pve_kernel
 
-- name: Remove old Debian/PVE kernels
+- name: "Remove old Debian/PVE kernels"
   apt:
     name: "{{ ['linux-image-amd64'] + _pve_kernel.old_packages }}"
     state: absent
