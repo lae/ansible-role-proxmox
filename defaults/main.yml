@@ -6,6 +6,7 @@ pve_remove_subscription_warning: true
 pve_extra_packages: []
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
+pve_reboot_on_kernel_update_delay: 60
 pve_remove_old_kernels: true
 pve_run_system_upgrades: false
 pve_run_proxmox_upgrades: true
