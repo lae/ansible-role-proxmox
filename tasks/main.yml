@@ -305,3 +305,6 @@
 
 - import_tasks: ssl_letsencrypt.yml
   when: "pve_ssl_letsencrypt | bool"
+
+- include_tasks: firewall.yml
+  when: "pve_manage_firewall | bool"

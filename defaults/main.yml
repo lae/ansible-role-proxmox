@@ -44,3 +44,57 @@ pve_acls: []
 pve_storages: []
 pve_ssh_port: 22
 pve_manage_ssh: true
+
+# enable to configure the database too
+pve_manage_firewall: false
+pve_firewall_cluster_enabled: true
+pve_firewall_group: "{{ pve_group }}"
+
+# pve_firewall_aliases:
+#   - name: xyz
+#     cidr: 1.2.3.4
+#     comment: my_host
+
+pve_firewall_ipsets:
+  - name: "network-nodes"
+    comment: "all nodes"
+    aliases: []
+  - name: "proxmox-nodes"
+    comment: "all proxmox hosts"
+    group: "{{ pve_group }}"
+pve_firewall_groups:
+  - name: "proxmox-hosts"
+    comment: "rules for all proxmox hosts"
+    assign_hosts: "{{ groups[proxmox_firewall_group] }}"
+    assign_cluster: true
+    rules:
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        source: "+proxmox-nodes"
+        dest: "+proxmox-nodes"
+        comment: "allow internal communication between all proxmox nodes"
+        log: "nolog"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+proxmox-nodes"
+        proto: tcp
+        dport: "{{ pve_ssh_port }}"
+        comment: "allow all to access SSH"
+        log: "nolog"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+proxmox-nodes"
+        proto: tcp
+        dport: 8006
+        comment: "allow all to access proxmox WebUI"
+        log: "nolog"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+proxmox-nodes"
+        macro: "HTTP"
+        comment: "allow Letsencrypt to access Proxmox Nodes"
+        log: "nolog"

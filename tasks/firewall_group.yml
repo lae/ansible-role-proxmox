@@ -1,0 +1,37 @@
+---
+- name: "Configure cluster security group of rule {{ pve_firewall_group.name }}"
+  proxmox_firewall_group:
+    name: "{{ pve_firewall_group.name }}"
+    comment: "{{ pve_firewall_group.comment | default(omit) }}"
+    rules: "{{ pve_firewall_group.rules }}"
+
+- name: "Assign security group of rules {{ pve_firewall_group.name }} to cluster"
+  proxmox_firewall_rule:
+    name: "{{ pve_firewall_group.name }}"
+    cluster: true
+  when: "pve_firewall_group.assign_cluster | bool"
+
+- name: "Assign security group of rules {{ pve_firewall_group.name }} to hosts"
+  proxmox_firewall_rule:
+    name: "{{ pve_firewall_group.name }}"
+    node: "{{ hostvars[_host].inventory_hostname_short }}"
+  with_items: "{{ groups[pve_firewall_group.assign_hosts] }}"
+  loop_control:
+    loop_var: _host
+  when:
+    - "pve_firewall_group.assign_hosts is defined"
+    - "pve_firewall_group.assign_vms is not defined"
+
+- name: "Assign security group of rules {{ pve_firewall_group.name }} to VMs"
+  proxmox_firewall_rule:
+    name: "{{ pve_firewall_group.name }}"
+    node: "{{ hostvars[hostvars[_host].pve_parent].inventory_hostname_short }}"
+    qemu: "{{ hostvars[_host].pve_vmid }}"
+  with_items: "{{ pve_firewall_group.assign_vms }}"
+  loop_control:
+    loop_var: _host
+  when:
+    - "pve_firewall_group.assign_vms is defined"
+    - "hostvars[_host].pve_vmid is defined"
+    - "hostvars[_host].pve_parent is defined"
+    

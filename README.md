@@ -410,6 +410,11 @@ pve_groups: [] # List of group definitions to manage in PVE. See section on User
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
+pve_manage_firewall: false # manage the proxmox firewall by configuring aliases, ipsets, security groups and assignments
+pve_firewall_cluster_enabled: true # enable cluster firewall on success
+pve_firewall_aliases: [] # List of dict of aliases with keys name, comment and cidr, which can be either IPv4 or IPv6
+pve_firewall_ipsets: [] # List of dict of ip sets with keys name, comment and aliases, which is a list of aliases
+pve_firewall_groups: [] # List of dict of a security group. It contains a list rules and which hosts should be assigned
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -538,6 +543,88 @@ pve_acls:
 
 Refer to `library/proxmox_role.py` [link][user-module] and 
 `library/proxmox_acl.py` [link][acl-module] for module documentation.
+
+## Firewall management
+
+This feature is not fully implemented yet.
+
+A list of aliases.
+
+```
+pve_firewall_aliases:
+  - name: host1-ipv4
+    cidr: 10.0.0.1
+    comment: my_host
+  - name: host1-ipv6
+    cidr: fd01:1::1
+    comment: my_host
+  - name: host2-ipv4
+    cidr: 10.0.0.2
+    comment: my_host
+  - name: host2-ipv6
+    cidr: fd01:1::2
+    comment: my_host
+```
+
+A list of ip sets
+
+```
+pve_firewall_ipsets:
+  - name: "all-nodes"
+    comment: "all nodes"
+    aliases:
+      - host1-ipv4
+      - host1-ipv6
+      - host2-ipv4
+      - host2-ipv6
+  - name: "ipv4-nodes"
+    comment: "all nodes with ipv4 addresses"
+    aliases:
+      - host1-ipv4
+      - host2-ipv4
+  - name: "ipv6-nodes"
+    comment: "all nodes with ipv6 addresses"
+    aliases:
+      - host1-ipv6
+      - host2-ipv6
+```
+
+A list of security groups
+
+```
+pve_firewall_groups:
+  - name: "proxmox-hosts"
+    comment: "rules for all proxmox hosts"
+    assign_hosts: "{{ groups[proxmox_firewall_group] }}"
+    assign_cluster: true
+    rules:
+      - comment: "allow internal communication between all proxmox nodes"
+        source: "+all-nodes"
+        dest: "+all-nodes"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+all-nodes"
+        proto: tcp
+        dport: "{{ pve_ssh_port }}"
+        comment: "allow all to access SSH"
+        log: "nolog"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+all-nodes"
+        proto: tcp
+        dport: 8006
+        comment: "allow all to access proxmox WebUI"
+        log: "nolog"
+      - action: "ACCEPT"
+        type: "in"
+        enable: true
+        dest: "+all-nodes"
+        macro: "HTTP"
+        comment: "allow Letsencrypt to access Proxmox Nodes"
+        log: "nolog"
+```
 
 ## Storage Management
 
