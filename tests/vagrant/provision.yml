@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: True
+  pre_tasks:
+    - name: Install gnupg2
+      apt:
+        name: gnupg2
+  roles:
+    - geerlingguy.ntp
+    - lae.proxmox

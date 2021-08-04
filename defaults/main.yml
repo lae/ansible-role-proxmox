@@ -1,7 +1,6 @@
 ---
 # defaults file for ansible-role-proxmox
 pve_group: proxmox
-pve_fetch_directory: fetch
 pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
 pve_remove_subscription_warning: true
 pve_extra_packages: []
@@ -9,23 +8,42 @@ pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_remove_old_kernels: true
 pve_run_system_upgrades: false
+pve_run_proxmox_upgrades: true
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
 pve_zfs_enabled: no
 # pve_zfs_options: "parameters to pass to zfs module"
 # pve_zfs_zed_email: "email address for zfs events"
+pve_ceph_enabled: false
+pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'stretch' %}ceph-luminous stretch{% else %}ceph-nautilus buster{% endif %} main"
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_nodes: "{{ pve_group }}"
+pve_ceph_mon_group: "{{ pve_group }}"
+pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
+pve_ceph_mds_group: "{{ pve_group }}"
+pve_ceph_osds: []
+pve_ceph_pools: []
+pve_ceph_fs: []
+pve_ceph_crush_rules: []
 # pve_ssl_private_key: "contents of private key"
 # pve_ssl_certificate: "contents of certificate"
 pve_cluster_enabled: no
 pve_cluster_clustername: "{{ pve_group }}"
-pve_cluster_ring0_addr: "{{ ansible_default_ipv4.address }}"
-pve_cluster_bindnet0_addr: "{{ pve_cluster_ring0_addr }}"
-# pve_cluster_ring1_addr: "another interface's IP address or hostname"
-# pve_cluster_bindnet1_addr: "{{ pve_cluster_ring1_addr }}"
+pve_manage_hosts_enabled: yes
+# pve_cluster_addr0: "{{ ansible_default_ipv4.address }}"
+# pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
+pve_datacenter_cfg: {}
+pve_cluster_ha_groups: []
 pve_acme_enabled: no
 # pve_acme_directory: "ACME directory to register on/get certificates from"
 # pve_acme_contact: "email address for Let's Encrypt"
+
+# additional roles for your cluster (f.e. for monitoring)
+pve_roles: []
 pve_groups: []
 pve_users: []
 pve_acls: []
+pve_storages: []
+pve_ssh_port: 22
+pve_manage_ssh: true

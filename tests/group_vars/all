@@ -1,7 +1,7 @@
 ---
 ansible_ssh_user: root
 
-pve_group: pve
+pve_group: "{{ ansible_distribution_release }}cluster"
 pve_extra_packages:
   - sl
 pve_check_for_kernel_update: false
@@ -9,9 +9,25 @@ pve_run_system_upgrades: true
 pve_watchdog: ipmi
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
+pve_ceph_enabled: yes
 pve_ssl_private_key: "{{ lookup('file', ssl_host_key_path) }}"
 pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes
+pve_datacenter_cfg:
+  console: xtermjs
+pve_cluster_ha_groups:
+  - name: proxmox_5_01
+    comment: "Resources on proxmox-5-01"
+    nodes: proxmox-5-01
+    restricted: 1
+pve_roles:
+  - name: Monitoring
+    privileges:
+      - "Sys.Modify"
+      - "Sys.Audit"
+      - "Datastore.Audit"
+      - "VM.Monitor"
+      - "VM.Audit"
 pve_groups:
   - name: Admins
     comment: Administrators of this PVE cluster
@@ -52,6 +68,38 @@ pve_acls: # This should generate 3 different ACLs (note that this is count shoul
       - pveapi@pve
     groups:
       - test_users
+pve_storages: # This should create 2 different storages.
+  - name: dir1
+    type: dir
+    content: [ "images", "iso", "backup" ]
+    path: /plop
+    maxfiles: 4
+  - name: ceph1
+    type: rbd
+    content: [ "images", "rootdir" ]
+    username: admin
+    pool: rbd
+    krbd: yes
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
+  - name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+  - name: lvmthin1
+    type: lvmthin
+    content: [ "images", "rootdir" ]
+    vgname: vg2
+    thinpool: data
+  - name: cephfs1
+    type: cephfs
+    content: [ "snippets", "vztmpl", "iso" ]
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
 
 ssl_directory: /home/travis/ssl/
 ssl_ca_key_path: "{{ ssl_directory }}/test-ca.key"

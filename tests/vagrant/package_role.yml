@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    role_name: lae.proxmox
+  tasks:
+    - block:
+        - shell: pwd
+        - name: Package up current working role
+          shell: "cd $(git rev-parse --show-toplevel); git ls-files -z | xargs -0 tar -czvf $OLDPWD/{{ role_name }}.tar.gz"
+        - name: Install packaged role
+          shell: "ansible-galaxy install {{ role_name }}.tar.gz,devel-$(git rev-parse HEAD),{{ role_name }} --force"
+        - name: Remove packaged role artifact
+          file:
+            dest: "{{ role_name }}.tar.gz"
+            state: absent

@@ -83,6 +83,11 @@ class ProxmoxACL(object):
         except ProxmoxShellError as e:
             self.module.fail_json(msg=e.message, status_code=e.status_code)
 
+        # PVE 5.x (unnecessarily) uses a string for this value. This ensures
+        # that it's an integer for when we compare values later.
+        for acl in self.existing_acl:
+            acl['propagate'] = int(acl['propagate'])
+
         self.parse_acls()
 
     def parse_acls(self):
@@ -99,7 +104,7 @@ class ProxmoxACL(object):
             for constituent in constituents:
                 self.acls.append({
                     "path": self.path,
-                    "propagate": "1", # possibly make this configurable in the module later
+                    "propagate": 1, # possibly make this configurable in the module later
                     "roleid": role,
                     "type": constituent[0],
                     "ugid": constituent[1]

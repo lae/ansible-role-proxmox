@@ -14,9 +14,16 @@
       shell: "openssl req -x509 -new -nodes -key {{ ssl_ca_key_path }} -sha256 -days 1 -subj '{{ ssl_subj }}' -out {{ ssl_ca_cert_path }}"
   vars:
     test_profiles:
+      - profile: debian-buster
+        prefix: proxmox-6-
       - profile: debian-stretch
         prefix: proxmox-5-
     test_hosts_per_profile: 3
+    container_config:
+      - "lxc.apparmor.profile = unconfined"
+      - "lxc.mount.auto = proc:rw sys:rw cgroup-full:rw"
+      - "lxc.cgroup.devices.allow = a *:* rmw"
+      - "lxc.mount.entry = /lib/modules/{{ ansible_kernel }} lib/modules/{{ ansible_kernel }} none bind,create=dir,ro 0 0"
 
 # Run the following within the containers in the inventory
 - hosts: all
@@ -29,7 +36,6 @@
       copy:
         src: "{{ ssl_ca_cert_path }}"
         dest: /usr/local/share/ca-certificates/test-ca.crt
-      become: True
     - name: Insert bogus lines in /etc/hosts
       lineinfile:
         path: /etc/hosts
@@ -39,12 +45,11 @@
         - "10.22.33.44    {{ ansible_hostname }} {{ ansible_fqdn }}"
     - name: Update CA certificate store
       shell: update-ca-certificates
-      become: True
     - block:
-      - name: Create host SSL private key
-        shell: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
-      - name: Create host SSL certificate signing request
-        shell: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
-      - name: Create host SSL certificate
-        shell: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
+        - name: Create host SSL private key
+          shell: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
+        - name: Create host SSL certificate signing request
+          shell: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
+        - name: Create host SSL certificate
+          shell: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
       delegate_to: localhost

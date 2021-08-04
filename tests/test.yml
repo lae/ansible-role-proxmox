@@ -7,23 +7,23 @@
 
     - name: Query PVE cluster status
       shell: "pvesh get /cluster/status --output=json"
-      register: __pve_cluster
+      register: _pve_cluster
       changed_when: False
 
     - name: Check that this node is within the cluster and it is in quorum
       assert:
-        that: "(__pve_cluster.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_cluster.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "([?type=='cluster'].quorate)[0]"
 
     - name: Query PVE groups
       shell: "pvesh get /access/groups --output=json"
-      register: __pve_groups
+      register: _pve_groups
       changed_when: False
 
     - name: Check that PVE groups exist
       assert:
-        that: "(__pve_groups.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_groups.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?groupid=='{{ item.name }}'])"
       run_once: True
@@ -31,12 +31,12 @@
 
     - name: Query PVE users
       shell: "pvesh get /access/users --output=json"
-      register: __pve_users
+      register: _pve_users
       changed_when: False
 
     - name: Check that PVE users exist
       assert:
-        that: "(__pve_users.stdout | from_json | json_query(query)) == 1"
+        that: "(_pve_users.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?userid=='{{ item.name }}'])"
       run_once: True
@@ -44,27 +44,71 @@
 
     - name: Query PVE ACLs
       shell: "pvesh get /access/acl --output=json"
-      register: __pve_acl
+      register: _pve_acl
       changed_when: False
 
     - name: Check that PVE ACLs exist
       assert:
-        that: "(__pve_acl.stdout | from_json | json_query(query)) == 3"
+        that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
       vars:
         query: "length([])"
       run_once: True
 
+    - name: Query PVE storages
+      shell: "pvesh get /storage --output=json"
+      register: _pve_storage
+      changed_when: False
+
+    - name: Construct storage list
+      set_fact:
+        sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
+      with_items: "{{ pve_storages }}"
+
+    - name: Check that PVE storages exist
+      assert:
+        that: "sto_list is subset(_pve_storage.stdout | from_json | json_query(query))"
+      vars:
+        query: "[*].storage"
+      run_once: True
+
+    - name: Read datacenter.cfg file
+      slurp:
+        src: "/etc/pve/datacenter.cfg"
+      register: datacenter_cfg
+
+    - name: Check datacenter.cfg content
+      assert:
+        that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
+
+    - name: Query PVE HA groups
+      command: "pvesh get /cluster/ha/groups --output=json"
+      register: _ha_group_list
+      run_once: true
+
+    - name: Check PVE HA group configuration
+      assert:
+        that:
+          - item.name == ha_group.group
+          - item.comment == ha_group.comment
+          - item.nodes == ha_group.nodes
+          - item.restricted == ha_group.restricted
+          - "'nofailback' not in ha_group"
+      vars:
+        ha_group: '{{ _ha_group_list.stdout | from_json
+                      | json_query("[?group==''" + item.name + "'']") | first }}'
+      with_items: "{{ pve_cluster_ha_groups }}"
+
     - block:
-      - name: pvedaemon service status
-        shell: "journalctl --no-pager -xu pvedaemon.service"
-        changed_when: False
-      - name: pve-cluster service status
-        shell: "journalctl --no-pager -xu pve-cluster.service"
-        changed_when: False
-      - name: pveproxy service status
-        shell: "journalctl --no-pager -xu pveproxy.service"
-        changed_when: False
-      - name: hosts file
-        shell: "cat /etc/hosts"
-        changed_when: False
+        - name: pvedaemon service status
+          shell: "journalctl --no-pager -xu pvedaemon.service"
+          changed_when: False
+        - name: pve-cluster service status
+          shell: "journalctl --no-pager -xu pve-cluster.service"
+          changed_when: False
+        - name: pveproxy service status
+          shell: "journalctl --no-pager -xu pveproxy.service"
+          changed_when: False
+        - name: hosts file
+          shell: "cat /etc/hosts"
+          changed_when: False
       ignore_errors: yes

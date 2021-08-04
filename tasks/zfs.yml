@@ -15,7 +15,7 @@
   copy:
     content: "options zfs {{ pve_zfs_options }}"
     dest: /etc/modprobe.d/zfs.conf
-  when: pve_zfs_options is defined and pve_zfs_options
+  when: "pve_zfs_options is defined and pve_zfs_options | bool"
 
 - name: Configure email address for ZFS event daemon notifications
   lineinfile:
@@ -24,4 +24,4 @@
     regexp: '^#?ZED_EMAIL_ADDR='
   notify:
     - restart zfs-zed
-  when: pve_zfs_zed_email is defined
+  when: "pve_zfs_zed_email is defined"

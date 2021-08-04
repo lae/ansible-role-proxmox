@@ -10,9 +10,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: proxmox_acme_account
-
 short_description: Manages ACME configs/account registrations in Proxmox
-
 options:
     name:
         default: "default"
@@ -33,7 +31,6 @@ options:
         required: true
         description:
             - Sets the contact email for the ACME account.
-
 author:
     - Musee Ullah (@lae)
 '''
@@ -75,13 +72,15 @@ class ProxmoxACMEAccount(object):
         try:
             return pvesh.get("cluster/acme/account/{}".format(self.name))
         except ProxmoxShellError as e:
-            self.module.fail_json(msg=e.message, status_code=e.status_code, **result)
+            if e.status_code == 400:
+                return None
+            self.module.fail_json(msg=e.message, status_code=e.status_code)
 
     def identify_tos(self):
         try:
             return pvesh.get("cluster/acme/tos")
         except ProxmoxShellError as e:
-            self.module.fail_json(msg=e.message, status_code=e.status_code, **result)
+            self.module.fail_json(msg=e.message, status_code=e.status_code)
 
     def remove_account(self):
         try:

@@ -4,15 +4,19 @@
     content: "{{ item.content }}"
     dest: "{{ item.dest }}"
   with_items:
-    - { dest: "/etc/ssl/pveproxy-ssl.key", content: "{{ pve_ssl_private_key }}" }
-    - { dest: "/etc/ssl/pveproxy-ssl.pem", content: "{{ pve_ssl_certificate }}" }
+    - dest: "/etc/ssl/pveproxy-ssl.key"
+      content: "{{ pve_ssl_private_key }}"
+    - dest: "/etc/ssl/pveproxy-ssl.pem"
+      content: "{{ pve_ssl_certificate }}"
 
 - name: Install PVE SSL certificate chain and key
   shell: "diff {{ item.src }} {{ item.dest }} >/dev/null 2>&1 || (cp {{ item.src }} {{ item.dest }}; echo changed)"
-  register: __pve_ssl_diff
-  changed_when: "'changed' in __pve_ssl_diff.stdout"
+  register: _pve_ssl_diff
+  changed_when: "'changed' in _pve_ssl_diff.stdout"
   with_items:
-    - { src: "/etc/ssl/pveproxy-ssl.key", dest: "/etc/pve/local/pveproxy-ssl.key"}
-    - { src: "/etc/ssl/pveproxy-ssl.pem", dest: "/etc/pve/local/pveproxy-ssl.pem"}
+    - src: "/etc/ssl/pveproxy-ssl.key"
+      dest: "/etc/pve/local/pveproxy-ssl.key"
+    - src: "/etc/ssl/pveproxy-ssl.pem"
+      dest: "/etc/pve/local/pveproxy-ssl.pem"
   notify:
     - restart pveproxy
