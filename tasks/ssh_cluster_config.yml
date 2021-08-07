@@ -19,11 +19,16 @@
     src: /root/.ssh/id_ed25519.pub
   register: _proxmox_root_ssh_pubkey
 
-- name: Authorize all hosts' root SSH public keys
+- name: Accumulate all hosts' root SSH public keys
+  set_fact:
+    _pve_root_ssh_pubkeys: "{{ _pve_root_ssh_pubkeys | default([]) | union([hostvars[item]._proxmox_root_ssh_pubkey.content | b64decode]) }}"
+  with_items: "{{ groups[pve_group] }}"
+
+- name: Authorize SSH public keys for root user
   authorized_key:
     user: root
-    key: "{{ hostvars[item]._proxmox_root_ssh_pubkey.content | b64decode }}"
-  with_items: "{{ groups[pve_group] }}"
+    key: "{{ pve_ssh_extra_pubkeys | default([]) | union(_pve_root_ssh_pubkeys) | join('\n') }}"
+    exclusive: true
 
 - name: Configure SSH clients for connecting to PVE cluster hosts
   blockinfile:
