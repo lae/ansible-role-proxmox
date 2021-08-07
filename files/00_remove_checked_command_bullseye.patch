@@ -1,0 +1,13 @@
+diff -u /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+--- /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
++++ /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+@@ -493,7 +493,8 @@
+     },
+ 
+     checked_command: function(orig_cmd) {
+-	Proxmox.Utils.API2Request(
++	orig_cmd();
++	false && Proxmox.Utils.API2Request(
+ 	    {
+ 		url: '/nodes/localhost/subscription',
+ 		method: 'GET',
