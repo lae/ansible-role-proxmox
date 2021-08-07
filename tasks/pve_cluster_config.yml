@@ -44,8 +44,8 @@
   args:
     creates: "{{ pve_cluster_conf }}"
   vars:
-    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
-    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
+    addr0_flag: "{{ (ansible_distribution_major_version >= '10') | ternary('-link0', '-ring0_addr') }}"
+    addr1_flag: "{{ (ansible_distribution_major_version >= '10') | ternary('-link1', '-ring1_addr') }}"
   when:
     - "_pve_found_clusters is not defined"
     - "inventory_hostname == groups[pve_group][0]"
