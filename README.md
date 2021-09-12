@@ -195,9 +195,9 @@ pvecluster. Here, a file lookup is used to read the contents of a file in the
 playbook, e.g. `files/pve01/lab-node01.key`. You could possibly just use host
 variables instead of files, if you prefer.
 
-`pve_ssl_letsencrypt` allows to obtain a Let's Encrypt SSL certificate for
-pvecluster. The Ansible role [systemli.letsencrypt](https://galaxy.ansible.com/systemli/letsencrypt/)
-needs to be installed first in order to use this function.
+`pve_acme_enabled` allows to obtain an acmle SSL certificate for pve nodes. If
+enabled, you also need to configure `pve_acme_contact` (your mail address) and
+`pve_acme_directory` (url to acme service).
 
 `pve_cluster_enabled` enables the role to perform all cluster management tasks.
 This includes creating a cluster if it doesn't exist, or adding nodes to the
@@ -405,7 +405,9 @@ pve_ceph_fs: [] # List of CephFS filesystems to create
 pve_ceph_crush_rules: [] # List of CRUSH rules to create
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
-pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
+pve_acme_enabled: no # If enabled, role tries to add a SSL certificate for webui via ACME provider
+# pve_acme_directory: # ACME directory to register on/get certificates from
+# pve_acme_contact: # email address for ACME provider
 pve_roles: [] # Added more roles with specific privileges. See section on User Management.
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.

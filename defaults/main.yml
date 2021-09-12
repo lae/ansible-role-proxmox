@@ -36,7 +36,10 @@ pve_manage_hosts_enabled: yes
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 pve_datacenter_cfg: {}
 pve_cluster_ha_groups: []
-pve_ssl_letsencrypt: false
+pve_acme_enabled: no
+# pve_acme_directory: "ACME directory to register on/get certificates from"
+# pve_acme_contact: "email address for Let's Encrypt"
+
 # additional roles for your cluster (f.e. for monitoring)
 pve_roles: []
 pve_groups: []
