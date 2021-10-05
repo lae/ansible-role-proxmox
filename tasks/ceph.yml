@@ -77,7 +77,7 @@
 
     - name: Determine ceph volumes Step2
       set_fact:
-        _existing_ceph_volumes: "{{ _existing_ceph_volumes + [{'device': item}] }}"
+        _existing_ceph_volumes: "{{ _existing_ceph_volumes + [{'device': item}, {'device': item, 'encrypted': true}] }}"
       with_items: "{{ _existing_ceph_volumes_tmp }}"
       tags: ceph_volume
 
