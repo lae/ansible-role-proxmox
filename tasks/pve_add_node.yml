@@ -6,15 +6,12 @@
 - name: Add node to Proxmox cluster
   command: >-
     pvecm add {{ hostvars[groups[pve_group][0]].pve_cluster_addr0 }} -use_ssh
-    {{ addr0_flag }} {{ pve_cluster_addr0 }}
+    -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
-    {{ addr1_flag }} {{ pve_cluster_addr1 }}
+    -link1 {{ pve_cluster_addr1 }}
     {% endif %}
   args:
     creates: "{{ pve_cluster_conf }}"
-  vars:
-    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
-    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
   when:
     - "inventory_hostname == _pve_current_node"
 

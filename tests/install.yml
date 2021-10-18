@@ -14,10 +14,10 @@
       shell: "openssl req -x509 -new -nodes -key {{ ssl_ca_key_path }} -sha256 -days 1 -subj '{{ ssl_subj }}' -out {{ ssl_ca_cert_path }}"
   vars:
     test_profiles:
+      - profile: debian-bullseye
+        prefix: proxmox-7-
       - profile: debian-buster
         prefix: proxmox-6-
-      - profile: debian-stretch
-        prefix: proxmox-5-
     test_hosts_per_profile: 3
     container_config:
       - "lxc.apparmor.profile = unconfined"
