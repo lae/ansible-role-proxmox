@@ -85,16 +85,16 @@
 - name: Define hostname in /etc/hosts for single-host installations
   lineinfile:
     dest: /etc/hosts
-    regexp: |-
-      {# Match an IPv4/v6 address at the start #}
-      ^\\h*[0-9a-f:.]+
-      {# Match at least one whitespace, and any non-hostname names #}
-      (\\h+.*)?\\h
-      {# Match either our fqdn or hostname #}
-      ({{ ansible_fqdn | regex_escape() }}|{{ ansible_hostname | regex_escape() }})
-      {# Require there be a word boundary at the end of the name(s). #}
-      {# This can be any whitespace, or end-of-line. #}
-      (\\h+.*|\\h*)$
+    regexp: "\
+      {# Match an IPv4/v6 address at the start #}\
+      ^\\s*[0-9a-f:.]+\
+      {# Match at least one whitespace, and any non-hostname names #}\
+      (\\s+.*)*\\s\
+      {# Match either our fqdn or hostname #}\
+      ({{ ansible_fqdn | regex_escape() }}|{{ ansible_hostname | regex_escape() }})\
+      {# Require there be a word boundary at the end of the name(s). #}\
+      {# This can be any whitespace, or end-of-line. #}\
+      (\\s+.*|\\s*)$"
     line: "{{ hostvars[inventory_hostname].pve_cluster_addr0 }} {{ ansible_fqdn }} {{ ansible_hostname }}"
     backup: yes
   when: "not pve_cluster_enabled | bool and pve_manage_hosts_enabled | bool"
@@ -204,7 +204,9 @@
   when: "pve_cluster_enabled | bool"
 
 - import_tasks: ceph.yml
-  when: "pve_ceph_enabled | bool"
+  when:
+    - "pve_ceph_enabled | bool"
+    - "inventory_hostname in groups[pve_ceph_nodes]"
 
 - name: Configure Proxmox roles
   proxmox_role:

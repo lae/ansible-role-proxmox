@@ -6,6 +6,7 @@ pve_remove_subscription_warning: true
 pve_extra_packages: []
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
+pve_reboot_on_kernel_update_delay: 60
 pve_remove_old_kernels: true
 pve_run_system_upgrades: false
 pve_run_proxmox_upgrades: true
@@ -18,6 +19,7 @@ pve_zfs_enabled: no
 pve_ceph_enabled: false
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'buster' %}ceph-nautilus buster{% else %}ceph-pacific bullseye{% endif %} main"
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
 pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
 pve_ceph_mds_group: "{{ pve_group }}"
