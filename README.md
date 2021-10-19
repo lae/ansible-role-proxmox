@@ -37,20 +37,15 @@ Copy the following playbook to a file like `install_proxmox.yml`:
     - hosts: all
       become: True
       roles:
-        - {
-            role: geerlingguy.ntp,
-            ntp_manage_config: true,
-            ntp_servers: [
-              clock.sjc.he.net,
-              clock.fmt.he.net,
-              clock.nyc.he.net
-            ]
-          }
-        - {
-            role: lae.proxmox,
-            pve_group: all,
-            pve_reboot_on_kernel_update: true
-          }
+        - role: geerlingguy.ntp
+            ntp_manage_config: true
+            ntp_servers:
+              - clock.sjc.he.net,
+              - clock.fmt.he.net,
+              - clock.nyc.he.net
+        - role: lae.proxmox
+            - pve_group: all
+            - pve_reboot_on_kernel_update: true
 
 Install this role and a role for configuring NTP:
 
@@ -356,22 +351,17 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
     - hosts: pve01
       become: True
       roles:
-        - {
-            role: geerlingguy.ntp,
-            ntp_manage_config: true,
-            ntp_servers: [
-              clock.sjc.he.net,
-              clock.fmt.he.net,
-              clock.nyc.he.net
-            ]
-          }
-        - {
-            role: lae.proxmox,
-            pve_group: pve01,
-            pve_cluster_enabled: yes,
-            pve_reboot_on_kernel_update: true,
+        - role: geerlingguy.ntp
+            ntp_manage_config: true
+            ntp_servers:
+              - clock.sjc.he.net,
+              - clock.fmt.he.net,
+              - clock.nyc.he.net
+        - role: lae.proxmox
+            pve_group: pve01
+            pve_cluster_enabled: yes
+            pve_reboot_on_kernel_update: true
             pve_watchdog: ipmi
-          }
 
 ## Role Variables
 
