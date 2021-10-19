@@ -269,17 +269,23 @@
 - name: Configure Proxmox Storage
   proxmox_storage:
     name: "{{ item.name }}"
-    type: "{{ item.type }}"
-    disable: "{{ item.disable | default(False) }}"
-    path: "{{ item.path | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    # Globally applicable PVE API arguments
     content: "{{ item.content | default([]) }}"
+    disable: "{{ item.disable | default(False) }}"
     nodes: "{{ item.nodes | default(omit) }}"
+    type: "{{ item.type }}"
+    # Remaining PVE API arguments (depending on type) past this point
+    datastore: "{{ item.datastore | default(omit) }}"
+    encryption_key: "{{ item.encryption_key | default(omit) }}"
+    fingerprint: "{{ item.fingerprint | default(omit) }}"
+    password: "{{ item.password | default(omit) }}"
+    path: "{{ item.path | default(omit) }}"
     username: "{{ item.username | default(omit) }}"
     pool: "{{ item.pool | default(omit) }}"
     monhost: "{{ item.monhost | default(omit) }}"
     maxfiles: "{{ item.maxfiles | default(omit) }}"
     krbd: "{{ item.krbd | default(omit) }}"
-    state: "{{ item.state | default('present') }}"
     server: "{{ item.server | default(omit) }}"
     export: "{{ item.export | default(omit) }}"
     options: "{{ item.options | default(omit) }}"
