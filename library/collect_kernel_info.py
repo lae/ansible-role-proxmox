@@ -14,11 +14,6 @@ def main():
         supports_check_mode=True
     )
 
-    # This module only performs diagnostics, so it doesn't actually change anything
-    # During actual usage we return "changed" depending on booted kernel status
-    if module.check_mode:
-        module.exit_json(changed=False)
-
     params = module.params
 
     # Much of the following is reimplemented from /usr/share/grub/grub-mkconfig_lib

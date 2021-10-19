@@ -148,7 +148,6 @@ Now for the flesh of your playbook, `pve01`'s group variables. Create a file
 ```
 ---
 pve_group: pve01
-pve_fetch_directory: "fetch/{{ pve_group }}/"
 pve_watchdog: ipmi
 pve_ssl_private_key: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.key') }}"
 pve_ssl_certificate: "{{ lookup('file', pve_group + '/' + inventory_hostname + '.pem') }}"
@@ -185,12 +184,8 @@ interfaces_template: "interfaces-{{ pve_group }}.j2"
 `pve_group` is set to the group name of our cluster, `pve01` - it will be used
 for the purposes of ensuring all hosts within that group can connect to each
 other and are clustered together. Note that the PVE cluster name will be set to
-this group name as well, unless otherwise specified by `pve_clustername`.
+this group name as well, unless otherwise specified by `pve_cluster_clustername`.
 Leaving this undefined will default to `proxmox`.
-
-`pve_fetch_directory` will be used to download the host public key and root user's
-public key from all hosts within `pve_group`. These are then uploaded to each
-host into the appropriate configuration files.
 
 `pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
 manager to use it. Leave this undefined if you don't want to configure it.
@@ -381,7 +376,6 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-pve_fetch_directory: fetch/ # local directory used to download root public keys from each host to
 pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
@@ -389,6 +383,7 @@ pve_run_system_upgrades: false # Let role perform system upgrades
 pve_run_proxmox_upgrades: true # Let role perform Proxmox VE upgrades
 pve_check_for_kernel_update: true # Runs a script on the host to check kernel versions
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
+pve_reboot_on_kernel_update_delay: 60 # Number of seconds to wait before and after a reboot process to proceed with next task in cluster mode
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
@@ -400,7 +395,9 @@ pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph 
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-nautilus buster main" # apt-repository configuration. Will be automatically set for 5.x and 6.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
+pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
+pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}" # Host group containing all Ceph manager hosts
 pve_ceph_mds_group: "{{ pve_group }}" # Host group containing all Ceph metadata server hosts
 pve_ceph_osds: [] # List of OSD disks
 pve_ceph_pools: [] # List of pools to create
@@ -421,6 +418,7 @@ To enable clustering with this role, configure the following variables appropria
 ```
 pve_cluster_enabled: no # Set this to yes to configure hosts to be clustered together
 pve_cluster_clustername: "{{ pve_group }}" # Should be set to the name of the PVE cluster
+pve_manage_hosts_enabled : yes # Set this to no to NOT configure hosts file (case of using vpn and hosts file is already configured)
 ```
 
 The following variables are used to provide networking information to corosync.
@@ -546,7 +544,7 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `lvm` and `lvmthin`.
+types are `dir`, `rbd`, `nfs`, `cephfs` ,`lvm` and `lvmthin`.
 Here are some examples.
 
 ```
@@ -582,6 +580,14 @@ pve_storages:
     content: [ "images", "rootdir" ]
     vgname: vg2
     thinpool: data
+  - name: cephfs1
+    type: cephfs
+    content: [ "snippets", "vztmpl", "iso" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    monhost:
+      - 10.0.0.1
+      - 10.0.0.2
+      - 10.0.0.3
 ```
 
 Refer to `library/proxmox_storage.py` [link][storage-module] for module
@@ -606,6 +612,7 @@ following definitions show some of the configurations that are possible.
 pve_ceph_enabled: true
 pve_ceph_network: '172.10.0.0/24'
 pve_ceph_cluster_network: '172.10.1.0/24'
+pve_ceph_nodes: "ceph_nodes"
 pve_ceph_osds:
   # OSD with everything on the same device
   - device: /dev/sdc
@@ -649,6 +656,13 @@ pve_ceph_pools:
     storage: true
     size: 2
     min-size: 1
+# This Ceph pool uses custom autoscale mode : "off" | "on" | "warn"> (default = "warn")
+  - name: vm-storage
+    pgs: 128
+    rule: replicated_rule
+    application: rbd
+    autoscale_mode: "on"
+    storage: true
 pve_ceph_fs:
 # A CephFS filesystem not defined as a Proxmox storage
   - name: backup
@@ -660,6 +674,8 @@ pve_ceph_fs:
 
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
+
+`pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify on which nodes install Ceph (e.g. if you don't want to install Ceph on all your nodes).
 
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
 
