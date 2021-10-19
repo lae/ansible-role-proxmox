@@ -46,3 +46,4 @@ pve_acls: []
 pve_storages: []
 pve_ssh_port: 22
 pve_manage_ssh: true
+pve_hooks: {}

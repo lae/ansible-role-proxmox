@@ -25,3 +25,7 @@
   notify:
     - restart zfs-zed
   when: "pve_zfs_zed_email is defined"
+
+- name: HOOK - Run ZFS post-install hook tasks
+  ansible.builtin.include_tasks: "{{ pve_hooks.zfs_post_install }}"
+  when: "'zfs_post_install' in pve_hooks"
