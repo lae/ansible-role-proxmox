@@ -14,6 +14,13 @@ Installs and configures a Proxmox 6.x/7.x cluster with the following features:
 - BYO HTTPS certificate support
 - Ability to use either `pve-no-subscription` or `pve-enterprise` repositories
 
+## Support/Contributing
+
+For support or if you'd like to contribute to this role but want guidance, feel
+free to join this Discord server: https://discord.gg/cjqr6Fg. Please note, this
+is an temporary invite, so you'll need to wait for @lae to assign you a role,
+otherwise Discord will remove you from the server when you logout.
+
 ## Quickstart
 
 The primary goal for this role is to configure and manage a
@@ -62,11 +69,6 @@ file containing a list of hosts).
 
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
-
-## Support/Contributing
-
-For support or if you'd like to contribute to this role but want guidance, feel
-free to join this Discord server: https://discord.gg/cjqr6Fg
 
 ## Deploying a fully-featured PVE 7.x cluster
 
