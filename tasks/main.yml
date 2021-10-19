@@ -249,6 +249,21 @@
   with_items: "{{ pve_acls }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
+- name: Create ZFS Pools
+  zfs:
+    name: "{{ item.pool }}"
+    state: present
+  with_items: "{{ pve_storages }}"
+  when: "item.type == 'zfspool'"
+  tags: storage
+
+- name: Create ZFS Volumes specified by user
+  zfs:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ pve_zfs_create_volumes }}"
+  tags: storage
+
 - name: Configure Proxmox Storage
   proxmox_storage:
     name: "{{ item.name }}"
@@ -268,8 +283,10 @@
     options: "{{ item.options | default(omit) }}"
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
+    sparse: "{{ item.sparse | default(omit) }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  tags: storage
 
 - name: Check datacenter.cfg exists
   stat:

@@ -5,6 +5,7 @@ Vagrant.configure("2") do |config|
     libvirt.memory = 2048
     libvirt.cpus = 2
     libvirt.storage :file, :size => '512M'
+    libvirt.storage :file, :size => '256M'
   end
 
   N = 3
