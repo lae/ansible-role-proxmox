@@ -1,18 +1,29 @@
-[![Build Status](https://travis-ci.org/lae/ansible-role-proxmox.svg?branch=master)](https://travis-ci.org/lae/ansible-role-proxmox)
 [![Galaxy Role](https://img.shields.io/badge/ansible--galaxy-proxmox-blue.svg)](https://galaxy.ansible.com/lae/proxmox/)
 
 lae.proxmox
 ===========
 
-Installs and configures a Proxmox 6.x/7.x cluster with the following features:
+Installs and configures Proxmox Virtual Environment 6.x/7.x on Debian servers.
 
-- Ensures all hosts can connect to one another as root
-- Ability to create/manage groups, users, access control lists and storage
-- Ability to create or add nodes to a PVE cluster
-- Ability to setup Ceph on the nodes
-- IPMI watchdog support
-- BYO HTTPS certificate support
-- Ability to use either `pve-no-subscription` or `pve-enterprise` repositories
+This role allows you to deploy and manage single-node PVE installations and PVE
+clusters (3+ nodes) on Debian Buster (10) and Bullseye (11). You are able to
+configure the following with the assistance of this role:
+
+  - PVE RBAC definitions (roles, groups, users, and access control lists)
+  - PVE Storage definitions
+  - [`datacenter.cfg`][datacenter-cfg]
+  - HTTPS certificates for the Proxmox Web GUI (BYO)
+  - PVE repository selection (e.g. `pve-no-subscription` or `pve-enterprise`)
+  - Watchdog modules (IPMI and NMI) with applicable pve-ha-manager config
+  - ZFS module setup and ZED notification email
+
+With clustering enabled, this role does (or allows you to do) the following:
+
+  - Ensure all hosts can connect to one another as root over SSH
+  - Initialize a new PVE cluster (or possibly adopt an existing one)
+  - Create or add new nodes to a PVE cluster
+  - Setup Ceph on a PVE cluster
+  - Create and manage high availability groups
 
 ## Support/Contributing
 
@@ -206,8 +217,8 @@ must already exist) to access PVE and gives them the Administrator role as part
 of the `ops` group. Read the **User and ACL Management** section for more info.
 
 `pve_storages` allows to create different types of storage and configure them.
-The backend needs to be supported by [Proxmox](https://pve.proxmox.com/pve-docs/chapter-pvesm.html).
-Read the **Storage Management** section for more info.
+The backend needs to be supported by [Proxmox][pvesm]. Read the **Storage
+Management** section for more info.
 
 `pve_ssh_port` allows you to change the SSH port. If your SSH is listening on
 a port other than the default 22, please set this variable. If a new node is
@@ -446,8 +457,8 @@ pve_cluster_ha_groups:
     restricted: 0
 ```
 
-All configuration options supported in the datacenter.cfg file are documented in the
-[Proxmox manual datacenter.cfg section][datacenter-cfg].
+All configuration options supported in the datacenter.cfg file are documented
+in the [Proxmox manual datacenter.cfg section][datacenter-cfg].
 
 In order for live reloading of network interfaces to work via the PVE web UI,
 you need to install the `ifupdown2` package. Note that this will remove
@@ -619,7 +630,8 @@ pve_ceph_osds:
     block.db: /dev/sdb1
     encrypted: true
 # Crush rules for different storage classes
-# By default 'type' is set to host, you can find valid types at (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
+# By default 'type' is set to host, you can find valid types at
+# (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
 # listed under 'TYPES AND BUCKETS'
 pve_ceph_crush_rules:
   - name: replicated_rule
@@ -667,9 +679,12 @@ pve_ceph_fs:
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
 
-`pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify on which nodes install Ceph (e.g. if you don't want to install Ceph on all your nodes).
+`pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify
+on which nodes install Ceph (e.g. if you don't want to install Ceph on all your
+nodes).
 
-`pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
+`pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted
+volumes the parameter `encrypted` has to be set per drive to `true`.
 
 ## Contributors
 
@@ -688,6 +703,7 @@ Michael Holasek ([@mholasek](https://github.com/mholasek))
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[pvesm]: https://pve.proxmox.com/pve-docs/chapter-pvesm.html
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
