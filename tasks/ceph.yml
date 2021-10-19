@@ -1,22 +1,5 @@
 # This is an Ansible version of what "pveceph install" actually does
 ---
-- block:
-    - name: Install custom Ceph systemd service
-      copy:
-        src: /usr/share/doc/pve-manager/examples/ceph.service
-        dest: /etc/systemd/system/ceph.service
-        remote_src: true
-        owner: root
-        group: root
-        mode: preserve
-      notify: 'restart ceph'
-
-    - name: Enable Ceph
-      systemd:
-        name: ceph.service
-        enabled: true
-  when:
-    - "ansible_distribution_release == 'stretch'"
 
 - block:
     - name: Create initial Ceph config
@@ -83,17 +66,19 @@
 
     - name: Change osd list (remove existing osds from the list)
       set_fact:
-        pve_ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
+        _ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
       tags: ceph_volume
 
     - name: Create Ceph OSDs
       command: >-
         pveceph osd create {{ item.device }}
         {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
-        {% if "block.db" in item %}--journal_dev {{ item["block.db"] }}{% endif %}
+        {% if "block.db" in item %}--db_dev {{ item["block.db"] }}{% endif %}
+        {% if "block.wal" in item %}--wal_dev {{ item["block.wal"] }}{% endif %}
       args:
         creates: '{{ item.device }}1'
-      with_items: '{{ pve_ceph_osds_diff }}'
+      with_items: '{{ _ceph_osds_diff }}'
+
   tags: create_osd
 
 - block:

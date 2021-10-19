@@ -37,15 +37,12 @@
 - name: Initialize a Proxmox cluster
   command: >-
     pvecm create {{ pve_cluster_clustername }}
-    {{ addr0_flag }} {{ pve_cluster_addr0 }}
+    -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
-    {{ addr1_flag }} {{ pve_cluster_addr1 }}
+    -link1 {{ pve_cluster_addr1 }}
     {% endif %}
   args:
     creates: "{{ pve_cluster_conf }}"
-  vars:
-    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
-    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
   when:
     - "_pve_found_clusters is not defined"
     - "inventory_hostname == groups[pve_group][0]"

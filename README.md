@@ -4,7 +4,7 @@
 lae.proxmox
 ===========
 
-Installs and configures a Proxmox 5.x/6.x cluster with the following features:
+Installs and configures a Proxmox 6.x/7.x cluster with the following features:
 
 - Ensures all hosts can connect to one another as root
 - Ability to create/manage groups, users, access control lists and storage
@@ -68,7 +68,7 @@ Once complete, you should be able to access your Proxmox VE instance at
 For support or if you'd like to contribute to this role but want guidance, feel
 free to join this Discord server: https://discord.gg/cjqr6Fg
 
-## Deploying a fully-featured PVE 5.x cluster
+## Deploying a fully-featured PVE 7.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
@@ -376,7 +376,7 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-pve_repository_line: "deb http://download.proxmox.com/debian/pve stretch pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_repository_line: "deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_run_system_upgrades: false # Let role perform system upgrades
@@ -392,7 +392,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_options: "" # modprobe parameters to pass to zfs module on boot/modprobe
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-nautilus buster main" # apt-repository configuration. Will be automatically set for 5.x and 6.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
+pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
@@ -683,7 +683,8 @@ pve_ceph_fs:
 
 Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
 Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
-Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc
+Richard Scott ([@zenntrix](https://github.com/zenntrix)) - Ceph support, PVE 7.x support, etc
 Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
 Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
 Jonas Meurer ([@mejo-](https://github.com/mejo-))  

@@ -5,6 +5,10 @@
     - name: Install gnupg2
       apt:
         name: gnupg2
+    - name: Replace /etc/network/interfaces
+      ansible.builtin.copy:
+        src: files/interfaces
+        dest: /etc/network/interfaces
   roles:
     - geerlingguy.ntp
     - lae.proxmox
