@@ -4,7 +4,7 @@
 lae.proxmox
 ===========
 
-Installs and configures a Proxmox 5.x/6.x cluster with the following features:
+Installs and configures a Proxmox 6.x/7.x cluster with the following features:
 
 - Ensures all hosts can connect to one another as root
 - Ability to create/manage groups, users, access control lists and storage
@@ -68,7 +68,7 @@ Once complete, you should be able to access your Proxmox VE instance at
 For support or if you'd like to contribute to this role but want guidance, feel
 free to join this Discord server: https://discord.gg/cjqr6Fg
 
-## Deploying a fully-featured PVE 5.x cluster
+## Deploying a fully-featured PVE 7.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
