@@ -173,10 +173,11 @@
         - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
 
     - name: Remove subscription check wrapper function in web UI
-      patch:
-        src: "00_remove_checked_command_{{ ansible_distribution_release }}.patch"
-        basedir: /
-        strip: 1
+      ansible.builtin.lineinfile:
+        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+        line: '        orig_cmd(); return;'
+        insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
+        firstmatch: yes
         backup: yes
       when:
         - "pve_remove_subscription_warning | bool"
