@@ -702,6 +702,27 @@ nodes).
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted
 volumes the parameter `encrypted` has to be set per drive to `true`.
 
+## Developer Notes
+
+When developing new features or fixing something in this role, you can test out
+your changes by using Vagrant (only libvirt is supported currently). The
+playbook can be found in `tests/vagrant` (so be sure to modify group variables
+as needed). Be sure to test any changes on both Debian 10 and 11 (update the
+Vagrantfile locally to use `debian/buster64`) before submitting a PR.
+
+You can also specify an apt caching proxy (e.g. `apt-cacher-ng`, and it must
+run on port 3142) with the `APT_CACHE_HOST` environment variable to speed up
+package downloads if you have one running locally in your environment. The
+vagrant playbook will detect whether or not the caching proxy is available and
+only use it if it is accessible from your network, so you could just
+permanently set this variable in your development environment if you prefer.
+
+For example, you could run the following to show verbose/easier to read output,
+use a caching proxy, and keep the VMs running if you run into an error (so that
+you can troubleshoot it and/or run `vagrant provision` after fixing):
+
+    APT_CACHE_HOST=10.71.71.10 ANSIBLE_STDOUT_CALLBACK=debug vagrant up --no-destroy-on-error
+
 ## Contributors
 
 Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  

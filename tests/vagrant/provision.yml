@@ -2,6 +2,15 @@
 - hosts: all
   become: True
   pre_tasks:
+    - name: Copy apt proxy detection script
+      ansible.builtin.template:
+        src: detect-http-proxy.j2
+        dest: /etc/apt/detect-http-proxy
+        mode: 0755
+    - name: Configure apt to use detection script
+      ansible.builtin.copy:
+        content: "Acquire::Retries 0;\nAcquire::http::ProxyAutoDetect \"/etc/apt/detect-http-proxy\";"
+        dest: /etc/apt/apt.conf.d/30detectproxy
     - name: Install gnupg2
       apt:
         name: gnupg2
