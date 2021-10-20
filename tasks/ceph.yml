@@ -107,7 +107,7 @@
         regexp: >-
           rule\s+{{ item.name }}\s+{(?:(?P<space>\s+)id\s+(?P<id>[^\s]+)|\s+type\s+(?P<r_type>[^\s]+)|\s+min_size[ ](?P<min>[^\s]+)|\s+max_size\s+(?P<max>[^\s]+)|\s+step\s+take\s+default(?:\n|\s+class\s+(?P<class>[^\n]*))|\s+step\s+(?P<choose>chooseleaf|choose).*?type\s+(?P<type>[^\s]+))+(?:.|\n)*?}
         replace: >-
-          rule {{item.name}} {
+          rule {{ item.name }} {
           \g<space>id \g<id>
           \g<space>type \g<r_type>
           \g<space>min_size {{ (pve_ceph_crush_rules | selectattr("name", "match", item.name) | list)[0].min_size | default("\g<min>") | trim }}

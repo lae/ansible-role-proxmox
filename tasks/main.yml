@@ -294,6 +294,7 @@
   file:
     path: "/etc/pve/datacenter.cfg"
     state: "touch"
+    mode: 0640
   when:
     - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
     - "pve_datacenter_cfg | length > 0"
