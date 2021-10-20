@@ -14,11 +14,3 @@
     creates: "{{ pve_cluster_conf }}"
   when:
     - "inventory_hostname == _pve_current_node"
-
-- name: Remove stale corosync lock file due to lack of quorum during initialization
-  file:
-    dest: "{{ pve_base_dir }}/priv/lock/file-corosync_conf"
-    state: absent
-  when:
-    - "inventory_hostname == _pve_current_node"
-    - "inventory_hostname == groups[pve_group][1]"
