@@ -1,16 +1,32 @@
 ---
-- name: Identify what host we're working with (inside outer loop)
-  set_fact:
-    _pve_current_node: "{{ item }}"
+- name: Identify the SSH public key and SSH addresses of initial cluster host
+  ansible.builtin.set_fact:
+    _pve_cluster_host_key: "{{ ' '.join((hostvars[groups[pve_group][0]]._pve_ssh_public_key.content | b64decode).split()[:-1]) }}"
+    _pve_cluster_host_addresses: "{{ hostvars[groups[pve_group][0]].pve_cluster_ssh_addrs | join(',') }}"
+
+- name: Temporarily mark that cluster host as known in root user's known_hosts
+  ansible.builtin.blockinfile:
+    dest: /root/.ssh/known_hosts
+    create: yes
+    mode: 0600
+    marker: "# {mark}: cluster host key for joining"
+    content: "{{ _pve_cluster_host_addresses }} {{ _pve_cluster_host_key }}"
 
 - name: Add node to Proxmox cluster
-  command: >-
+  ansible.builtin.command: >-
     pvecm add {{ hostvars[groups[pve_group][0]].pve_cluster_addr0 }} -use_ssh
     -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
     -link1 {{ pve_cluster_addr1 }}
     {% endif %}
+  # Ensure that nodes join one-by-one because cluster joins create a lock
+  throttle: 1
   args:
     creates: "{{ pve_cluster_conf }}"
-  when:
-    - "inventory_hostname == _pve_current_node"
+
+- name: Remove the cluster host's public key from root user's known_hosts
+  ansible.builtin.blockinfile:
+    dest: /root/.ssh/known_hosts
+    state: absent
+    mode: 0600
+    marker: "# {mark}: cluster host key for joining"
