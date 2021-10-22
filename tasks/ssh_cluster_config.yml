@@ -50,35 +50,10 @@
   notify:
     - reload sshd configuration
 
-- name: Fetch SSH public host keys
-  slurp:
-    src: "/etc/ssh/{{ item }}"
-  register: proxmox_ssh_public_host_keys
-  with_items:
-    - ssh_host_rsa_key.pub
-    - ssh_host_ed25519_key.pub
-    - ssh_host_ecdsa_key.pub
-
-- name: Check status of known hosts file
-  stat:
-    path: /etc/ssh/ssh_known_hosts
-  register: _pve_known_hosts_file
-
-- name: Add every host's host keys to global known_hosts
-  blockinfile:
-    dest: /etc/ssh/ssh_known_hosts
-    create: yes
-    mode: 0644
-    marker: "# {mark}: PVE host keys (managed by ansible)."
-    content: |
-      {% for host in groups[pve_group] %}
-      {% for _key_slurp in hostvars[host].proxmox_ssh_public_host_keys.results %}
-      {%- set _key = ' '.join((_key_slurp.content | b64decode).split()[:-1]) -%}
-      {{ hostvars[host].pve_cluster_ssh_addrs | join(",") }} {{ _key }}
-      {% endfor %}
-      {% endfor %}
-  when:
-    - "not (_pve_known_hosts_file.stat.islnk is defined and _pve_known_hosts_file.stat.islnk)"
+- name: Fetch a SSH public key to use for cluster joins
+  ansible.builtin.slurp:
+    src: "/etc/ssh/ssh_host_ed25519_key.pub"
+  register: _pve_ssh_public_key
 
 - name: Add PVE-provided ciphers to SSH client config
   lineinfile:

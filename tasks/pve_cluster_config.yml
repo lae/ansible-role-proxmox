@@ -60,7 +60,6 @@
     query: "response[?type=='cluster'].quorate | [0]"
 
 - include_tasks: pve_add_node.yml
-  with_items: "{{ groups[pve_group][1:] }}"
   when:
     - "_pve_active_cluster is not defined"
     - "inventory_hostname != groups[pve_group][0]"
