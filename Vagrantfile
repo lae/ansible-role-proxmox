@@ -2,10 +2,10 @@ Vagrant.configure("2") do |config|
   config.vm.box = "debian/bullseye64"
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.memory = 2048
+    libvirt.memory = 2560
     libvirt.cpus = 2
-    libvirt.storage :file, :size => '512M'
-    libvirt.storage :file, :size => '256M'
+    libvirt.storage :file, :size => '128M'
+    libvirt.storage :file, :size => '128M'
   end
 
   N = 3
