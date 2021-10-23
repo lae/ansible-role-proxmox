@@ -37,48 +37,27 @@
   when: "inventory_hostname in groups[pve_ceph_mgr_group]"
 
 - block:
-    - name: Get existing ceph volumes
+    - name: Query for existing Ceph volumes
       ceph_volume:
-        action: list
-        data: "{{ item.device }}"
       register: _ceph_volume_data
-      loop: '{{ pve_ceph_osds }}'
-      tags: ceph_volume
-      changed_when: false #Merely gets the list of ceph volumes so never changes anything
 
-    - name: Initialize osd variables
-      set_fact:
-        _existing_ceph_volumes_tmp: []
-        _existing_ceph_volumes: []
-      tags: ceph_volume
+    - name: Generate a list of active OSDs
+      ansible.builtin.set_fact:
+        _existing_ceph_osds: "{{ _ceph_volume_data.stdout | from_json | json_query('*[].devices[]') }}"
 
-    - name: Determine ceph volumes Step1
-      set_fact:
-        _existing_ceph_volumes_tmp: "{{ _existing_ceph_volumes_tmp + item.stdout | from_json | json_query('*[].devices[]') }}"
-      with_items: "{{ _ceph_volume_data.results }}"
-      tags: ceph_volume
-
-    - name: Determine ceph volumes Step2
-      set_fact:
-        _existing_ceph_volumes: "{{ _existing_ceph_volumes + [{'device': item}] }}"
-      with_items: "{{ _existing_ceph_volumes_tmp }}"
-      tags: ceph_volume
-
-    - name: Change osd list (remove existing osds from the list)
-      set_fact:
-        _ceph_osds_diff: "{{ pve_ceph_osds | difference(_existing_ceph_volumes) }}"
-      tags: ceph_volume
+    - name: Generate list of unprovisioned OSDs
+      ansible.builtin.set_fact:
+        _ceph_osds_diff: "{{ _ceph_osds_diff | default([]) + [item] }}"
+      loop: "{{ pve_ceph_osds }}"
+      when: item.device not in _existing_ceph_osds
 
     - name: Create Ceph OSDs
-      command: >-
+      ansible.builtin.command: >-
         pveceph osd create {{ item.device }}
         {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
         {% if "block.db" in item %}--db_dev {{ item["block.db"] }}{% endif %}
         {% if "block.wal" in item %}--wal_dev {{ item["block.wal"] }}{% endif %}
-      args:
-        creates: '{{ item.device }}1'
-      with_items: '{{ _ceph_osds_diff }}'
-
+      loop: '{{ _ceph_osds_diff | default([]) }}'
   tags: create_osd
 
 - block:
