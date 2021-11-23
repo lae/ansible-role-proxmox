@@ -39,6 +39,7 @@
 - block:
     - name: Query for existing Ceph volumes
       ceph_volume:
+        action: list
       register: _ceph_volume_data
 
     - name: Generate a list of active OSDs
