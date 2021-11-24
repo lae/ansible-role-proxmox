@@ -1,10 +1,6 @@
 #!/usr/bin/python
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.ca_common import exec_command
-except ImportError:
-    from module_utils.ca_common import exec_command
 import datetime
 
 ANSIBLE_METADATA = {
@@ -54,6 +50,15 @@ EXAMPLES = '''
     data: /dev/sdc
 '''
 
+def exec_command(module, cmd, stdin=None):
+    '''
+    Execute command(s)
+    '''
+    binary_data = False
+    if stdin:
+        binary_data = True
+    rc, out, err = module.run_command(cmd, data=stdin, binary_data=binary_data)
+    return rc, cmd, out, err
 
 def get_data(data, data_vg):
     if data_vg:
