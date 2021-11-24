@@ -2,8 +2,7 @@
 
 The following files are licensed under APL2:
 
-    module_utils/ca_common.py
-    library/ceph_volume.py
+    library/pve_ceph_volume.py (This is a combined version of the original files module_utils/ca_common.py and library/ceph_volume.py)
 
 The license text from ceph/ceph-ansible is as follows:
 
