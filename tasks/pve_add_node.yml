@@ -14,7 +14,7 @@
 
 - name: Add node to Proxmox cluster
   ansible.builtin.command: >-
-    pvecm add {{ hostvars[groups[pve_group][0]].pve_cluster_addr0 }} -use_ssh
+    pvecm add {{ hostvars[_init_node].pve_cluster_addr0 }} -use_ssh
     -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
     -link1 {{ pve_cluster_addr1 }}
