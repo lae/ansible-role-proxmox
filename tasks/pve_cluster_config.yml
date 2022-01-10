@@ -38,6 +38,14 @@
   set_fact:
     _init_node: "{{ groups[pve_group][0] }}"
 
+- name: Find any active node in an already initialized Proxmox cluster
+  set_fact:
+    _init_node: "{{ item }}"
+  with_items: "{{ groups[pve_group] }}"
+  when:
+    - "'_pve_active_cluster' in hostvars[item]"
+    - "hostvars[item]['_pve_active_cluster'] == pve_cluster_clustername"
+
 - name: Initialize a Proxmox cluster
   command: >-
     pvecm create {{ pve_cluster_clustername }}
@@ -50,14 +58,6 @@
   when:
     - "_pve_found_clusters is not defined"
     - "inventory_hostname == _init_node"
-
-- name: Find any active node in an already initialized Proxmox cluster
-  set_fact:
-    _init_node: "{{ item }}"
-  with_items: "{{ groups[pve_group] }}"
-  when:
-    - "'_pve_active_cluster' in hostvars[item]"
-    - "hostvars[item]['_pve_active_cluster'] == pve_cluster_clustername"
 
 - name: Wait for quorum on initialization node
   proxmox_query:
