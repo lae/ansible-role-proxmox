@@ -34,8 +34,20 @@
           cluster's name cannot be modified."
   when: "(_pve_found_clusters | default([]) | length) == 1"
 
+- name: Default initialization node is the first node of pve_group
+  ansible.builtin.set_fact:
+    _init_node: "{{ groups[pve_group][0] }}"
+
+- name: Find any active node in an already initialized Proxmox cluster
+  ansible.builtin.set_fact:
+    _init_node: "{{ item }}"
+  with_items: "{{ groups[pve_group] }}"
+  when:
+    - "'_pve_active_cluster' in hostvars[item]"
+    - "hostvars[item]['_pve_active_cluster'] == pve_cluster_clustername"
+
 - name: Initialize a Proxmox cluster
-  command: >-
+  ansible.builtin.command: >-
     pvecm create {{ pve_cluster_clustername }}
     -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
@@ -45,7 +57,7 @@
     creates: "{{ pve_cluster_conf }}"
   when:
     - "_pve_found_clusters is not defined"
-    - "inventory_hostname == groups[pve_group][0]"
+    - "inventory_hostname == _init_node"
 
 - name: Wait for quorum on initialization node
   proxmox_query:
@@ -55,14 +67,14 @@
   retries: 5
   delay: 5
   when:
-    - "inventory_hostname == groups[pve_group][0]"
+    - "inventory_hostname == _init_node"
   vars:
     query: "response[?type=='cluster'].quorate | [0]"
 
 - include_tasks: pve_add_node.yml
   when:
     - "_pve_active_cluster is not defined"
-    - "inventory_hostname != groups[pve_group][0]"
+    - "inventory_hostname != _init_node"
 
 - name: Check for PVE cluster HA groups
   proxmox_query:
