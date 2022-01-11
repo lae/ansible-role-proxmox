@@ -224,7 +224,7 @@ joining the cluster, the PVE cluster needs to communicate once via SSH.
 would make to your SSH server config. This is useful if you use another role
 to manage your SSH server. Note that setting this to false is not officially
 supported, you're on your own to replicate the changes normally made in
-ssh_cluster_config.yml.
+`ssh_cluster_config.yml` and `pve_add_node.yml`.
 
 `interfaces_template` is set to the path of a template we'll use for configuring
 the network on these Debian machines. This is only necessary if you want to
