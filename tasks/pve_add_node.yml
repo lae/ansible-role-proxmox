@@ -1,8 +1,8 @@
 ---
 - name: Identify the SSH public key and SSH addresses of initial cluster host
   ansible.builtin.set_fact:
-    _pve_cluster_host_key: "{{ ' '.join((hostvars[groups[pve_group][0]]._pve_ssh_public_key.content | b64decode).split()[:-1]) }}"
-    _pve_cluster_host_addresses: "{{ hostvars[groups[pve_group][0]].pve_cluster_ssh_addrs | join(',') }}"
+    _pve_cluster_host_key: "{{ ' '.join((hostvars[_init_node]._pve_ssh_public_key.content | b64decode).split()[:-1]) }}"
+    _pve_cluster_host_addresses: "{{ hostvars[_init_node].pve_cluster_ssh_addrs | join(',') }}"
 
 - name: Temporarily mark that cluster host as known in root user's known_hosts
   ansible.builtin.blockinfile:
