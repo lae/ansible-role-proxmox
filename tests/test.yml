@@ -71,6 +71,11 @@
         query: "[*].storage"
       run_once: True
 
+    - name: Check that User specified ZFS Volumes exist
+      zfs_facts:
+        dataset: "{{ item }}"
+      with_items: "{{ pve_zfs_create_volumes }}"
+
     - name: Read datacenter.cfg file
       slurp:
         src: "/etc/pve/datacenter.cfg"

@@ -1,27 +1,35 @@
 ---
-- name: Identify what host we're working with (inside outer loop)
-  set_fact:
-    _pve_current_node: "{{ item }}"
+- block:
+  - name: Identify the SSH public key and SSH addresses of initial cluster host
+    ansible.builtin.set_fact:
+      _pve_cluster_host_key: "{{ ' '.join((hostvars[_init_node]._pve_ssh_public_key.content | b64decode).split()[:-1]) }}"
+      _pve_cluster_host_addresses: "{{ hostvars[_init_node].pve_cluster_ssh_addrs | join(',') }}"
+
+  - name: Temporarily mark that cluster host as known in root user's known_hosts
+    ansible.builtin.blockinfile:
+      dest: /root/.ssh/known_hosts
+      create: yes
+      mode: 0600
+      marker: "# {mark}: cluster host key for joining"
+      content: "{{ _pve_cluster_host_addresses }} {{ _pve_cluster_host_key }}"
+  when: "pve_manage_ssh | bool"
 
 - name: Add node to Proxmox cluster
-  command: >-
-    pvecm add {{ hostvars[groups[pve_group][0]].pve_cluster_addr0 }} -use_ssh
-    {{ addr0_flag }} {{ pve_cluster_addr0 }}
+  ansible.builtin.command: >-
+    pvecm add {{ hostvars[_init_node].pve_cluster_addr0 }} -use_ssh
+    -link0 {{ pve_cluster_addr0 }}
     {% if pve_cluster_addr1 is defined %}
-    {{ addr1_flag }} {{ pve_cluster_addr1 }}
+    -link1 {{ pve_cluster_addr1 }}
     {% endif %}
+  # Ensure that nodes join one-by-one because cluster joins create a lock
+  throttle: 1
   args:
     creates: "{{ pve_cluster_conf }}"
-  vars:
-    addr0_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link0', '-ring0_addr') }}"
-    addr1_flag: "{{ (ansible_distribution_release == 'buster') | ternary('-link1', '-ring1_addr') }}"
-  when:
-    - "inventory_hostname == _pve_current_node"
 
-- name: Remove stale corosync lock file due to lack of quorum during initialization
-  file:
-    dest: "{{ pve_base_dir }}/priv/lock/file-corosync_conf"
+- name: Remove the cluster host's public key from root user's known_hosts
+  ansible.builtin.blockinfile:
+    dest: /root/.ssh/known_hosts
     state: absent
-  when:
-    - "inventory_hostname == _pve_current_node"
-    - "inventory_hostname == groups[pve_group][1]"
+    mode: 0600
+    marker: "# {mark}: cluster host key for joining"
+  when: "pve_manage_ssh | bool"

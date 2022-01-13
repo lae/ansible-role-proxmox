@@ -42,6 +42,7 @@
       copy:
         content: "WATCHDOG_MODULE=softdog"
         dest: /etc/default/pve-ha-manager
+        mode: 0640
       notify:
         - restart watchdog-mux
   when: "pve_watchdog != 'ipmi'"

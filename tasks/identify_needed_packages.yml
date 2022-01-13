@@ -7,11 +7,6 @@
       - ksm-control-daemon
       - systemd-sysv
 
-- name: Stage patch package if we need to patch the subscription message
-  set_fact:
-    _pve_install_packages: "{{ _pve_install_packages | union(['patch']) }}"
-  when: "'pve-no-subscription' in pve_repository_line"
-
 - name: Stage ZFS packages if ZFS is enabled
   set_fact:
     _pve_install_packages: "{{ _pve_install_packages | union(['zfsutils-linux', 'zfs-initramfs', 'zfs-zed']) }}"

@@ -2,6 +2,10 @@
 ---
 - import_tasks: load_variables.yml
 
+- name: Gather package facts
+  package_facts:
+    manager: auto
+
 - name: Ensure that facts are present for all cluster hosts
   assert:
     that:
@@ -150,6 +154,8 @@
 
 - name: Install Proxmox VE and related packages
   apt:
+    update_cache: yes
+    cache_valid_time: 3600
     name: "{{ _pve_install_packages }}"
     state: "{{ 'latest' if pve_run_proxmox_upgrades else 'present' }}"
   retries: 2
@@ -167,10 +173,11 @@
         - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
 
     - name: Remove subscription check wrapper function in web UI
-      patch:
-        src: "00_remove_checked_command_{{ ansible_distribution_release }}.patch"
-        basedir: /
-        strip: 1
+      ansible.builtin.lineinfile:
+        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+        line: '        orig_cmd(); return;'
+        insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
+        firstmatch: yes
         backup: yes
       when:
         - "pve_remove_subscription_warning | bool"
@@ -186,15 +193,6 @@
   when: "pve_zfs_enabled | bool"
 
 - import_tasks: kernel_module_cleanup.yml
-
-- name: "[TEMPFIX] Fix cluster joins on PVE 6"
-  patch:
-    src: "01_pass_correct_format_for_linkX.patch"
-    basedir: /
-    strip: 1
-  when:
-    - "ansible_distribution_release == 'buster'"
-    - "pve_cluster_enabled | bool"
 
 - import_tasks: pve_cluster_config.yml
   when: "pve_cluster_enabled | bool"
@@ -245,6 +243,21 @@
   with_items: "{{ pve_acls }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
+- name: Create ZFS Pools
+  zfs:
+    name: "{{ item.pool }}"
+    state: present
+  with_items: "{{ pve_storages }}"
+  when: "item.type == 'zfspool'"
+  tags: storage
+
+- name: Create ZFS Volumes specified by user
+  zfs:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ pve_zfs_create_volumes }}"
+  tags: storage
+
 - name: Configure Proxmox Storage
   proxmox_storage:
     name: "{{ item.name }}"
@@ -264,8 +277,10 @@
     options: "{{ item.options | default(omit) }}"
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
+    sparse: "{{ item.sparse | default(omit) }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  tags: storage
 
 - name: Check datacenter.cfg exists
   stat:
@@ -279,6 +294,7 @@
   file:
     path: "/etc/pve/datacenter.cfg"
     state: "touch"
+    mode: 0640
   when:
     - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
     - "pve_datacenter_cfg | length > 0"
@@ -302,6 +318,3 @@
   when:
     - "pve_ssl_private_key is defined"
     - "pve_ssl_certificate is defined"
-
-- import_tasks: ssl_letsencrypt.yml
-  when: "pve_ssl_letsencrypt | bool"

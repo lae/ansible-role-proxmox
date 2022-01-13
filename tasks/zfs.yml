@@ -10,11 +10,13 @@
   copy:
     content: zfs
     dest: /etc/modules-load.d/zfs.conf
+    mode: 0644
 
 - name: Copy ZFS modprobe configuration
   copy:
     content: "options zfs {{ pve_zfs_options }}"
     dest: /etc/modprobe.d/zfs.conf
+    mode: 0644
   when: "pve_zfs_options is defined and pve_zfs_options | bool"
 
 - name: Configure email address for ZFS event daemon notifications
@@ -25,3 +27,7 @@
   notify:
     - restart zfs-zed
   when: "pve_zfs_zed_email is defined"
+
+- name: HOOK - Run ZFS post-install hook tasks
+  ansible.builtin.include_tasks: "{{ pve_hooks.zfs_post_install }}"
+  when: "'zfs_post_install' in pve_hooks"

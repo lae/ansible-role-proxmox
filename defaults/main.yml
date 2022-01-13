@@ -16,8 +16,9 @@ pve_watchdog_ipmi_timeout: 10
 pve_zfs_enabled: no
 # pve_zfs_options: "parameters to pass to zfs module"
 # pve_zfs_zed_email: "email address for zfs events"
+pve_zfs_create_volumes: []
 pve_ceph_enabled: false
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'stretch' %}ceph-luminous stretch{% else %}ceph-nautilus buster{% endif %} main"
+pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'buster' %}ceph-nautilus buster{% else %}ceph-pacific bullseye{% endif %} main"
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
@@ -36,7 +37,6 @@ pve_manage_hosts_enabled: yes
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 pve_datacenter_cfg: {}
 pve_cluster_ha_groups: []
-pve_ssl_letsencrypt: false
 # additional roles for your cluster (f.e. for monitoring)
 pve_roles: []
 pve_groups: []
@@ -45,3 +45,4 @@ pve_acls: []
 pve_storages: []
 pve_ssh_port: 22
 pve_manage_ssh: true
+pve_hooks: {}
