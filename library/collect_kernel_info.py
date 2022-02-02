@@ -16,44 +16,31 @@ def main():
 
     params = module.params
 
-    # Much of the following is reimplemented from /usr/share/grub/grub-mkconfig_lib
-    kernels = []
-    # Collect a list of possible installed kernels
-    for filename in glob.glob("/boot/vmlinuz-*") + glob.glob("/vmlinuz-*") + \
-                    glob.glob("/boot/kernel-*"):
-        if ".dpkg-" in filename:
-            continue
-        if filename.endswith(".rpmsave") or filename.endswith(".rpmnew"):
-            continue
-        kernels.append(filename)
+    # Collect a list of installed kernels
+    kernels = glob.glob("/lib/modules/*")
 
+    # Identify path to the latest kernel
     latest_kernel = ""
-    re_prefix = re.compile("[^-]*-")
-    re_attributes = re.compile("[._-](pre|rc|test|git|old|trunk)")
     for kernel in kernels:
-        right = re.sub(re_attributes, "~\1", re.sub(re_prefix, '', latest_kernel, count=1))
-        if not right:
+        if not latest_kernel:
             latest_kernel = kernel
             continue
-        left = re.sub(re_attributes, "~\1", re.sub(re_prefix, '', kernel, count=1))
+        # These splits remove the path and get the base directory name, which
+        # should be something like 5.4.78-1-pve, that we can compare
+        right = latest_kernel.split("/")[-1]
+        left = kernel.split("/")[-1]
         cmp_str = "gt"
-        if left.endswith(".old") and not right.endswith(".old"):
-            left = left[:-4]
-        if right.endswith(".old") and not left.endswith(".old"):
-            right = right[:-4]
-            cmp_str = "ge"
         if subprocess.call(["dpkg", "--compare-versions", left, cmp_str, right]) == 0:
             latest_kernel = kernel
 
-    # This will likely output a path that considers the boot partition as /
-    # e.g. /vmlinuz-4.4.44-1-pve
-    booted_kernel = to_text(subprocess.check_output(["grep", "-o", "-P", "(?<=BOOT_IMAGE=).*?(?= )", "/proc/cmdline"]).strip())
+    booted_kernel = "/lib/modules/{}".format(to_text(subprocess.check_output(["uname", "-r"]).strip))
 
     booted_kernel_package = ""
     old_kernel_packages = []
-
     if params['lookup_packages']:
         for kernel in kernels:
+            # Identify the currently booted kernel and unused old kernels by
+            # querying which packages owns the directory in /lib/modules
             if kernel.split("/")[-1] == booted_kernel.split("/")[-1]:
                 booted_kernel_package = to_text(subprocess.check_output(["dpkg-query", "-S", kernel])).split(":")[0]
             elif kernel != latest_kernel:
