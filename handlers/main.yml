@@ -10,9 +10,9 @@
     name: pveproxy
     state: restarted
 
-- name: reload sshd configuration
-  service:
-    name: sshd
+- name: reload ssh server configuration
+  ansible.builtin.systemd:
+    name: ssh.service
     state: reloaded
 
 - name: restart watchdog-mux
