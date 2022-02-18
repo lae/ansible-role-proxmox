@@ -39,6 +39,7 @@
 - block:
     - name: Query for existing Ceph volumes
       pve_ceph_volume:
+      check_mode: no
       register: _ceph_volume_data
 
     - name: Generate a list of active OSDs
@@ -126,6 +127,7 @@
     - name: List Ceph Pools
       command: ceph osd pool ls
       changed_when: false
+      check_mode: no
       register: _ceph_pools
 
     - name: Create Ceph Pools
@@ -175,6 +177,7 @@
     - name: List Ceph Filesystems
       command: ceph fs ls -f json
       changed_when: false
+      check_mode: no
       when: "pve_ceph_fs | length > 0"
       register: _ceph_fs
 
@@ -192,6 +195,7 @@
     - name: Get Ceph Filesystem pool CRUSH rules
       command: 'ceph -f json osd pool get {{ item.0.name }}_{{ item.1 }} crush_rule'
       changed_when: false
+      check_mode: no
       when: "pve_ceph_fs | length > 0"
       register: _ceph_fs_rule
       loop: '{{ pve_ceph_fs | product(["data", "metadata"]) | list }}'
