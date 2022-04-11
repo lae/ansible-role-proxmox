@@ -115,6 +115,28 @@
     name: os-prober
     state: absent
 
+- block:
+    - name: Remove automatically installed PVE Enterprise repo configuration
+      apt_repository:
+        repo: "{{ item }}"
+        filename: pve-enterprise
+        state: absent
+      with_items:
+        - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
+        - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+
+    - name: Remove subscription check wrapper function in web UI
+      ansible.builtin.lineinfile:
+        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+        line: '        orig_cmd(); return;'
+        insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
+        firstmatch: yes
+        backup: yes
+      when:
+        - "pve_remove_subscription_warning | bool"
+  when:
+    - "'pve-no-subscription' in pve_repository_line"
+
 - name: Add Proxmox repository
   apt_repository:
     repo: "{{ pve_repository_line }}"
@@ -161,28 +183,6 @@
   retries: 2
   register: _proxmox_install
   until: _proxmox_install is succeeded
-
-- block:
-    - name: Remove automatically installed PVE Enterprise repo configuration
-      apt_repository:
-        repo: "{{ item }}"
-        filename: pve-enterprise
-        state: absent
-      with_items:
-        - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
-        - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
-
-    - name: Remove subscription check wrapper function in web UI
-      ansible.builtin.lineinfile:
-        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-        line: '        orig_cmd(); return;'
-        insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
-        firstmatch: yes
-        backup: yes
-      when:
-        - "pve_remove_subscription_warning | bool"
-  when:
-    - "'pve-no-subscription' in pve_repository_line"
 
 - import_tasks: kernel_updates.yml
 
