@@ -241,7 +241,7 @@
       {{ loop.last | ternary("", ",") -}}
       {% endfor %}:/
     fstype: 'ceph'
-    opts: 'name={{ item.name }},secretfile=/etc/ceph/{{ item.name }}.secret,_netdev'
+    opts: 'name={{ item.name }},secretfile=/etc/ceph/{{ item.name }}.secret,_netdev,fs={{ item.name }}'
     state: 'mounted'
   when: "item.mountpoint is defined"
   loop: '{{ pve_ceph_fs }}'
