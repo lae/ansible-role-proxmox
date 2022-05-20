@@ -38,6 +38,7 @@ pve_manage_hosts_enabled: yes
 pve_datacenter_cfg: {}
 pve_cluster_ha_groups: []
 # additional roles for your cluster (f.e. for monitoring)
+pve_pools: []
 pve_roles: []
 pve_groups: []
 pve_users: []

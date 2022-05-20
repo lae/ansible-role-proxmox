@@ -202,6 +202,14 @@
     - "pve_ceph_enabled | bool"
     - "inventory_hostname in groups[pve_ceph_nodes]"
 
+- name: Configure Proxmox pools
+  proxmox_pool:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+    comment: "{{ item.comment | default(omit) }}"
+  with_items: "{{ pve_pools }}"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+
 - name: Configure Proxmox roles
   proxmox_role:
     name: "{{ item.name }}"
