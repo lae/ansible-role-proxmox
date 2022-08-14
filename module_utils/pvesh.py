@@ -57,7 +57,7 @@ def run_command(handler, resource, **params):
         if handler == "get":
             if any(re.match(pattern, stderr[0]) for pattern in [
                 "^no such user \('.{3,64}?'\)$",
-                "^(group|role) '[A-Za-z0-9\.\-_]+' does not exist$",
+                "^(group|role|pool) '[A-Za-z0-9\.\-_]+' does not exist$",
                 "^domain '[A-Za-z][A-Za-z0-9\.\-_]+' does not exist$"]):
                 return {u"status": 404, u"message": stderr[0]}
 

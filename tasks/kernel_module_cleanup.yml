@@ -5,7 +5,7 @@
     state: absent
   when: >
     (pve_zfs_options is not defined) or
-    (pve_zfs_options is defined and not pve_zfs_options | bool) or
+    (pve_zfs_options is defined and not pve_zfs_options | length > 0) or
     (not pve_zfs_enabled | bool)
 
 - name: Disable loading of ZFS module on init

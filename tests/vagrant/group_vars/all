@@ -12,6 +12,9 @@ pve_zfs_zed_email: root@localhost
 pve_cluster_enabled: yes
 pve_datacenter_cfg:
   console: xtermjs
+pve_pools:
+  - name: customer01
+    comment: Pool for customer01
 pve_groups:
   - name: Admins
     comment: Administrators of this PVE cluster

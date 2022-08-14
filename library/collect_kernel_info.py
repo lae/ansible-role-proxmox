@@ -1,10 +1,10 @@
 #!/usr/bin/python
 import glob
-import re
 import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
+
 
 def main():
     module = AnsibleModule(
@@ -16,52 +16,54 @@ def main():
 
     params = module.params
 
-    # Much of the following is reimplemented from /usr/share/grub/grub-mkconfig_lib
-    kernels = []
-    # Collect a list of possible installed kernels
-    for filename in glob.glob("/boot/vmlinuz-*") + glob.glob("/vmlinuz-*") + \
-                    glob.glob("/boot/kernel-*"):
-        if ".dpkg-" in filename:
-            continue
-        if filename.endswith(".rpmsave") or filename.endswith(".rpmnew"):
-            continue
-        kernels.append(filename)
+    # Collect a list of installed kernels
+    kernels = glob.glob("/lib/modules/*")
 
+    # Identify path to the latest kernel
     latest_kernel = ""
-    re_prefix = re.compile("[^-]*-")
-    re_attributes = re.compile("[._-](pre|rc|test|git|old|trunk)")
     for kernel in kernels:
-        right = re.sub(re_attributes, "~\1", re.sub(re_prefix, '', latest_kernel, count=1))
-        if not right:
+        if not latest_kernel:
             latest_kernel = kernel
             continue
-        left = re.sub(re_attributes, "~\1", re.sub(re_prefix, '', kernel, count=1))
+        # These splits remove the path and get the base directory name, which
+        # should be something like 5.4.78-1-pve, that we can compare
+        right = latest_kernel.split("/")[-1]
+        left = kernel.split("/")[-1]
         cmp_str = "gt"
-        if left.endswith(".old") and not right.endswith(".old"):
-            left = left[:-4]
-        if right.endswith(".old") and not left.endswith(".old"):
-            right = right[:-4]
-            cmp_str = "ge"
         if subprocess.call(["dpkg", "--compare-versions", left, cmp_str, right]) == 0:
             latest_kernel = kernel
 
-    # This will likely output a path that considers the boot partition as /
-    # e.g. /vmlinuz-4.4.44-1-pve
-    booted_kernel = to_text(subprocess.check_output(["grep", "-o", "-P", "(?<=BOOT_IMAGE=).*?(?= )", "/proc/cmdline"]).strip())
+    booted_kernel = "/lib/modules/{}".format(to_text(
+            subprocess.run(["uname", "-r"], capture_output=True).stdout.strip))
 
     booted_kernel_package = ""
     old_kernel_packages = []
-
     if params['lookup_packages']:
         for kernel in kernels:
+            # Identify the currently booted kernel and unused old kernels by
+            # querying which packages own directories in /lib/modules
+            try:
+                sp = subprocess.run(["dpkg-query", "-S", kernel],
+                                    check=True, capture_output=True)
+            except subprocess.CalledProcessError as e:
+                # Ignore errors about directories not associated with a package
+                if e.stderr.startswith(b"dpkg-query: no path found matching"):
+                    continue
+                raise e
             if kernel.split("/")[-1] == booted_kernel.split("/")[-1]:
-                booted_kernel_package = to_text(subprocess.check_output(["dpkg-query", "-S", kernel])).split(":")[0]
+                booted_kernel_package = to_text(sp.stdout).split(":")[0]
             elif kernel != latest_kernel:
-                old_kernel_packages.append(to_text(subprocess.check_output(["dpkg-query", "-S", kernel])).split(":")[0])
+                old_kernel_packages.append(to_text(sp.stdout).split(":")[0])
 
     # returns True if we're not booted into the latest kernel
     new_kernel_exists = booted_kernel.split("/")[-1] != latest_kernel.split("/")[-1]
-    module.exit_json(changed=False, new_kernel_exists=new_kernel_exists, old_packages=old_kernel_packages, booted_package=booted_kernel_package)
+    module.exit_json(
+            changed=False,
+            new_kernel_exists=new_kernel_exists,
+            old_packages=old_kernel_packages,
+            booted_package=booted_kernel_package
+    )
+
 
 if __name__ == '__main__':
     main()

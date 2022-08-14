@@ -48,7 +48,13 @@
       {% endfor %}
     validate: "/usr/sbin/sshd -t -f %s"
   notify:
-    - reload sshd configuration
+    - reload ssh server configuration
+
+- name: Enable and start SSH server
+  ansible.builtin.systemd:
+    name: ssh.service
+    enabled: yes
+    state: started
 
 - name: Fetch a SSH public key to use for cluster joins
   ansible.builtin.slurp:
