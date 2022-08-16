@@ -4,7 +4,7 @@
     ansible.builtin.lineinfile:
       path: /etc/default/grub
       regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
-      line: GRUB_CMDLINE_LINUX_DEFAULT="quiet iommu=pt{% if '"GenuineIntel" in ansible_processor | unique' %} intel_iommu=on{% else %} amd_iommu=on{% endif %}{% if pve_mediated_devices %} i915.enable_gvt=1{% endif %}"
+      line: GRUB_CMDLINE_LINUX_DEFAULT="quiet iommu=pt{% if '"GenuineIntel" in ansible_processor | unique' %} intel_iommu=on{% else %} amd_iommu=on{% endif %}{% if pve_mediated_devices_enabled %} i915.enable_gvt=1{% endif %}"
     register: iommu_modify
   - name: Update default grub
     ansible.builtin.command: update-grub
@@ -35,7 +35,7 @@
       content: |
         kvmgt
     register: modules_list_gvtg
-    when: pve_mediated_devices
+    when: pve_mediated_devices_enabled
   - name: Update initramfs
     command: update-initramfs -u -k all
     when: modules_list_pcie.changed or modules_list_gvtg.changed

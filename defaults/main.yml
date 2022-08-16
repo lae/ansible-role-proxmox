@@ -10,9 +10,9 @@ pve_reboot_on_kernel_update_delay: 60
 pve_remove_old_kernels: true
 pve_run_system_upgrades: false
 pve_run_proxmox_upgrades: true
-pve_pcie_passthrough: false
+pve_pcie_passthrough_enabled: false
 pve_iommu_unsafe_interrupts: false
-pve_mediated_devices: false
+pve_mediated_devices_enabled: false
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
