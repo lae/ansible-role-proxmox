@@ -384,6 +384,9 @@ pve_check_for_kernel_update: true # Runs a script on the host to check kernel ve
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_reboot_on_kernel_update_delay: 60 # Number of seconds to wait before and after a reboot process to proceed with next task in cluster mode
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
+pve_pcie_passthrough_enabled: false # Set this to true to enable PCIe passthrough
+pve_iommu_unsafe_interrupts: false # Set this to true if your system doesn't support interrupt remapping
+pve_mediated_devices_enabled: false # Set this to true if your device supports gtv-g and you wish to enable split functionality
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait

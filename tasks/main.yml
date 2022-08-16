@@ -185,7 +185,7 @@
     - "'pve-no-subscription' in pve_repository_line"
 
 - import_tasks: pcie_passthrough.yml
-  when: "pve_pcie_passthrough"
+  when: "pve_pcie_passthrough_enabled | bool"
 
 - import_tasks: kernel_updates.yml
 
