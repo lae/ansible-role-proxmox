@@ -58,6 +58,11 @@ pve_storages:
     type: dir
     content: [ "iso", "vztmpl", "backup" ]
     path: /testpool/zfs2
+  - name: disabled-dir
+    type: dir
+    disable: yes
+    content: [ "images" ]
+    path: /tmp/fakedir
 pve_zfs_create_volumes:
   - testpool/zfs2
 pve_ceph_osds:
