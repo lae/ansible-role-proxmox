@@ -7,6 +7,9 @@ pve_extra_packages:
 pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: true
 pve_run_system_upgrades: true
+pve_pcie_passthrough_enabled: false
+pve_iommu_unsafe_interrupts: false
+pve_mediated_devices_enabled: false
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
 pve_cluster_enabled: yes
