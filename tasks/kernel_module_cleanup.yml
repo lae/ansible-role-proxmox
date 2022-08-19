@@ -20,14 +20,7 @@
         dest: /etc/default/grub
         line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX nmi_watchdog=0"'
         state: absent
-      register: _pve_grub
-
-    - name: Update GRUB configuration
-      command: update-grub
-      register: _pve_grub_update
-      failed_when: ('error' in _pve_grub_update.stderr)
-      when: "_pve_grub is changed"
-      tags: skiponlxc
+      notify: update-grub
 
     - name: Remove ipmi_watchdog modprobe configuration
       file:
@@ -46,3 +39,46 @@
       notify:
         - restart watchdog-mux
   when: "pve_watchdog != 'ipmi'"
+
+- block:
+    - name: Disable declaring IOMMU unsafe interrupts on init
+      file:
+        desk: /etc/modprobe.d/iommu_unsafe_interrupts.conf
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_iommu_unsafe_interrupts | bool)
+
+    - block:
+        - name: Remove modules list for PCIe Passthrough
+          ansible.builtin.blockinfile:
+            dest: /etc/modules
+            state: absent
+            marker: "# {mark}: Modules required for PCI passthrough (managed by ansible)."
+          notify: update-initramfs
+
+        - name: Remove CPU IOMMU in default grub
+          ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: ^GRUB_CMDLINE_LINUX="iommu=pt
+            state: absent
+          notify: update-grub
+      when: "not pve_pcie_passthrough_enabled | bool"
+
+    - block:
+        - name: Remove modules list for GVT-g
+          ansible.builtin.blockinfile:
+            dest: /etc/modules
+            state: absent
+            marker: "# {mark}: Modules required for GVT-g (managed by ansible)."
+          notify: update-initramfs
+
+        - name: Remove CPU IOMMU in default grub
+          ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: ^GRUB_CMDLINE_LINUX="i915.enable_gvt=1"
+            state: absent
+          notify: update-grub
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_mediated_devices_enabled | bool)
