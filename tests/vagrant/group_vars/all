@@ -63,6 +63,9 @@ pve_storages:
     disable: yes
     content: [ "images" ]
     path: /tmp/fakedir
+  - name: no-content-dir
+    type: dir
+    path: /tmp/fakedir2
 pve_zfs_create_volumes:
   - testpool/zfs2
 pve_ceph_osds:

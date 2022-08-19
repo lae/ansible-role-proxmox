@@ -218,7 +218,11 @@ class ProxmoxStorage(object):
         args = {}
 
         args['type'] = self.type
-        args['content'] = ','.join(self.content)
+        if self.content is not None and len(self.content) > 0:
+            args['content'] = ','.join(self.content)
+        else:
+            # PVE uses "none" to represent when no content types are selected
+            args['content'] = 'none'
         if self.nodes is not None:
             args['nodes'] = ','.join(self.nodes)
         if self.disable is not None:
@@ -273,7 +277,8 @@ class ProxmoxStorage(object):
 
         for key in new_storage:
             if key == 'content':
-                if set(self.content) != set(lookup.get('content', '').split(',')):
+                if set(new_storage['content'].split(',')) \
+                        != set(lookup.get('content', '').split(',')):
                     updated_fields.append(key)
                     staged_storage[key] = new_storage[key]
             elif key == 'monhost':
