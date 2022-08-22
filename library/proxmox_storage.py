@@ -202,9 +202,9 @@ class ProxmoxStorage(object):
         for item in self.existing_storages:
             if item['storage'] == self.name:
                 # pvesh doesn't return the disable param value if it's false,
-                # so we set it to False.
+                # so we set it to 0, which is what PVE would normally use.
                 if item.get('disable') is None:
-                    item['disable'] = False
+                    item['disable'] = 0
                 return item
         return None
 
@@ -218,13 +218,15 @@ class ProxmoxStorage(object):
         args = {}
 
         args['type'] = self.type
-        args['content'] = ','.join(self.content)
+        if self.content is not None and len(self.content) > 0:
+            args['content'] = ','.join(self.content)
+        else:
+            # PVE uses "none" to represent when no content types are selected
+            args['content'] = 'none'
         if self.nodes is not None:
             args['nodes'] = ','.join(self.nodes)
         if self.disable is not None:
-            args['disable'] = self.disable
-        else:
-            args['disable'] = False
+            args['disable'] = 1 if self.disable else 0
         if self.path is not None:
             args['path'] = self.path
         if self.pool is not None:
@@ -234,7 +236,7 @@ class ProxmoxStorage(object):
         if self.username is not None:
             args['username'] = self.username
         if self.krbd is not None:
-            args['krbd'] = self.krbd
+            args['krbd'] = 1 if self.krbd else 0
         if self.maxfiles is not None:
             args['maxfiles'] = self.maxfiles
         if self.server is not None:
@@ -248,7 +250,7 @@ class ProxmoxStorage(object):
         if self.thinpool is not None:
             args['thinpool'] = self.thinpool
         if self.sparse is not None:
-            args['sparse'] = self.sparse
+            args['sparse'] = 1 if self.sparse else 0
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
@@ -275,7 +277,8 @@ class ProxmoxStorage(object):
 
         for key in new_storage:
             if key == 'content':
-                if set(self.content) != set(lookup.get('content', '').split(',')):
+                if set(new_storage['content'].split(',')) \
+                        != set(lookup.get('content', '').split(',')):
                     updated_fields.append(key)
                     staged_storage[key] = new_storage[key]
             elif key == 'monhost':
