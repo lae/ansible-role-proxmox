@@ -17,6 +17,30 @@
       when: "pve_mediated_devices_enabled | bool"
       notify: update-grub
 
+- block:
+    - name: Stub vfio-pci id(s) in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: 'vfio-pci.ids'
+        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}"
+        insertafter: '^GRUB_CMDLINE_LINUX="'
+      notify: update-grub
+      when: "pve_pci_device_ids | length > 0"
+
+    - name: Specify vfio configuration options
+      ansible.builtin.blockinfile:
+        dest: /etc/modprobe.d/vfio.conf
+        marker: "# {mark}: VFIO driver configuration options (managed by ansible)."
+        content: "\
+          {% if (pve_vfio_drivers | length > 0) %}{% for k in pve_vfio_drivers %}softdep {{ k.name }} pre: vfio-pci\n{% endfor %}{% endif %}\
+          {% if (pve_pcie_ovmf_enabled | bool) %}options vfio-pci disable_vga=1{% endif %}\
+          {% if (pve_pci_device_ids | length > 0) %}options vfio-pci ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}{% endif %}"
+        create: yes
+      when: >
+        (pve_vfio_drivers | length > 0) or
+        (pve_pci_device_ids | length > 0) or
+        (pve_pcie_ovmf_enabled | bool)
+
 - name: Enable IOMMU unsafe interrupts
   ansible.builtin.copy:
     content: "options vfio_iommu_type1 allow_unsafe_interrupts=1"
