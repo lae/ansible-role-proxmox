@@ -708,6 +708,47 @@ nodes).
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted
 volumes the parameter `encrypted` has to be set per drive to `true`.
 
+## PCIe Passthrough
+
+PCIe passthrough is not enabled by default and is an optional feature to enable PCI devices to be passed through from the host to VM's in Proxmox.
+
+Included in this feature is dedicated device passthrough (such as a GPU or USB devices). Along with dedicated devices, integrated devices such as integrated Intel GPU's are also able to be passed through to VM's.
+
+Some devices can take advantage of Mediated usage; Splitting of devices is not supported by all devices and should be checked before being enabled. Split devices can be used and allocated between multiple VM's including the host, whereas normal passthrough requires the host to blacklist device drivers.
+
+The following definitions shows some of the configurations that are possible.
+
+```
+pve_pcie_passthrough_enabled: true
+pve_iommu_unsafe_interrupts: false
+pve_mediated_devices_enabled: false
+pve_pcie_ovmf_enabled: false
+pve_pci_device_ids:
+  - id: "10de:1381"
+  - id: "10de:0fbc"
+pve_vfio_drivers:
+  - name: "radeon"
+  - name: "nouveau"
+  - name: "nvidia"
+```
+
+`pve_pcie_passthrough_enabled` is required to use any PCIe passthrough functionality. Without this enabled, all other PCIe related fields will be unused.
+
+`pve_iommu_unsafe_interrupts` is beneficial if your system doesn't support interrupt remapping. This can be found by using `dmesg | grep 'remapping'`. If you see one of the following lines:
+
+- "AMD-Vi: Interrupt remapping enabled"
+- "DMAR-IR: Enabled IRQ remapping in x2apic mode" ('x2apic' can be different on old CPUs, but should still work)
+
+Then system interrupt remapping is supported and you do not need to enable `pve_iommu_unsafe_interrupts`.
+
+`pve_mediated_devices_enabled` enables GVT-g support for integrated devices such as Intel iGPU's. Not all devices support GVT-g so it is recommended to check with your specific device beforehand to ensure it is allowed.
+
+`pve_pcie_ovmf_enabled` enables GPU OVMF PCI passthrough. When using OVMF you should select 'OVMF' as the BIOS option for the VM instead of 'SeaBIOS' within Proxmox. This setting will try to opt-out devices from VGA arbitration if possible.
+
+`pve_pci_device_ids` is a list of device and vendor ids that is wished to be passed through from the host. See the section 'GPU Passthrough' on the [Proxmox WIKI](https://pve.proxmox.com/wiki/Pci_passthrough) to find your specific device and vendor id's. When setting this value, it is required to specify an 'id' for each new element in the array.
+
+`pve_vfio_drivers` is a list of drivers to be excluded from the host. This is required when passing through a PCI device to prevent the host from using the device before it can be assigned to a VM. When setting this value, it is required to specify a 'name' for each new element in the array.
+
 ## Developer Notes
 
 When developing new features or fixing something in this role, you can test out
