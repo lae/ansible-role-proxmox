@@ -10,6 +10,14 @@ pve_run_system_upgrades: true
 pve_pcie_passthrough_enabled: true
 pve_iommu_unsafe_interrupts: true
 pve_mediated_devices_enabled: true
+pve_pcie_ovmf_enabled: false
+pve_pci_device_ids:
+  - id: "10de:1381"
+  - id: "10de:0fbc"
+pve_vfio_drivers:
+  - name: "radeon"
+  - name: "nouveau"
+  - name: "nvidia"
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
 pve_cluster_enabled: yes

@@ -42,7 +42,7 @@
 
 - block:
     - name: Disable declaring IOMMU unsafe interrupts on init
-      file:
+      ansible.builtin.file:
         desk: /etc/modprobe.d/iommu_unsafe_interrupts.conf
         state: absent
       when: >
@@ -82,3 +82,21 @@
       when: >
         (not pve_pcie_passthrough_enabled | bool) or
         (not pve_mediated_devices_enabled | bool)
+
+    - block:
+        - name: Remove vfio-pci id(s) in default grub
+          ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: ^GRUB_CMDLINE_LINUX="vfio-pci.ids=
+            state: absent
+          notify: update-grub
+          when: "not pve_pci_device_ids | length > 0"
+
+        - name: Remove vfio config file
+          ansible.builtin.file:
+            desk: /etc/modprobe.d/vfio.conf
+            state: absent
+          when: >
+            (not pve_pci_device_ids | length > 0) and
+            (not pve_vfio_drivers | length > 0) and
+            (not pve_pcie_ovmf_enabled | bool)
