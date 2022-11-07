@@ -34,7 +34,7 @@ def main():
             latest_kernel = kernel
 
     booted_kernel = "/lib/modules/{}".format(to_text(
-            subprocess.run(["uname", "-r"], capture_output=True).stdout.strip))
+            subprocess.run(["uname", "-r"], capture_output=True).stdout.decode("utf-8").strip()))
 
     booted_kernel_package = ""
     old_kernel_packages = []
