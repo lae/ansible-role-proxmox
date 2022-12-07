@@ -49,12 +49,14 @@ Copy the following playbook to a file like `install_proxmox.yml`:
       become: True
       roles:
         - role: geerlingguy.ntp
+          vars:
             ntp_manage_config: true
             ntp_servers:
               - clock.sjc.he.net,
               - clock.fmt.he.net,
               - clock.nyc.he.net
         - role: lae.proxmox
+          vars:
             - pve_group: all
             - pve_reboot_on_kernel_update: true
 
