@@ -36,7 +36,7 @@ def main():
     booted_kernel = "/lib/modules/{}".format(to_text(
             subprocess.run(["uname", "-r"], capture_output=True).stdout).strip())
 
-    booted_kernel_package = ""
+    booted_kernel_packages = ""
     old_kernel_packages = []
     if params['lookup_packages']:
         for kernel in kernels:
