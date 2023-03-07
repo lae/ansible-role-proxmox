@@ -1,0 +1,33 @@
+---
+- name: Check domains.cfg exists
+  stat:
+    path: "/etc/pve/domains.cfg"
+  register: _domains_cfg
+
+- name: Create domains.cfg if it does not exist
+  file:
+    path: "/etc/pve/domains.cfg"
+    state: "touch"
+  when:
+    - not _domains_cfg.stat.exists
+
+- name: Configure domains.cfg
+  # The parser for domains.cfg requires a blank line after each domain,
+  # and there's a TAB character before printing each key / value pair for a domain
+  copy:
+    dest: "/etc/pve/domains.cfg"
+    owner: "root"
+    group: "www-data"
+    mode: "0640"
+    content: |
+      {% for domain in pve_domains_cfg %}
+      {{ domain.type }}: {{ domain.name }}
+      {% for k,v in domain.items() %}
+      {% if k != 'name' %}
+      {% if k != 'type' %}
+      	{{ k }} {{ v }}
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+
+      {% endfor %}
