@@ -22,12 +22,47 @@
     content: |
       {% for domain in pve_domains_cfg %}
       {{ domain.type }}: {{ domain.name }}
-      {% for k,v in domain.items() %}
-      {% if k != 'name' %}
-      {% if k != 'type' %}
+      {% if domain.attributes %}
+      {% for k,v in domain.attributes.items() %}
+      {% if k != 'bind_password' %}
       	{{ k }} {{ v }}
       {% endif %}
-      {% endif %}
       {% endfor %}
+      {% endif %}
 
       {% endfor %}
+
+- name: Select ldap-based realms with bind_password
+  set_fact:
+    pve_ldap_realms_with_bind_pw: |
+      {{ pve_domains_cfg | selectattr('type', 'in', ['ad', 'ldap'])
+                         | selectattr('attributes.bind_password', 'defined') }}
+
+- name: Ensure /etc/pve/priv/realm/ exists
+  ansible.builtin.file:
+    path: /etc/pve/priv/realm
+    state: directory
+    owner: root
+    group: www-data
+    mode: 0700
+  when: pve_ldap_realms_with_bind_pw | length
+
+- name: Ensure ldap-based realm secret files exists
+  ansible.builtin.file:
+    path: "/etc/pve/priv/realm/{{ item.name }}.pw"
+    access_time: preserve
+    modification_time: preserve
+    state: touch
+    mode: 0600
+  with_items:
+    - "{{ pve_ldap_realms_with_bind_pw }}"
+
+- name: Update ldap-based realm secret files
+  ansible.builtin.copy:
+    content: "{{ item.attributes.bind_password }}"
+    dest: "/etc/pve/priv/realm/{{ item.name }}.pw"
+    owner: root
+    group: www-data
+    mode: 0600
+  with_items:
+    - "{{ pve_ldap_realms_with_bind_pw }}"

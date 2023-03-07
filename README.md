@@ -472,25 +472,32 @@ One realm should have the `default: 1` property to mark it as the default:
 pve_domains_cfg:
   - name: pam
     type: pam
-    comment: Linux PAM standard authentication
+    attributes:
+      comment: Linux PAM standard authentication
   - name: pve
     type: pve
-    comment: Proxmox VE authentication server
-  - name: AD
+    attributes:
+      comment: Proxmox VE authentication server
+  - name: ad
     type: ad
-    comment: Active Directory authentication
-    domain: yourdomain.com
-    server1: dc01.yourdomain.com
-    default: 1
-    secure: 1
-    server2: dc02.yourdomain.com
-  - name: LDAP
+    attributes:
+      comment: Active Directory authentication
+      domain: yourdomain.com
+      server1: dc01.yourdomain.com
+      default: 1
+      secure: 1
+      server2: dc02.yourdomain.com
+  - name: ldap
     type: ldap
-    base_dn: CN=Users,dc=yourdomain,dc=com
-    server1: ldap1.yourdomain.com
-    user_attr: uid
-    secure: 1
-    server2: ldap2.yourdomain.com
+    attributes:
+      comment: LDAP authentication
+      base_dn: CN=Users,dc=yourdomain,dc=com
+      bind_dn: "uid=svc-reader,CN=Users,dc=yourdomain,dc=com"
+      bind_password: "{{ secret_ldap_svc_reader_password }}"
+      server1: ldap1.yourdomain.com
+      user_attr: uid
+      secure: 1
+      server2: ldap2.yourdomain.com
 ```
 
 ## Dependencies
