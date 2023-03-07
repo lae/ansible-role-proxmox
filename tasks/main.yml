@@ -241,6 +241,27 @@
   with_items: "{{ pve_users }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
 
+- import_tasks: realms_config.yml
+  when:
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_domains_cfg | length > 0
+
+- name: Select ldap-based realms with sync
+  set_fact:
+    pve_ldap_realms_with_sync: |
+      {{ pve_domains_cfg | selectattr('type', 'in', ['ad', 'ldap'])
+                         | selectattr('sync', 'defined') }}
+
+- name: Sync ldap-based realms
+  include_tasks: realms_sync.yml
+  loop: "{{ pve_ldap_realms_with_sync | flatten(levels=1) }}"
+  loop_control:
+    loop_var: pve_ldap_realm
+  when:
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_domains_cfg | length > 0
+    - pve_ldap_realm.sync | bool
+
 - name: Configure Proxmox ACLs
   proxmox_acl:
     path: "{{ item.path }}"
@@ -321,11 +342,6 @@
   when:
     - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
     - "pve_datacenter_cfg | length > 0"
-
-- import_tasks: realms_config.yml
-  when:
-    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
-    - pve_domains_cfg | length > 0
 
 - import_tasks: ssl_config.yml
   when:
