@@ -22,7 +22,7 @@
       ansible.builtin.lineinfile:
         path: /etc/default/grub
         regexp: 'vfio-pci.ids'
-        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}"
+        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}\""
         insertafter: '^GRUB_CMDLINE_LINUX="'
       notify: update-grub
       when: "pve_pci_device_ids | length > 0"
