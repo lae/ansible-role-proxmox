@@ -66,5 +66,6 @@
         marker: "# {mark}: Modules required for GVT-g (managed by ansible)."
         content: |
           kvmgt
+          mdev
       when: "pve_mediated_devices_enabled | bool"
       notify: update-initramfs
