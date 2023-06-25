@@ -104,11 +104,19 @@
     name: gpg
     state: present
 
-- name: Trust Proxmox' packaging key
+- name: Trust Proxmox' packaging key on Debian < 12
   apt_key:
     data: "{{ lookup('file', pve_release_key) }}"
     id: "{{ pve_release_key_id }}"
     state: present
+  when: "ansible_distribution_major_version | int < 12"
+
+- name: Trust Proxmox' packaging key on Debian 12
+  copy:
+    src: "proxmox-release-{{ ansible_distribution_release }}.gpg"
+    dest: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    mode: 0644
+  when: "ansible_distribution_major_version | int == 12"
 
 - name: Remove os-prober package
   apt:
