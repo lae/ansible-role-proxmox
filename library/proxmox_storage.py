@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool", "btrfs" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -325,7 +325,7 @@ def main():
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
-                           "zfspool"]),
+                           "zfspool", "btrfs"]),
         disable=dict(required=False, type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'], type='str'),
         path=dict(default=None, required=False, type='str'),
@@ -353,6 +353,7 @@ def main():
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
+            ["type", "btfs", ["path", "content"]],
         ]
     )
     storage = ProxmoxStorage(module)
