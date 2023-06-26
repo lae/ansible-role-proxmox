@@ -343,7 +343,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
-        is_mountpoint=dict(default='no', type='str', required=False),
+        is_mountpoint=dict(default=None, type='bool', required=False),
     )
 
     module = AnsibleModule(
