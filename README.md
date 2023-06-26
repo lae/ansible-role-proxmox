@@ -545,7 +545,7 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, and `zfspool`.
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool` and `btrfs`.
 Here are some examples.
 
 ```
@@ -594,7 +594,15 @@ pve_storages:
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+  - name: btrfs1
+    type: btrfs
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    path: /mnt/proxmox_storage
+    is_mountpoint: true
 ```
+
+Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
 
 Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
 If you want to store the other content types on a ZFS volume, you need to specify

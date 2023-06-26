@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool", "btrfs" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -98,6 +98,11 @@ options:
         required: false
         description:
             - Use ZFS thin-provisioning.
+    is_mountpoint:
+        required: false
+        description:
+            - Specifies whether or not the given path is an externally managed
+            mountpoint.
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -192,6 +197,7 @@ class ProxmoxStorage(object):
         self.vgname = module.params['vgname']
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
+        self.is_mountpoint = module.params['is_mountpoint']
 
         try:
             self.existing_storages = pvesh.get("storage")
@@ -251,6 +257,8 @@ class ProxmoxStorage(object):
             args['thinpool'] = self.thinpool
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
+        if self.is_mountpoint is not None:
+            args['is_mountpoint'] = 1 if self.is_mountpoint else 0
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
@@ -325,7 +333,7 @@ def main():
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
-                           "zfspool"]),
+                           "zfspool", "btrfs"]),
         disable=dict(required=False, type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'], type='str'),
         path=dict(default=None, required=False, type='str'),
@@ -340,6 +348,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
+        is_mountpoint=dict(default=None, type='bool', required=False),
     )
 
     module = AnsibleModule(
@@ -353,6 +362,7 @@ def main():
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
+            ["type", "btrfs", ["path", "content"]],
         ]
     )
     storage = ProxmoxStorage(module)
