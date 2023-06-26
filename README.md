@@ -545,8 +545,8 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, and `zfspool`.
-Here are some examples.
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool` and `btrfs`.
+Here are some examples`
 
 ```
 pve_storages:
@@ -594,7 +594,15 @@ pve_storages:
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+  - name: btrfs1
+    type: btrfs
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    path: /mnt/proxmox_storage
+    is_mountpoint: true
 ```
+
+Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
 
 Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
 If you want to store the other content types on a ZFS volume, you need to specify
@@ -727,17 +735,17 @@ you can troubleshoot it and/or run `vagrant provision` after fixing):
 
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
-Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
-Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
-Richard Scott ([@zenntrix](https://github.com/zenntrix)) - Ceph support, PVE 7.x support, etc  
-Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
-Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
-Jonas Meurer ([@mejo-](https://github.com/mejo-))  
-Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
-niko2 ([@niko2](https://github.com/niko2))  
-Christian Aublet ([@caublet](https://github.com/caublet))  
-Michael Holasek ([@mholasek](https://github.com/mholasek))  
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc
+Richard Scott ([@zenntrix](https://github.com/zenntrix)) - Ceph support, PVE 7.x support, etc
+Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc
+Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
+Jonas Meurer ([@mejo-](https://github.com/mejo-))
+Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))
+niko2 ([@niko2](https://github.com/niko2))
+Christian Aublet ([@caublet](https://github.com/caublet))
+Michael Holasek ([@mholasek](https://github.com/mholasek))
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
