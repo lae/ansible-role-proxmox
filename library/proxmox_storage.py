@@ -192,6 +192,7 @@ class ProxmoxStorage(object):
         self.vgname = module.params['vgname']
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
+        self.is_mountpoint = module.params['is_mountpoint']
 
         try:
             self.existing_storages = pvesh.get("storage")
@@ -251,6 +252,8 @@ class ProxmoxStorage(object):
             args['thinpool'] = self.thinpool
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
+        if self.is_mountpoint is not None:
+            args['is_mountpoint'] = self.is_mountpoint
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
@@ -340,6 +343,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
+        is_mountpoint=dict(default='no', type='str', required=False),
     )
 
     module = AnsibleModule(
