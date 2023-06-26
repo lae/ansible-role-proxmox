@@ -98,6 +98,11 @@ options:
         required: false
         description:
             - Use ZFS thin-provisioning.
+    is_mountpoint:
+        required: false
+        description:
+            - Specifies whether or not the given path is an externally managed
+            mountpoint.
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -253,7 +258,7 @@ class ProxmoxStorage(object):
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
         if self.is_mountpoint is not None:
-            args['is_mountpoint'] = self.is_mountpoint
+            args['is_mountpoint'] = 1 if self.is_mountpoint else 0
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
