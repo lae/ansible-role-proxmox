@@ -735,17 +735,17 @@ you can troubleshoot it and/or run `vagrant provision` after fixing):
 
 ## Contributors
 
-Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer
-Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support
-Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc
-Richard Scott ([@zenntrix](https://github.com/zenntrix)) - Ceph support, PVE 7.x support, etc
-Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc
-Engin Dumlu ([@roadrunner](https://github.com/roadrunner))
-Jonas Meurer ([@mejo-](https://github.com/mejo-))
-Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))
-niko2 ([@niko2](https://github.com/niko2))
-Christian Aublet ([@caublet](https://github.com/caublet))
-Michael Holasek ([@mholasek](https://github.com/mholasek))
+Musee Ullah ([@lae](https://github.com/lae), <lae@lae.is>) - Main developer  
+Fabien Brachere ([@Fbrachere](https://github.com/Fbrachere)) - Storage config support  
+Gaudenz Steinlin ([@gaundez](https://github.com/gaudenz)) - Ceph support, etc  
+Richard Scott ([@zenntrix](https://github.com/zenntrix)) - Ceph support, PVE 7.x support, etc  
+Thoralf Rickert-Wendt ([@trickert76](https://github.com/trickert76)) - PVE 6.x support, etc  
+Engin Dumlu ([@roadrunner](https://github.com/roadrunner))  
+Jonas Meurer ([@mejo-](https://github.com/mejo-))  
+Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
+niko2 ([@niko2](https://github.com/niko2))  
+Christian Aublet ([@caublet](https://github.com/caublet))  
+Michael Holasek ([@mholasek](https://github.com/mholasek))  
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
