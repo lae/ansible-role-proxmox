@@ -546,7 +546,7 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
 types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool` and `btrfs`.
-Here are some examples`
+Here are some examples.
 
 ```
 pve_storages:
