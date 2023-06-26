@@ -353,7 +353,7 @@ def main():
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
-            ["type", "btfs", ["path", "content"]],
+            ["type", "btrfs", ["path", "content"]],
         ]
     )
     storage = ProxmoxStorage(module)
