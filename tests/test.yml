@@ -16,6 +16,34 @@
       vars:
         query: "([?type=='cluster'].quorate)[0]"
 
+    - name: Query PVE realms
+      shell: "pvesh get /access/domains --output=json"
+      register: _pve_realms
+      changed_when: False
+
+    - name: Construct realm list
+      set_fact:
+        realm_list: "{{ realm_list | default([]) }} + [ '{{ item.type }}' ]"
+      with_items: "{{ pve_domains_cfg }}"
+
+    - name: Check that PVE realms exist
+      assert:
+        that: "realm_list is subset(_pve_realms.stdout | from_json | json_query(query))"
+      vars:
+        query: "[*].type"
+      run_once: True
+
+    - name: Check PVE realms configuration
+      assert:
+        that:
+          - item.type == realm.type
+          - item.name == realm.realm
+          - item.attributes.comment == realm.comment
+      vars:
+        realm: '{{ _pve_realms.stdout | from_json
+                   | json_query("[?realm==''" + item.name + "'']") | first }}'
+      with_items: "{{ pve_domains_cfg }}"
+
     - name: Query PVE groups
       shell: "pvesh get /access/groups --output=json"
       register: _pve_groups

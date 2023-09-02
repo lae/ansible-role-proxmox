@@ -1,0 +1,59 @@
+---
+# expects to be called with variable pve_ldap_realm set
+
+- name: Get pre-sync state of groups
+  ansible.builtin.shell: pveum group list --output-format json-pretty
+  register: groups_before
+  changed_when: false
+
+- name: Get pre-sync state of users
+  ansible.builtin.shell: pveum user list --output-format json-pretty
+  register: users_before
+  changed_when: false
+
+- name: "Sync ldap-based realm {{ pve_ldap_realm.name }}"
+  ansible.builtin.shell: |
+    pveum realm sync {{ pve_ldap_realm.name }}
+  changed_when: false
+
+- name: Get post-sync state of groups
+  ansible.builtin.shell: pveum group list --output-format json-pretty
+  register: groups_after
+  changed_when: false
+
+- name: Get post-sync state of users
+  ansible.builtin.shell: pveum user list --output-format json-pretty
+  register: users_after
+  changed_when: false
+
+- name: Create temporary file for pre-post-sync comparation
+  ansible.builtin.tempfile:
+    state: file
+    suffix: pve_realm_sync_pre
+  register: pre_sync_content
+  changed_when: false
+
+- name: Save pre-sync state of groups and users
+  ansible.builtin.copy:
+    content: |
+      {{ groups_before.stdout | from_json | sort(attribute='groupid') | to_yaml }}
+      {{ users_before.stdout | from_json | sort(attribute='userid') | to_yaml }}
+    dest: "{{ pre_sync_content.path }}"
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: "Compare to post-sync state of groups and users for realm {{ pve_ldap_realm.name }}"
+  ansible.builtin.copy:
+    content: |
+      {{ groups_after.stdout | from_json | sort(attribute='groupid') | to_yaml }}
+      {{ users_after.stdout | from_json | sort(attribute='userid') | to_yaml }}
+    dest: "{{ pre_sync_content.path }}"
+  when: not ansible_check_mode
+  diff: true
+
+- name: Remove the temporary file for pre-post-sync comparation
+  ansible.builtin.file:
+    path: "{{ pre_sync_content.path }}"
+    state: absent
+  when: not ansible_check_mode
+  changed_when: false
