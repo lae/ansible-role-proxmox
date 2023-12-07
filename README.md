@@ -392,6 +392,8 @@ pve_mediated_devices_enabled: false # Set this to true if your device supports g
 pve_pcie_ovmf_enabled: false # Set this to true to enable GPU OVMF PCI passthrough
 pve_pci_device_ids: [] # List of pci device ID's (see https://pve.proxmox.com/wiki/Pci_passthrough#GPU_Passthrough)
 pve_vfio_drivers: [] # List of device drivers (see https://pve.proxmox.com/wiki/Pci_passthrough#GPU_Passthrough)
+pve_pcie_ignore_msrs: false # Set this to true if passing through to Windows machine to prevent VM crashing.
+pve_pcie_report_msrs: true # Set this to false to prevent dmesg system from logging msrs crash reports.
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait

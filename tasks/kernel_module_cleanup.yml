@@ -76,7 +76,7 @@
         - name: Remove CPU IOMMU in default grub
           ansible.builtin.lineinfile:
             path: /etc/default/grub
-            regexp: ^GRUB_CMDLINE_LINUX="i915.enable_gvt=1"
+            regexp: ^GRUB_CMDLINE_LINUX="i915.enable_gvt=1 i915.enable_guc=0"
             state: absent
           notify: update-grub
       when: >
@@ -100,3 +100,10 @@
             (not pve_pci_device_ids | length > 0) and
             (not pve_vfio_drivers | length > 0) and
             (not pve_pcie_ovmf_enabled | bool)
+
+        - name: Remove kvm config file
+          ansible.builtin.file:
+            dest: /etc/modprobe.d/kvm.conf
+            state: absent
+          when: >
+            (not pve_pci_device_ids | length > 0)
