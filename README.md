@@ -49,12 +49,14 @@ Copy the following playbook to a file like `install_proxmox.yml`:
       become: True
       roles:
         - role: geerlingguy.ntp
+          vars:
             ntp_manage_config: true
             ntp_servers:
               - clock.sjc.he.net,
               - clock.fmt.he.net,
               - clock.nyc.he.net
         - role: lae.proxmox
+          vars:
             - pve_group: all
             - pve_reboot_on_kernel_update: true
 
@@ -549,8 +551,8 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, and `zfspool`.
-Here are some examples.
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`,
+and `pbs`. Here are some examples.
 
 ```
 pve_storages:
@@ -593,12 +595,27 @@ pve_storages:
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+  - name: pbs1
+    type: pbs
+    content: [ "backup" ]
+    server: 192.168.122.2
+    username: user@pbs
+    password: PBSPassword1
+    datastore: main
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+  - name: btrfs1
+    type: btrfs
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    path: /mnt/proxmox_storage
+    is_mountpoint: true
 ```
+
+Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
 
 Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
 If you want to store the other content types on a ZFS volume, you need to specify

@@ -22,7 +22,7 @@ options:
     type:
         required: true
         aliases: [ "storagetype" ]
-        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool" ]
+        choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool", "btrfs" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
@@ -98,6 +98,11 @@ options:
         required: false
         description:
             - Use ZFS thin-provisioning.
+    is_mountpoint:
+        required: false
+        description:
+            - Specifies whether or not the given path is an externally managed
+            mountpoint.
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -154,6 +159,17 @@ EXAMPLES = '''
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+- name: Create a Proxmox Backup Server storage type
+  proxmox_storage:
+    name: pbs1
+    type: pbs
+    content: [ "backup" ]
+    server: 192.168.122.2
+    username: user@pbs
+    password: PBSPassword1
+    datastore: main
+    fingerprint: f2:fb:85:76:d2:2a:c4:96:5c:6e:d8:71:37:36:06:17:09:55:f7:04:e3:74:bb:aa:9e:26:85:92:63:c8:b9:23
+    encryption_key: autogen
 - name: Create a ZFS storage type
   proxmox_storage:
     name: zfs1
@@ -170,16 +186,26 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
+import re
+import json
+from json import JSONDecodeError, loads as parse_json
+
 
 class ProxmoxStorage(object):
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
         self.state = module.params['state']
-        self.type = module.params['type']
+        # Globally applicable PVE API arguments
         self.disable = module.params['disable']
         self.content = module.params['content']
         self.nodes = module.params['nodes']
+        self.type = module.params['type']
+        # Remaining PVE API arguments (depending on type) past this point
+        self.datastore = module.params['datastore']
+        self.encryption_key = module.params['encryption_key']
+        self.fingerprint = module.params['fingerprint']
+        self.password = module.params['password']
         self.path = module.params['path']
         self.pool = module.params['pool']
         self.monhost = module.params['monhost']
@@ -192,7 +218,26 @@ class ProxmoxStorage(object):
         self.vgname = module.params['vgname']
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
+        self.is_mountpoint = module.params['is_mountpoint']
 
+        # Validate the parameters given to us
+        fingerprint_re = re.compile('^([A-Fa-f0-9]{2}:){31}[A-Fa-f0-9]{2}$')
+        if self.fingerprint is not None and not fingerprint_re.match(self.fingerprint):
+            self.module.fail_json(msg=(f"fingerprint must be of the format, "
+                                       f"{fingerprint_re.pattern}."))
+
+        if self.type == 'pbs':
+            if self.content != ['backup']:
+                self.module.fail_json(msg="PBS storage type only supports the "
+                                          "'backup' content type.")
+            try:
+                if self.encryption_key not in ["autogen", None]:
+                    parse_json(self.encryption_key)
+            except JSONDecodeError:
+                self.module.fail_json(msg=("encryption_key needs to be valid "
+                                           "JSON or set to 'autogen'."))
+
+        # Attempt to retrieve current/live storage definitions
         try:
             self.existing_storages = pvesh.get("storage")
         except ProxmoxShellError as e:
@@ -202,9 +247,9 @@ class ProxmoxStorage(object):
         for item in self.existing_storages:
             if item['storage'] == self.name:
                 # pvesh doesn't return the disable param value if it's false,
-                # so we set it to False.
+                # so we set it to 0, which is what PVE would normally use.
                 if item.get('disable') is None:
-                    item['disable'] = False
+                    item['disable'] = 0
                 return item
         return None
 
@@ -218,13 +263,25 @@ class ProxmoxStorage(object):
         args = {}
 
         args['type'] = self.type
-        args['content'] = ','.join(self.content)
+        if self.content is not None and len(self.content) > 0:
+            args['content'] = ','.join(self.content)
+        else:
+            # PVE uses "none" to represent when no content types are selected
+            args['content'] = 'none'
         if self.nodes is not None:
             args['nodes'] = ','.join(self.nodes)
         if self.disable is not None:
-            args['disable'] = self.disable
-        else:
-            args['disable'] = False
+            args['disable'] = 1 if self.disable else 0
+        if self.datastore is not None:
+            args['datastore'] = self.datastore
+        if self.encryption_key is not None:
+            args['encryption-key'] = self.encryption_key
+        if self.fingerprint is not None:
+            args['fingerprint'] = self.fingerprint
+        if self.master_pubkey is not None:
+            args['master-pubkey'] = self.master_pubkey
+        if self.password is not None:
+            args['password'] = self.password
         if self.path is not None:
             args['path'] = self.path
         if self.pool is not None:
@@ -234,7 +291,7 @@ class ProxmoxStorage(object):
         if self.username is not None:
             args['username'] = self.username
         if self.krbd is not None:
-            args['krbd'] = self.krbd
+            args['krbd'] = 1 if self.krbd else 0
         if self.maxfiles is not None:
             args['maxfiles'] = self.maxfiles
         if self.server is not None:
@@ -248,7 +305,9 @@ class ProxmoxStorage(object):
         if self.thinpool is not None:
             args['thinpool'] = self.thinpool
         if self.sparse is not None:
-            args['sparse'] = self.sparse
+            args['sparse'] = 1 if self.sparse else 0
+        if self.is_mountpoint is not None:
+            args['is_mountpoint'] = 1 if self.is_mountpoint else 0
 
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
@@ -275,7 +334,8 @@ class ProxmoxStorage(object):
 
         for key in new_storage:
             if key == 'content':
-                if set(self.content) != set(lookup.get('content', '').split(',')):
+                if set(new_storage['content'].split(',')) \
+                        != set(lookup.get('content', '').split(',')):
                     updated_fields.append(key)
                     staged_storage[key] = new_storage[key]
             elif key == 'monhost':
@@ -318,13 +378,20 @@ def main():
     # Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html
     module_args = dict(
         name=dict(type='str', required=True, aliases=['storage', 'storageid']),
+        state=dict(default='present', choices=['present', 'absent'], type='str'),
+        # Globally applicable PVE API arguments
         content=dict(type='list', required=True, aliases=['storagetype']),
+        disable=dict(required=False, type='bool', default=False),
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
-                           "zfspool"]),
-        disable=dict(required=False, type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent'], type='str'),
+                           "zfspool", "btrfs", "pbs"]),
+        # Remaining PVE API arguments (depending on type) past this point
+        datastore=dict(default=None, type='str', required=False),
+        encryption_key=dict(default=None, type='str', required=False),
+        fingerprint=dict(default=None, type='str', required=False),
+        master_pubkey=dict(default=None, type='str', required=False),
+        password=dict(default=None, type='str', required=False),
         path=dict(default=None, required=False, type='str'),
         pool=dict(default=None, type='str', required=False),
         monhost=dict(default=None, type='list', required=False),
@@ -337,6 +404,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
+        is_mountpoint=dict(default=None, type='bool', required=False),
     )
 
     module = AnsibleModule(
@@ -350,7 +418,12 @@ def main():
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
-        ]
+            ["type", "btrfs", ["path", "content"]],
+            ["type", "pbs", ["server", "username", "password", "datastore"]]
+        ],
+        required_by={
+            "master_pubkey": "encryption_key"
+        }
     )
     storage = ProxmoxStorage(module)
 
