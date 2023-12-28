@@ -3,3 +3,6 @@ proxmox-6-[01:03].lxc
 
 [bullseyecluster]
 proxmox-7-[01:03].lxc
+
+[bookwormcluster]
+proxmox-8-[01:03].lxc
