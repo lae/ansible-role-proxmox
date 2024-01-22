@@ -18,11 +18,12 @@
     src: /root/.ssh/id_rsa.pub
   register: proxmox_root_id_rsa_pub
 
-- name: Authorize all hosts' root SSH public keys
-  authorized_key:
-    user: root
-    key: "{{ hostvars[item].proxmox_root_id_rsa_pub.content | b64decode }}"
-  with_items: "{{ groups[pve_group] }}"
+# Skip this task as we have our own SSH key task
+# - name: Authorize all hosts' root SSH public keys
+#   authorized_key:
+#     user: root
+#     key: "{{ hostvars[item].proxmox_root_id_rsa_pub.content | b64decode }}"
+#   with_items: "{{ groups[pve_group] }}"
 
 - name: Configure SSH clients for connecting to PVE cluster hosts
   blockinfile:
