@@ -34,9 +34,9 @@ def main():
             latest_kernel = kernel
 
     booted_kernel = "/lib/modules/{}".format(to_text(
-            subprocess.run(["uname", "-r"], capture_output=True).stdout.strip))
+            subprocess.run(["uname", "-r"], capture_output=True).stdout).strip())
 
-    booted_kernel_package = ""
+    booted_kernel_packages = ""
     old_kernel_packages = []
     if params['lookup_packages']:
         for kernel in kernels:
@@ -50,10 +50,11 @@ def main():
                 if e.stderr.startswith(b"dpkg-query: no path found matching"):
                     continue
                 raise e
+            pkgs = to_text(sp.stdout).split(":")[0].split(", ")
             if kernel.split("/")[-1] == booted_kernel.split("/")[-1]:
-                booted_kernel_package = to_text(sp.stdout).split(":")[0]
+                booted_kernel_packages = pkgs
             elif kernel != latest_kernel:
-                old_kernel_packages.append(to_text(sp.stdout).split(":")[0])
+                old_kernel_packages.extend(pkgs)
 
     # returns True if we're not booted into the latest kernel
     new_kernel_exists = booted_kernel.split("/")[-1] != latest_kernel.split("/")[-1]
@@ -61,7 +62,7 @@ def main():
             changed=False,
             new_kernel_exists=new_kernel_exists,
             old_packages=old_kernel_packages,
-            booted_package=booted_kernel_package
+            booted_packages=booted_kernel_packages
     )
 
 
