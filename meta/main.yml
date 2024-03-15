@@ -13,6 +13,7 @@ galaxy_info:
       versions:
         - buster
         - bullseye
+        - bookworm
 
   galaxy_tags:
     - proxmox
