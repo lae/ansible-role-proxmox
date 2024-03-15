@@ -80,7 +80,7 @@
   proxmox_query:
     query: "/cluster/ha/groups"
   register: _ha_group_list
-  when: "inventory_hostname == groups[pve_group][0]"
+  when: "inventory_hostname == _init_node"
 
 - name: Create PVE cluster HA groups
   command: >-
@@ -94,7 +94,7 @@
     -restricted {{ item.restricted }}
     {% endif %}
   when:
-    - "inventory_hostname == groups[pve_group][0]"
+    - "inventory_hostname == _init_node"
     - item.name not in _ha_group_list.response | json_query("[*].group")
   with_items: "{{ pve_cluster_ha_groups }}"
 
@@ -102,7 +102,7 @@
   command: >-
     ha-manager groupset {{ item.0.name }} -{{ item.1 }} "{{ item.0[item.1] }}"
   when:
-    - "inventory_hostname == groups[pve_group][0]"
+    - "inventory_hostname == _init_node"
     - item.0.name in _ha_group_list.response | json_query("[*].group")
     - item.1 in item.0
     - item.0[item.1] != _ha_group_list.response
