@@ -1,0 +1,83 @@
+---
+- block:
+    - name: Enable CPU IOMMU in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line:
+          "GRUB_CMDLINE_LINUX=\"iommu=pt\
+          {% if '\"GenuineIntel\" in ansible_processor | unique' %} intel_iommu=on{% else %} amd_iommu=on{% endif %}\""
+        insertafter: '^GRUB_CMDLINE_LINUX="'
+      notify: update-grub
+
+    - name: Enable Mediated Devices (gvt-g) in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line: GRUB_CMDLINE_LINUX="i915.enable_gvt=1 i915.enable_guc=0"
+        insertafter: '^GRUB_CMDLINE_LINUX="'
+      when: "pve_mediated_devices_enabled | bool"
+      notify: update-grub
+
+- block:
+    - name: Stub vfio-pci id(s) in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: 'vfio-pci.ids'
+        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}\""
+        insertafter: '^GRUB_CMDLINE_LINUX="'
+      notify: update-grub
+      when: "pve_pci_device_ids | length > 0"
+
+    - name: Specify vfio configuration options
+      ansible.builtin.blockinfile:
+        dest: /etc/modprobe.d/vfio.conf
+        marker: "# {mark}: VFIO driver configuration options (managed by ansible)."
+        content: "\
+          {% if (pve_vfio_drivers | length > 0) %}{% for k in pve_vfio_drivers %}softdep {{ k.name }} pre: vfio-pci\n{% endfor %}{% endif %}\
+          {% if (pve_pcie_ovmf_enabled | bool) %}options vfio-pci disable_vga=1\n{% endif %}\
+          {% if (pve_pci_device_ids | length > 0) %}options vfio-pci ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}{% endif %}"
+        create: yes
+      when: >
+        (pve_vfio_drivers | length > 0) or
+        (pve_pci_device_ids | length > 0) or
+        (pve_pcie_ovmf_enabled | bool)
+
+    - name: Specify kvm configuration options
+      ansible.builtin.blockinfile:
+        dest: /etc/modprobe.d/kvm.conf
+        marker: "# {mark}: VFIO driver configuration options (managed by ansible)."
+        content: "\
+          {% if (pve_pcie_ignore_msrs | bool) %}options kvm ignore_msrs=1\n{% endif %}\
+          {% if (not pve_pcie_report_msrs | bool) %}options kvm report_ignored_msrs=0{% endif %}"
+        create: yes
+      when: >
+        (pve_pcie_ignore_msrs | bool) or
+        (not pve_pcie_report_msrs | bool)
+
+- name: Enable IOMMU unsafe interrupts
+  ansible.builtin.copy:
+    content: "options vfio_iommu_type1 allow_unsafe_interrupts=1"
+    dest: /etc/modprobe.d/iommu_unsafe_interrupts.conf
+    mode: 0640
+  when: "pve_iommu_unsafe_interrupts | bool"
+
+- block:
+    - name: Modify modules list for PCIe Passthrough
+      ansible.builtin.blockinfile:
+        dest: /etc/modules
+        marker: "# {mark}: Modules required for PCI passthrough (managed by ansible)."
+        content: |
+          vfio
+          vfio_iommu_type1
+          vfio_pci
+          vfio_virqfd
+      notify: update-initramfs
+
+    - name: Modify modules list for GVT-g
+      ansible.builtin.blockinfile:
+        dest: /etc/modules
+        marker: "# {mark}: Modules required for GVT-g (managed by ansible)."
+        content: |
+          kvmgt
+          mdev
+      when: "pve_mediated_devices_enabled | bool"
+      notify: update-initramfs
