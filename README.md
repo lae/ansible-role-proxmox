@@ -3,7 +3,7 @@
 lae.proxmox
 ===========
 
-Installs and configures Proxmox Virtual Environment 6.x/7.x on Debian servers.
+Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x on Debian servers.
 
 This role allows you to deploy and manage single-node PVE installations and PVE
 clusters (3+ nodes) on Debian Buster (10) and Bullseye (11). You are able to
@@ -78,7 +78,7 @@ file containing a list of hosts).
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
 
-## Deploying a fully-featured PVE 7.x cluster
+## Deploying a fully-featured PVE 8.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
@@ -752,7 +752,17 @@ Jonas Meurer ([@mejo-](https://github.com/mejo-))
 Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
+Gille Pietri ([@gilou](https://github.com/gilou))  
 Michael Holasek ([@mholasek](https://github.com/mholasek))  
+Alexander Petermann ([@lexxxel](https://github.com/lexxxel)) - PVE 8.x support, etc  
+Bruno Travouillon ([@btravouillon](https://github.com/btravouillon)) - UX improvements   
+Tobias Negd ([@wu3rstle](https://github.com/wu3rstle)) - Ceph support  
+PendaGTP ([@PendaGTP](https://github.com/PendaGTP)) - Ceph support  
+John Marion ([@jmariondev](https://github.com/jmariondev))  
+foerkede ([@foerkede](https://github.com/foerkede)) - ZFS storage support  
+Guiffo Joel ([@futuriste](https://github.com/futuriste)) - Pool configuration support  
+
+[Full list of contributors](https://github.com/lae/ansible-role-proxmox/graphs/contributors)
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
