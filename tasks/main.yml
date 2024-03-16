@@ -104,11 +104,19 @@
     name: gpg
     state: present
 
-- name: Trust Proxmox' packaging key
+- name: Trust Proxmox' packaging key on Debian < 12
   apt_key:
     data: "{{ lookup('file', pve_release_key) }}"
     id: "{{ pve_release_key_id }}"
     state: present
+  when: "ansible_distribution_major_version | int < 12"
+
+- name: Trust Proxmox' packaging key on Debian 12
+  copy:
+    src: "proxmox-release-{{ ansible_distribution_release }}.gpg"
+    dest: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    mode: 0644
+  when: "ansible_distribution_major_version | int == 12"
 
 - name: Remove os-prober package
   apt:
@@ -211,7 +219,7 @@
     state: "{{ item.state | default('present') }}"
     comment: "{{ item.comment | default(omit) }}"
   with_items: "{{ pve_pools }}"
-  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
 - name: Configure Proxmox roles
   proxmox_role:
@@ -219,7 +227,7 @@
     privileges: "{{ item.privileges }}"
     state: "{{ item.state | default('present') }}"
   with_items: "{{ pve_roles }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
 - name: Configure Proxmox groups
   proxmox_group:
@@ -227,7 +235,7 @@
     state: "{{ item.state | default('present') }}"
     comment: "{{ item.comment | default(omit) }}"
   with_items: "{{ pve_groups }}"
-  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
 - name: Configure Proxmox user accounts
   proxmox_user:
@@ -242,7 +250,7 @@
     password: "{{ item.password | default(omit) }}"
     expire: "{{ item.expire | default(omit) }}"
   with_items: "{{ pve_users }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
 - name: Configure Proxmox ACLs
   proxmox_acl:
@@ -252,7 +260,7 @@
     groups: "{{ item.groups | default([]) }}"
     users: "{{ item.users | default([]) }}"
   with_items: "{{ pve_acls }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
 - name: Create ZFS Pools
   zfs:
@@ -296,7 +304,7 @@
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
   with_items: "{{ pve_storages }}"
-  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
   tags: storage
 
 - name: Check datacenter.cfg exists
@@ -304,7 +312,7 @@
     path: "/etc/pve/datacenter.cfg"
   register: _datacenter_cfg
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
     - "pve_datacenter_cfg | length > 0"
 
 - name: Create datacenter.cfg if it does not exist
@@ -313,7 +321,7 @@
     state: "touch"
     mode: 0640
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
     - "pve_datacenter_cfg | length > 0"
     - "not _datacenter_cfg.stat.exists"
 
@@ -328,7 +336,7 @@
       {{ k }}: {{ v }}
       {% endfor %}
   when:
-    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == groups[pve_group][0])"
+    - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
     - "pve_datacenter_cfg | length > 0"
 
 - import_tasks: ssl_config.yml
