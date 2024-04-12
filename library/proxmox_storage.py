@@ -204,6 +204,7 @@ class ProxmoxStorage(object):
         # Remaining PVE API arguments (depending on type) past this point
         self.datastore = module.params['datastore']
         self.encryption_key = module.params['encryption_key']
+        self.master_pubkey = module.params['master_pubkey']
         self.fingerprint = module.params['fingerprint']
         self.password = module.params['password']
         self.path = module.params['path']
