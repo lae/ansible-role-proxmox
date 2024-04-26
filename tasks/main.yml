@@ -300,6 +300,8 @@
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
+    fs_name: "{{ item.fs_name | default(omit) }}"
+    prune_backups: "{{ item.prune_backups | default(omit) }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
   tags: storage

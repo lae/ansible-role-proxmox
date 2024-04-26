@@ -74,6 +74,7 @@ options:
         default: 0
         description:
             - Maximal number of backup files per VM. 0 for unlimited.
+            - Ceprecated on proxmox8, use prune-backups instead
     export:
         required: false
         description:
@@ -103,7 +104,14 @@ options:
         description:
             - Specifies whether or not the given path is an externally managed
             mountpoint.
-
+    fs_name:
+        required: false
+        description:
+            - Specifies whether or not the Name of the CephFS
+    prune_backups:
+        required: false
+        description:
+            - Specifies whether or not backup frequency and retention
 author:
     - Fabien Brachere (@fbrachere)
 '''
@@ -125,10 +133,19 @@ EXAMPLES = '''
     username: admin
     pool: rbd
     krbd: yes
+    fsname: ceph1
     monhost:
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+    prune_backups:
+        - keep-all=1|0
+        - keep-daily=<N>
+        - keep-hourly=<N>
+        - keep-last=<N>
+        - keep-monthly=<N>
+        - keep-weekly=<N>
+        - keep-yearly=<N>
 - name: Create an NFS storage type
   proxmox_storage:
     name: nfs1
@@ -220,6 +237,8 @@ class ProxmoxStorage(object):
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
         self.is_mountpoint = module.params['is_mountpoint']
+        self.fs_name = module.params['fs_name']
+        self.prune_backups = module.params['prune_backups']
 
         # Validate the parameters given to us
         fingerprint_re = re.compile('^([A-Fa-f0-9]{2}:){31}[A-Fa-f0-9]{2}$')
@@ -309,9 +328,12 @@ class ProxmoxStorage(object):
             args['sparse'] = 1 if self.sparse else 0
         if self.is_mountpoint is not None:
             args['is_mountpoint'] = 1 if self.is_mountpoint else 0
-
-        if self.maxfiles is not None and 'backup' not in self.content:
-            self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
+        if self.fs_name is not None:
+            args['fs-name'] = self.fs_name
+        if self.prune_backups is not None and len(self.prune_backups) > 0:
+            args['prune-backups'] = ','.join(self.prune_backups)
+        if (self.maxfiles or self.prune_backups) is not None and 'backup' not in self.content:
+            self.module.fail_json(msg="maxfiles or prune_backups is not allowed when there is no 'backup' in content")
         if self.krbd is not None and self.type != 'rbd':
             self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
 
@@ -345,6 +367,11 @@ class ProxmoxStorage(object):
                     staged_storage[key] = new_storage[key]
             elif key == 'nodes':
                 if set(self.nodes) != set(lookup.get('nodes', '').split(',')):
+                    updated_fields.append(key)
+                    staged_storage[key] = new_storage[key]
+            elif key == 'prune_backups':
+                if set(new_storage['prune_backups'].split(',')) \
+                        != set(lookup.get('prune_backups', '').split(',')):
                     updated_fields.append(key)
                     staged_storage[key] = new_storage[key]
             else:
@@ -406,6 +433,8 @@ def main():
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
         is_mountpoint=dict(default=None, type='bool', required=False),
+        fs_name=dict(default=None, type='str', required=False),
+        prune_backups=dict(default=None, type='list', required=False),
     )
 
     module = AnsibleModule(
