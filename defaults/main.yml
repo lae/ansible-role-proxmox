@@ -36,6 +36,7 @@ pve_manage_hosts_enabled: yes
 pve_cluster_addr0: "{{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}"
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 pve_datacenter_cfg: {}
+pve_domains_cfg: []
 pve_cluster_ha_groups: []
 # additional roles for your cluster (f.e. for monitoring)
 pve_pools: []
