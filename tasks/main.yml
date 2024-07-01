@@ -147,6 +147,8 @@
   retries: 2
   register: _dist_upgrade
   until: _dist_upgrade is succeeded
+  environment: 
+    - "DEBIAN_FRONTEND: noninteractive"
 
 - name: Perform system upgrades
   apt:
