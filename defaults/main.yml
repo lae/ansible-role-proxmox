@@ -19,7 +19,7 @@ pve_zfs_enabled: no
 pve_zfs_create_volumes: []
 pve_ceph_enabled: false
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'buster' %}ceph-nautilus buster{% else %}ceph-quincy bullseye{% endif %} main"
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}"
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
 pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
