@@ -8,16 +8,19 @@ pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: true
 pve_run_system_upgrades: true
 pve_pcie_passthrough_enabled: true
+pve_iommu_passthrough_mode: true
 pve_iommu_unsafe_interrupts: true
 pve_mediated_devices_enabled: true
-pve_pcie_ovmf_enabled: false
+pve_pcie_ovmf_enabled: true
 pve_pci_device_ids:
   - id: "10de:1381"
   - id: "10de:0fbc"
-pve_vfio_drivers:
+pve_vfio_blacklist_drivers:
   - name: "radeon"
   - name: "nouveau"
   - name: "nvidia"
+pve_pcie_ignore_msrs: true
+pve_pcie_report_msrs: false
 pve_zfs_enabled: yes
 pve_zfs_zed_email: root@localhost
 pve_cluster_enabled: yes

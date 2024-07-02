@@ -40,7 +40,74 @@
         - restart watchdog-mux
   when: "pve_watchdog != 'ipmi'"
 
-- block:
+- name: Modify vfio IOMMU references and configuration in default grub
+  notify: update-grub
+  block:
+    - name: Remove Intel IOMMU in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX intel_iommu=on"'
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool)
+
+    - name: Remove IOMMU passthrough mode in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX iommu=pt"'
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_iommu_passthrough_mode | bool)
+
+    - name: Remove CPU IOMMU in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX i915.enable_gvt=1 i915.enable_guc=0"'
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_mediated_devices_enabled | bool)
+
+    - name: Remove vfio-pci id(s) in default grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: ^GRUB_CMDLINE_LINUX="\$GRUB_CMDLINE_LINUX vfio-pci.ids=
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_pci_device_ids | length > 0)
+
+- name: Remove modprobe.d configuration files
+  notify: update-initramfs
+  block:
+    - name: Remove vfio config file
+      ansible.builtin.file:
+        dest: /etc/modprobe.d/vfio.conf
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        ((not pve_pci_device_ids | length > 0) and
+        (not pve_vfio_blacklist_drivers | length > 0) and
+        (not pve_pcie_ovmf_enabled | bool))
+
+    - name: Remove driver blacklist config file
+      ansible.builtin.file:
+        dest: /etc/modprobe.d/blacklist.conf
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        (not pve_vfio_blacklist_drivers | length > 0)
+
+    - name: Remove kvm config file
+      ansible.builtin.file:
+        dest: /etc/modprobe.d/kvm.conf
+        state: absent
+      when: >
+        (not pve_pcie_passthrough_enabled | bool) or
+        ((not pve_pcie_ignore_msrs | bool) and
+        (pve_pcie_report_msrs | bool))
+
     - name: Disable declaring IOMMU unsafe interrupts on init
       ansible.builtin.file:
         dest: /etc/modprobe.d/iommu_unsafe_interrupts.conf
@@ -49,61 +116,22 @@
         (not pve_pcie_passthrough_enabled | bool) or
         (not pve_iommu_unsafe_interrupts | bool)
 
-    - block:
-        - name: Remove modules list for PCIe Passthrough
-          ansible.builtin.blockinfile:
-            dest: /etc/modules
-            state: absent
-            marker: "# {mark}: Modules required for PCI passthrough (managed by ansible)."
-          notify: update-initramfs
-
-        - name: Remove CPU IOMMU in default grub
-          ansible.builtin.lineinfile:
-            path: /etc/default/grub
-            regexp: ^GRUB_CMDLINE_LINUX="iommu=pt
-            state: absent
-          notify: update-grub
-      when: "not pve_pcie_passthrough_enabled | bool"
-
-    - block:
-        - name: Remove modules list for GVT-g
-          ansible.builtin.blockinfile:
-            dest: /etc/modules
-            state: absent
-            marker: "# {mark}: Modules required for GVT-g (managed by ansible)."
-          notify: update-initramfs
-
-        - name: Remove CPU IOMMU in default grub
-          ansible.builtin.lineinfile:
-            path: /etc/default/grub
-            regexp: ^GRUB_CMDLINE_LINUX="i915.enable_gvt=1 i915.enable_guc=0"
-            state: absent
-          notify: update-grub
+- name: Remove all GVT-g configuration
+  notify: update-initramfs
+  block:
+    - name: Remove modules list for GVT-g
+      ansible.builtin.blockinfile:
+        dest: /etc/modules
+        state: absent
+        marker: "# {mark}: Modules required for GVT-g (managed by ansible)."
       when: >
         (not pve_pcie_passthrough_enabled | bool) or
         (not pve_mediated_devices_enabled | bool)
 
-    - block:
-        - name: Remove vfio-pci id(s) in default grub
-          ansible.builtin.lineinfile:
-            path: /etc/default/grub
-            regexp: ^GRUB_CMDLINE_LINUX="vfio-pci.ids=
-            state: absent
-          notify: update-grub
-          when: "not pve_pci_device_ids | length > 0"
-
-        - name: Remove vfio config file
-          ansible.builtin.file:
-            dest: /etc/modprobe.d/vfio.conf
-            state: absent
-          when: >
-            (not pve_pci_device_ids | length > 0) and
-            (not pve_vfio_drivers | length > 0) and
-            (not pve_pcie_ovmf_enabled | bool)
-
-        - name: Remove kvm config file
-          ansible.builtin.file:
-            dest: /etc/modprobe.d/kvm.conf
-            state: absent
-          when: >
-            (not pve_pci_device_ids | length > 0)
+    - name: Remove modules list required for PCI passthrough
+      ansible.builtin.blockinfile:
+        dest: /etc/modules
+        state: absent
+        marker: "# {mark}: Modules required for PCI passthrough (managed by ansible)."
+      when: >
+        (not pve_pcie_passthrough_enabled | bool)
