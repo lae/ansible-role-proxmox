@@ -14,14 +14,14 @@
   with_items: "{{ groups[pve_group] }}"
   when: "pve_cluster_enabled | bool"
 
-- name: Count host in {{ pve_group }}
-  set_fact:
-    pve_cluster_host_count: "{{ groups[pve_group] | length }}"
-
-- name: Ensure that group has more than one host to enable pve_cluster
-  set_fact:
-    pve_cluster_enabled: false
-  when: "pve_cluster_host_count | int <= 1"
+- name: Ensure that group has more than one host to enable PVE clustering
+  assert:
+    that:
+      - "groups[pve_group] | length | int < 2"
+    msg: "Clustering is enabled for {{ pve_group }} but does not meet the \
+          minimum host requirement of 2. Please either remove/disable \
+          pve_cluster_enabled, or update your inventory as needed."
+  when: "pve_cluster_enabled | bool"
 
 - name: Ensure this host is in the group specified
   assert:
