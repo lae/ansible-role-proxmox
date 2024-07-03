@@ -3,7 +3,7 @@
 lae.proxmox
 ===========
 
-Installs and configures Proxmox Virtual Environment 6.x/7.x on Debian servers.
+Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x on Debian servers.
 
 This role allows you to deploy and manage single-node PVE installations and PVE
 clusters (3+ nodes) on Debian Buster (10) and Bullseye (11). You are able to
@@ -78,7 +78,7 @@ file containing a list of hosts).
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
 
-## Deploying a fully-featured PVE 7.x cluster
+## Deploying a fully-featured PVE 8.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
@@ -395,7 +395,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
@@ -585,8 +585,8 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, and `zfspool`.
-Here are some examples.
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`,
+and `pbs`. Here are some examples.
 
 ```
 pve_storages:
@@ -629,12 +629,27 @@ pve_storages:
       - 10.0.0.1
       - 10.0.0.2
       - 10.0.0.3
+  - name: pbs1
+    type: pbs
+    content: [ "backup" ]
+    server: 192.168.122.2
+    username: user@pbs
+    password: PBSPassword1
+    datastore: main
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+  - name: btrfs1
+    type: btrfs
+    content: [ "images", "rootdir" ]
+    nodes: [ "lab-node01.local", "lab-node02.local" ]
+    path: /mnt/proxmox_storage
+    is_mountpoint: true
 ```
+
+Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
 
 Currently the `zfspool` type can be used only for `images` and `rootdir` contents.
 If you want to store the other content types on a ZFS volume, you need to specify
@@ -734,8 +749,9 @@ pve_ceph_fs:
     mountpoint: /srv/proxmox/backup
 ```
 
-`pve_ceph_network` by default uses the `ipaddr` filter, which requires the
-`netaddr` library to be installed and usable by your Ansible controller.
+`pve_ceph_network` by default uses the `ansible.utils.ipaddr` filter, which
+requires the `netaddr` library to be installed and usable by your Ansible
+controller.
 
 `pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify
 on which nodes install Ceph (e.g. if you don't want to install Ceph on all your
@@ -777,7 +793,17 @@ Jonas Meurer ([@mejo-](https://github.com/mejo-))
 Ondrej Flidr ([@SniperCZE](https://github.com/SniperCZE))  
 niko2 ([@niko2](https://github.com/niko2))  
 Christian Aublet ([@caublet](https://github.com/caublet))  
+Gille Pietri ([@gilou](https://github.com/gilou))  
 Michael Holasek ([@mholasek](https://github.com/mholasek))  
+Alexander Petermann ([@lexxxel](https://github.com/lexxxel)) - PVE 8.x support, etc  
+Bruno Travouillon ([@btravouillon](https://github.com/btravouillon)) - UX improvements   
+Tobias Negd ([@wu3rstle](https://github.com/wu3rstle)) - Ceph support  
+PendaGTP ([@PendaGTP](https://github.com/PendaGTP)) - Ceph support  
+John Marion ([@jmariondev](https://github.com/jmariondev))  
+foerkede ([@foerkede](https://github.com/foerkede)) - ZFS storage support  
+Guiffo Joel ([@futuriste](https://github.com/futuriste)) - Pool configuration support  
+
+[Full list of contributors](https://github.com/lae/ansible-role-proxmox/graphs/contributors)
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html

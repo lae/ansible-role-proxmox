@@ -241,7 +241,7 @@
     path: '{{ item.mountpoint }}'
     src: |-
       {% for h in groups[pve_ceph_mon_group] -%}
-      {{ hostvars[h].ansible_all_ipv4_addresses | ipaddr(pve_ceph_network) | first -}}
+      {{ hostvars[h].ansible_all_ipv4_addresses | ansible.utils.ipaddr(pve_ceph_network) | first -}}
       {{ loop.last | ternary("", ",") -}}
       {% endfor %}:/
     fstype: 'ceph'
