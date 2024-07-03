@@ -466,27 +466,36 @@ you need to install the `ifupdown2` package. Note that this will remove
 You can set realms / domains as authentication sources in the `domains.cfg` configuration file.
 If this file is not present, only the `Linux PAM` and `Proxmox VE authentication server` realms
 are available. Supported types are `pam`, `pve`, `ad` and `ldap`.
+It’s possible to automatically sync users and groups for LDAP-based realms (LDAP & Microsoft Active Directory) with `sync: true`.
 One realm should have the `default: 1` property to mark it as the default:
 
 ```
 pve_domains_cfg:
-    - name: pam
-      type: pam
+  - name: pam
+    type: pam
+    attributes:
       comment: Linux PAM standard authentication
-    - name: pve
-      type: pve
+  - name: pve
+    type: pve
+    attributes:
       comment: Proxmox VE authentication server
-    - name: AD
-      type: ad
+  - name: ad
+    type: ad
+    attributes:
       comment: Active Directory authentication
       domain: yourdomain.com
       server1: dc01.yourdomain.com
       default: 1
       secure: 1
       server2: dc02.yourdomain.com
-    - name: LDAP
-      type: ldap
+  - name: ldap
+    type: ldap
+    sync: true
+    attributes:
+      comment: LDAP authentication
       base_dn: CN=Users,dc=yourdomain,dc=com
+      bind_dn: "uid=svc-reader,CN=Users,dc=yourdomain,dc=com"
+      bind_password: "{{ secret_ldap_svc_reader_password }}"
       server1: ldap1.yourdomain.com
       user_attr: uid
       secure: 1
