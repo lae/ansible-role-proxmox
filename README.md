@@ -412,7 +412,7 @@ pve_groups: [] # List of group definitions to manage in PVE. See section on User
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
-pve_domains_cfg: {} # List of realms to use as authentication sources in the PVE domains.cfg config file.
+pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
