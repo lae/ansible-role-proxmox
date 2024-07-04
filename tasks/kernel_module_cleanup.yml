@@ -41,42 +41,17 @@
   when: "pve_watchdog != 'ipmi'"
 
 - name: Modify vfio IOMMU references and configuration in default grub
+  ansible.builtin.blockinfile:
+    dest: /etc/default/grub
+    state: absent
+    marker: "# {mark}: IOMMU default grub configuration (managed by ansible)."
   notify: update-grub
-  block:
-    - name: Remove Intel IOMMU in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX intel_iommu=on"'
-        state: absent
-      when: >
-        (not pve_pcie_passthrough_enabled | bool)
-
-    - name: Remove IOMMU passthrough mode in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX iommu=pt"'
-        state: absent
-      when: >
-        (not pve_pcie_passthrough_enabled | bool) or
-        (not pve_iommu_passthrough_mode | bool)
-
-    - name: Remove CPU IOMMU in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX i915.enable_gvt=1 i915.enable_guc=0"'
-        state: absent
-      when: >
-        (not pve_pcie_passthrough_enabled | bool) or
-        (not pve_mediated_devices_enabled | bool)
-
-    - name: Remove vfio-pci id(s) in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        regexp: ^GRUB_CMDLINE_LINUX="\$GRUB_CMDLINE_LINUX vfio-pci.ids=
-        state: absent
-      when: >
-        (not pve_pcie_passthrough_enabled | bool) or
-        (not pve_pci_device_ids | length > 0)
+  when: >
+    (not pve_pcie_passthrough_enabled | bool) or
+    ((not 'GenuineIntel' in ansible_processor | unique) and
+    (not pve_iommu_passthrough_mode | bool) and
+    (not pve_mediated_devices_enabled | bool) and
+    (not pve_pci_device_ids | length > 0))
 
 - name: Remove modprobe.d configuration files
   notify: update-initramfs

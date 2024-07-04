@@ -1,38 +1,21 @@
 ---
-- name: Modify default grub configuration
+- name: Modify vfio IOMMU references and configuration in default grub
+  ansible.builtin.blockinfile:
+    dest: /etc/default/grub
+    marker: "# {mark}: IOMMU default grub configuration (managed by ansible)."
+    content: "\
+      {% if '\"GenuineIntel\" in ansible_processor | unique' %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX intel_iommu=on\"\n{% endif %}\
+      {% if (pve_iommu_passthrough_mode | bool) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX iommu=pt\"\n{% endif %}\
+      {% if (pve_mediated_devices_enabled | bool) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX i915.enable_gvt=1 i915.enable_guc=0\"\n{% endif %}\
+      {% if (pve_pci_device_ids | length > 0) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}\"{% endif %}"
+    insertafter: '^GRUB_CMDLINE_LINUX=""'
+    mode: "0640"
   notify: update-grub
-  block:
-    - name: Enable CPU IOMMU in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: "{% if '\"GenuineIntel\" in ansible_processor | unique' %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX intel_iommu=on{% endif %}\""
-        insertafter: '^GRUB_CMDLINE_LINUX="'
-
-    - name: Enable IOMMU passthrough mode in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX iommu=pt\""
-        insertafter: '^GRUB_CMDLINE_LINUX="'
-      when: >
-        (pve_iommu_passthrough_mode | bool)
-
-    - name: Enable Mediated Devices (gvt-g) in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX i915.enable_gvt=1 i915.enable_guc=0\""
-        insertafter: '^GRUB_CMDLINE_LINUX="'
-      when: >
-        (pve_mediated_devices_enabled | bool)
-
-    - name: Stub vfio-pci id(s) in default grub
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        regexp: 'vfio-pci.ids'
-        line: "GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX
-          vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}\""
-        insertafter: '^GRUB_CMDLINE_LINUX="'
-      when: >
-        (pve_pci_device_ids | length > 0)
+  when: >
+    ('GenuineIntel' in ansible_processor | unique) or
+    (pve_iommu_passthrough_mode | bool) or
+    (pve_mediated_devices_enabled | bool) or
+    (pve_pci_device_ids | length > 0)
 
 - name: Create/Modify modprobe.d configuration files
   notify: update-initramfs
