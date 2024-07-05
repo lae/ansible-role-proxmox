@@ -32,3 +32,12 @@
     name: ceph.service
     state: restarted
     daemon_reload: true
+
+- name: update-initramfs
+  command: update-initramfs -u -k all
+
+- name: update-grub
+  command: update-grub
+  register: _pve_grub_update
+  failed_when: ('error' in _pve_grub_update.stderr)
+  tags: skiponlxc
