@@ -4,9 +4,9 @@
 - block:
     - name: Create initial Ceph config
       command: "pveceph init --network {{ pve_ceph_network }}  \
-      {% if pve_ceph_cluster_network is defined  %} \
+               {% if pve_ceph_cluster_network is defined  %} \
                   --cluster-network {{ pve_ceph_cluster_network }}
-      {% endif %}"
+               {% endif %}"
       args:
         creates: /etc/ceph/ceph.conf
 
