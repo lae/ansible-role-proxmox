@@ -17,9 +17,9 @@
 - name: Add node to Proxmox cluster
   ansible.builtin.command: >-
     pvecm add {{ hostvars[_init_node].pve_cluster_addr0 }} -use_ssh
-    -link0 {{ pve_cluster_addr0 }}
+    -link0 {{ pve_cluster_addr0 }},priority={{ pve_cluster_prio0 | default(omit)}}
     {% if pve_cluster_addr1 is defined %}
-    -link1 {{ pve_cluster_addr1 }}
+    -link1 {{ pve_cluster_addr1 }},priority={{ pve_cluster_prio1 | default(omit)}}
     {% endif %}
   # Ensure that nodes join one-by-one because cluster joins create a lock
   throttle: 1

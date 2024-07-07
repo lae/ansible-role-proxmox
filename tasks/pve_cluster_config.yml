@@ -49,9 +49,9 @@
 - name: Initialize a Proxmox cluster
   ansible.builtin.command: >-
     pvecm create {{ pve_cluster_clustername }}
-    -link0 {{ pve_cluster_addr0 }}
+    -link0 {{ pve_cluster_addr0 }},priority={{ pve_cluster_prio0 | default(omit)}}
     {% if pve_cluster_addr1 is defined %}
-    -link1 {{ pve_cluster_addr1 }}
+    -link1 {{ pve_cluster_addr1 }},priority={{ pve_cluster_prio1 | default(omit)}}
     {% endif %}
   args:
     creates: "{{ pve_cluster_conf }}"
