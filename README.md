@@ -423,6 +423,8 @@ pve_storages: [] # List of storages to manage in PVE. See section on Storage Man
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
 pve_no_log: false # Set this to true in production to disable logging for strorage add to avoid having credentials leaked in log.
+pve_addr0_priority: 255 # Type: integer Sets the Priority of the first Link for Corosync. Lower Number means higher Priority.
+pve_addr1_priority: 0 # Type: integer See [pvecm-network-priority] for more Information.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -595,7 +597,7 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 You can use this role to manage storage within Proxmox VE (both in
 single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`,
+types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`, `cifs`
 and `pbs`. Here are some examples.
 
 ```
@@ -646,6 +648,7 @@ pve_storages:
     username: user@pbs
     password: PBSPassword1
     datastore: main
+    namespace: Top/something # Optional
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]
@@ -657,6 +660,15 @@ pve_storages:
     nodes: [ "lab-node01.local", "lab-node02.local" ]
     path: /mnt/proxmox_storage
     is_mountpoint: true
+  - name: cifs1
+    server: cifs-host.domain.tld
+    type: cifs
+    content: [ "snippets", "vztmpl", "iso" ]
+    share: sharename
+    subdir: /subdir
+    username: user
+    password: supersecurepass
+    domain: addomain.tld
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
@@ -869,6 +881,7 @@ Adam Delo ([@ol3d](https://github.com/ol3d)) - PCIe Passthrough Support
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[pvecm-network-priority]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_Corosync_Redundancy
 [pvesm]: https://pve.proxmox.com/pve-docs/chapter-pvesm.html
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
