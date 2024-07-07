@@ -194,11 +194,11 @@ EXAMPLES = '''
     pool: rpool/data
     sparse: true
 - name: CIFS-Share
-  proxmox_Storage:
+  proxmox_storage:
     name: cifs1
     server: cifs-host.domain.tld
     type: cifs
-    content: ["snippets", "vztmpl", "iso" ]
+    content: [ "snippets", "vztmpl", "iso" ]
     share: sharename
     subdir: /subdir
     username: user
@@ -251,6 +251,7 @@ class ProxmoxStorage(object):
         self.domain = module.params['domain']
         self.subdir = module.params['subdir']
         self.share = module.params['share']
+
         # Validate the parameters given to us
         fingerprint_re = re.compile('^([A-Fa-f0-9]{2}:){31}[A-Fa-f0-9]{2}$')
         if self.fingerprint is not None and not fingerprint_re.match(self.fingerprint):
@@ -355,6 +356,7 @@ class ProxmoxStorage(object):
             self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
         if self.share is not None:
             args['share'] = self.share
+
         return args
 
     def create_storage(self):
@@ -426,7 +428,7 @@ def main():
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
-                           "zfspool", "btrfs", "pbs","cifs"]),
+                           "zfspool", "btrfs", "pbs", "cifs"]),
         # Remaining PVE API arguments (depending on type) past this point
         datastore=dict(default=None, type='str', required=False),
         encryption_key=dict(default=None, type='str', required=False),
@@ -450,7 +452,6 @@ def main():
         subdir=dict(default=None, type='str', required=False),
         domain=dict(default=None, type='str', required=False),
         share=dict(default=None, type='str', required=False),
-
     )
 
     module = AnsibleModule(

@@ -422,6 +422,7 @@ pve_users: [] # List of user definitions to manage in PVE. See section on User M
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
+pve_no_log: false # Set this to true in production to disable logging for strorage add to avoid having credentials leaked in log.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:

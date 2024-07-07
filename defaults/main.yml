@@ -57,4 +57,4 @@ pve_storages: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
-no_logging: false
+pve_no_logging: false
