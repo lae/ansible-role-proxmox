@@ -247,7 +247,10 @@ class ProxmoxStorage(object):
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
         self.is_mountpoint = module.params['is_mountpoint']
+        
+        # namespace for pbs
         self.namespace = module.params['namespace']
+        # new params for cifs
         self.domain = module.params['domain']
         self.subdir = module.params['subdir']
         self.share = module.params['share']
@@ -342,20 +345,19 @@ class ProxmoxStorage(object):
             args['sparse'] = 1 if self.sparse else 0
         if self.is_mountpoint is not None:
             args['is_mountpoint'] = 1 if self.is_mountpoint else 0
-        if self.namespace is not None:
-            args['namespace'] = self.namespace
+
         # CIFS
         if self.subdir is not None:
             args['subdir'] = self.subdir
         if self.domain is not None:
             args['domain'] = self.domain
+        if self.share is not None:
+            args['share'] = self.share
         # end cifs
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
         if self.krbd is not None and self.type != 'rbd':
             self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
-        if self.share is not None:
-            args['share'] = self.share
 
         return args
 
