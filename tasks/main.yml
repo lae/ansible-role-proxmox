@@ -337,7 +337,7 @@
     domain: "{{ item.domain | default(omit) }}"
     subdir: "{{ item.subdir | default(omit) }}"
     share: "{{ item.share | default(omit) }}"
-  no_log: "{{ pve_no_logging }}"
+  no_log: "{{ pve_no_log }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
   tags: storage

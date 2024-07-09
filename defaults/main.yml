@@ -44,6 +44,8 @@ pve_cluster_clustername: "{{ pve_group }}"
 pve_manage_hosts_enabled: yes
 pve_cluster_addr0: "{{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}"
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
+# pve_cluster_addr0_priority: 0
+# pve_cluster_addr1_priority: 1
 pve_datacenter_cfg: {}
 pve_domains_cfg: []
 pve_cluster_ha_groups: []
@@ -57,4 +59,4 @@ pve_storages: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
-pve_no_logging: false
+pve_no_log: false

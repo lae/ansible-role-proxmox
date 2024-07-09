@@ -113,12 +113,13 @@ options:
             - Specifies the CIFS-Share to use
     subdir:
         required: false
-            - specifies the folder in the share dir to use for proxmox 
+            - specifies the folder in the share dir to use for proxmox
               (useful to seperate proxmox content from other content)
     domain:
         required: false
-            - Specifies Realm to use for NTLM/LDAPS Authentification if using 
+            - Specifies Realm to use for NTLM/LDAPS Authentification if using
               an AD-Enabled share
+
 author:
     - Fabien Brachere (@fbrachere)
 '''
@@ -247,10 +248,10 @@ class ProxmoxStorage(object):
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
         self.is_mountpoint = module.params['is_mountpoint']
-        
+
         # namespace for pbs
         self.namespace = module.params['namespace']
-        # new params for cifs
+        # CIFS properties
         self.domain = module.params['domain']
         self.subdir = module.params['subdir']
         self.share = module.params['share']
@@ -449,7 +450,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
-        is_mountpoint=dict(default=None, type='bool', required=False),        
+        is_mountpoint=dict(default=None, type='bool', required=False),
         namespace=dict(default=None, type='str', required=False),
         subdir=dict(default=None, type='str', required=False),
         domain=dict(default=None, type='str', required=False),
