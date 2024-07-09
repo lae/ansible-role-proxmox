@@ -333,6 +333,11 @@
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
+    namespace: "{{ item.namespace | default(omit) }}"
+    domain: "{{ item.domain | default(omit) }}"
+    subdir: "{{ item.subdir | default(omit) }}"
+    share: "{{ item.share | default(omit) }}"
+  no_log: "{{ pve_no_log }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
   tags: storage

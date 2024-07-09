@@ -422,6 +422,7 @@ pve_users: [] # List of user definitions to manage in PVE. See section on User M
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
+pve_no_log: false # Set this to true in production to prevent leaking of storage credentials in run logs. (may be used in other tasks in the future)
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -434,12 +435,17 @@ pve_manage_hosts_enabled : yes # Set this to no to NOT configure hosts file (cas
 
 The following variables are used to provide networking information to corosync.
 These are known as ring0_addr/ring1_addr or link0_addr/link1_addr, depending on
-PVE version. They should be IPv4 or IPv6 addresses. For more information, refer
-to the [Cluster Manager][pvecm-network] chapter in the PVE Documentation.
+PVE version. They should be IPv4 or IPv6 addresses. You can also configure the
+[priority of these interfaces][pvecm-network-priority] to hint to corosync
+which interface should handle cluster traffic (lower numbers indicate higher
+priority). For more information, refer to the [Cluster Manager][pvecm-network]
+chapter in the PVE Documentation.
 
 ```
 # pve_cluster_addr0: "{{ defaults to the default interface ipv4 or ipv6 if detected }}"
 # pve_cluster_addr1: "another interface's IP address or hostname"
+# pve_cluster_addr0_priority: 255
+# pve_cluster_addr1_priority: 0
 ```
 
 You can set options in the datacenter.cfg configuration file:
@@ -592,9 +598,9 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 ## Storage Management
 
-You can use this role to manage storage within Proxmox VE (both in
-single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`,
+You can use this role to manage storage within Proxmox VE (both in single
+server deployments and cluster deployments). For now, the only supported types
+are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`, `cifs`
 and `pbs`. Here are some examples.
 
 ```
@@ -645,6 +651,7 @@ pve_storages:
     username: user@pbs
     password: PBSPassword1
     datastore: main
+    namespace: Top/something # Optional
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]
@@ -656,6 +663,15 @@ pve_storages:
     nodes: [ "lab-node01.local", "lab-node02.local" ]
     path: /mnt/proxmox_storage
     is_mountpoint: true
+  - name: cifs1
+    server: cifs-host.domain.tld
+    type: cifs
+    content: [ "snippets", "vztmpl", "iso" ]
+    share: sharename
+    subdir: /subdir
+    username: user
+    password: supersecurepass
+    domain: addomain.tld
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
@@ -868,6 +884,7 @@ Adam Delo ([@ol3d](https://github.com/ol3d)) - PCIe Passthrough Support
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[pvecm-network-priority]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_Corosync_Redundancy
 [pvesm]: https://pve.proxmox.com/pve-docs/chapter-pvesm.html
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
