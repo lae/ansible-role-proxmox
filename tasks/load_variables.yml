@@ -1,13 +1,13 @@
 ---
 - name: Gather distribution specific variables
-  include_vars: "debian-{{ ansible_distribution_release }}.yml"
+  ansible.builtin.include_vars: "debian-{{ ansible_distribution_release }}.yml"
 
 - name: Ensure pve_cluster_addr0 is in the host facts
-  set_fact:
+  ansible.builtin.set_fact:
     pve_cluster_addr0: "{{ pve_cluster_addr0 }}"
 
 - name: Calculate list of SSH addresses
-  set_fact:
+  ansible.builtin.set_fact:
     pve_cluster_ssh_addrs: >-
       ["{{ ansible_fqdn }}", "{{ ansible_hostname }}",
       "{{ pve_cluster_addr0 }}",

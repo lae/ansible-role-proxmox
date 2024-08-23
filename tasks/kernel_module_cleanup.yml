@@ -1,6 +1,6 @@
 ---
 - name: Remove ZFS modprobe configuration
-  file:
+  ansible.builtin.file:
     dest: /etc/modprobe.d/zfs.conf
     state: absent
   when: >
@@ -9,36 +9,37 @@
     (not pve_zfs_enabled | bool)
 
 - name: Disable loading of ZFS module on init
-  file:
+  ansible.builtin.file:
     dest: /etc/modules-load.d/zfs.conf
     state: absent
   when: "not pve_zfs_enabled | bool"
 
-- block:
+- name: Reset watchdog status
+  when: "pve_watchdog != 'ipmi'"
+  block:
     - name: Re-enable nmi_watchdog via GRUB config
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: /etc/default/grub
         line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX nmi_watchdog=0"'
         state: absent
       notify: update-grub
 
     - name: Remove ipmi_watchdog modprobe configuration
-      file:
+      ansible.builtin.file:
         dest: /etc/modprobe.d/ipmi_watchdog.conf
         state: absent
 
     - name: Load softdog
-      modprobe:
+      community.general.modprobe:
         name: softdog
 
     - name: Set PVE HA Manager watchdog configuration back to default
-      copy:
+      ansible.builtin.copy:
         content: "WATCHDOG_MODULE=softdog"
         dest: /etc/default/pve-ha-manager
-        mode: 0640
+        mode: "0640"
       notify:
         - restart watchdog-mux
-  when: "pve_watchdog != 'ipmi'"
 
 - name: Modify vfio IOMMU references and configuration in default grub
   ansible.builtin.blockinfile:

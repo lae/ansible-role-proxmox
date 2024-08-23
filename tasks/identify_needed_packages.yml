@@ -1,6 +1,6 @@
 ---
 - name: Stage packages needed for base PVE installation
-  set_fact:
+  ansible.builtin.set_fact:
     _pve_install_packages:
       - proxmox-ve
       - open-iscsi
@@ -8,15 +8,15 @@
       - systemd-sysv
 
 - name: Stage ZFS packages if ZFS is enabled
-  set_fact:
+  ansible.builtin.set_fact:
     _pve_install_packages: "{{ _pve_install_packages | union(['zfsutils-linux', 'zfs-initramfs', 'zfs-zed']) }}"
   when: "pve_zfs_enabled | bool"
 
 - name: Stage Ceph packages if Ceph is enabled
-  set_fact:
+  ansible.builtin.set_fact:
     _pve_install_packages: "{{ _pve_install_packages | union(['ceph', 'ceph-common', 'ceph-mds', 'ceph-fuse', 'gdisk']) }}"
   when: "pve_ceph_enabled | bool"
 
 - name: Stage any extra packages the user has specified
-  set_fact:
+  ansible.builtin.set_fact:
     _pve_install_packages: "{{ _pve_install_packages | union(pve_extra_packages) }}"

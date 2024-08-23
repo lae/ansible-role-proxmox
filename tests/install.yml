@@ -1,17 +1,21 @@
 ---
-- hosts: localhost
+- name: Create LXC containers
+  hosts: localhost
   connection: local
   roles:
     - lae.travis-lxc
   tasks:
     - name: Create SSL directory for storing secrets
-      file:
+      ansible.builtin.file:
         dest: "{{ ssl_directory }}"
         state: directory
+        mode: "0755"
     - name: Create Root CA private key
-      shell: "openssl genrsa -out {{ ssl_ca_key_path }} 2048"
+      ansible.builtin.command: "openssl genrsa -out {{ ssl_ca_key_path }} 2048"
+      changed_when: true
     - name: Create Root CA certificate
-      shell: "openssl req -x509 -new -nodes -key {{ ssl_ca_key_path }} -sha256 -days 1 -subj '{{ ssl_subj }}' -out {{ ssl_ca_cert_path }}"
+      ansible.builtin.command: "openssl req -x509 -new -nodes -key {{ ssl_ca_key_path }} -sha256 -days 1 -subj '{{ ssl_subj }}' -out {{ ssl_ca_cert_path }}"
+      changed_when: true
   vars:
     test_profiles:
       - profile: debian-bullseye
@@ -26,30 +30,38 @@
       - "lxc.mount.entry = /lib/modules/{{ ansible_kernel }} lib/modules/{{ ansible_kernel }} none bind,create=dir,ro 0 0"
 
 # Run the following within the containers in the inventory
-- hosts: all
+- name: Configure LXC containers
+  hosts: all
   tasks:
     - name: Create FUSE device within containers
-      command: "mknod -m 666 /dev/fuse c 10 229"
+      ansible.builtin.command: "mknod -m 666 /dev/fuse c 10 229"
       args:
         creates: /dev/fuse
     - name: Install Root CA certificate
-      copy:
+      ansible.builtin.copy:
         src: "{{ ssl_ca_cert_path }}"
         dest: /usr/local/share/ca-certificates/test-ca.crt
+        mode: "0644"
     - name: Insert bogus lines in /etc/hosts
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "{{ item }}"
       with_items:
         - "127.0.1.1    {{ ansible_fqdn }} {{ ansible_hostname }}"
         - "10.22.33.44    {{ ansible_hostname }} {{ ansible_fqdn }}"
     - name: Update CA certificate store
-      shell: update-ca-certificates
-    - block:
-        - name: Create host SSL private key
-          shell: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
-        - name: Create host SSL certificate signing request
-          shell: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
-        - name: Create host SSL certificate
-          shell: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: true
+    - name: Create SSL certificate
       delegate_to: localhost
+      block:
+        - name: Create host SSL private key
+          ansible.builtin.command: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
+          changed_when: true
+        - name: Create host SSL certificate signing request
+          ansible.builtin.command: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
+          changed_when: true
+        - name: Create host SSL certificate
+          ansible.builtin.command: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path
+            }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
+          changed_when: true

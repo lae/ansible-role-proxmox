@@ -1,20 +1,21 @@
 ---
 - name: Check domains.cfg exists
-  stat:
+  ansible.builtin.stat:
     path: "/etc/pve/domains.cfg"
   register: _domains_cfg
 
 - name: Create domains.cfg if it does not exist
-  file:
+  ansible.builtin.file:
     path: "/etc/pve/domains.cfg"
     state: "touch"
+    mode: "0640"
   when:
     - not _domains_cfg.stat.exists
 
 - name: Configure domains.cfg
   # The parser for domains.cfg requires a blank line after each domain,
   # and there's a TAB character before printing each key / value pair for a domain
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/pve/domains.cfg"
     owner: "root"
     group: "www-data"
@@ -23,7 +24,7 @@
       {% for domain in pve_domains_cfg %}
       {{ domain.type }}: {{ domain.name }}
       {% if domain.attributes %}
-      {% for k,v in domain.attributes.items() %}
+      {% for k, v in domain.attributes.items() %}
       {% if k != 'bind_password' %}
       	{{ k }} {{ v }}
       {% endif %}
@@ -33,7 +34,7 @@
       {% endfor %}
 
 - name: Select ldap-based realms with bind_password
-  set_fact:
+  ansible.builtin.set_fact:
     pve_ldap_realms_with_bind_pw: |
       {{ pve_domains_cfg | selectattr('type', 'in', ['ad', 'ldap'])
                          | selectattr('attributes.bind_password', 'defined') }}
@@ -44,7 +45,7 @@
     state: directory
     owner: root
     group: www-data
-    mode: 0700
+    mode: "0700"
   when: pve_ldap_realms_with_bind_pw | length
 
 - name: Ensure ldap-based realm secret files exists
@@ -53,7 +54,7 @@
     access_time: preserve
     modification_time: preserve
     state: touch
-    mode: 0600
+    mode: "0600"
   with_items:
     - "{{ pve_ldap_realms_with_bind_pw }}"
 
@@ -63,6 +64,6 @@
     dest: "/etc/pve/priv/realm/{{ item.name }}.pw"
     owner: root
     group: www-data
-    mode: 0600
+    mode: "0600"
   with_items:
     - "{{ pve_ldap_realms_with_bind_pw }}"
