@@ -6,7 +6,7 @@
   when: "pve_reboot_on_kernel_update | bool"
 
 - name: "Reboot for kernel update"
-  reboot:
+  ansible.builtin.reboot:
     msg: "PVE kernel update detected by Ansible"
     pre_reboot_delay: "{{ pve_reboot_on_kernel_update_delay }}"
     post_reboot_delay: "{{ pve_reboot_on_kernel_update_delay }}"
@@ -20,9 +20,9 @@
   register: _pve_kernel
 
 - name: "Remove old Debian/PVE kernels"
-  apt:
+  ansible.builtin.apt:
     name: "{{ ['linux-image-amd64'] + _pve_kernel.old_packages }}"
     state: absent
-    purge: yes
+    purge: true
   when:
     - "pve_remove_old_kernels | bool"

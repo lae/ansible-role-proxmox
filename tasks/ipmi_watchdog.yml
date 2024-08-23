@@ -1,24 +1,25 @@
 ---
-- import_tasks: disable_nmi_watchdog.yml
+- name: Disable nmi_watchdog
+  ansible.builtin.import_tasks: disable_nmi_watchdog.yml
 
 - name: Load ipmi_watchdog module
-  modprobe:
+  community.general.modprobe:
     name: ipmi_watchdog
     params: "action={{ pve_watchdog_ipmi_action }} timeout={{ pve_watchdog_ipmi_timeout }} panic_wdt_timeout=10"
     state: present
   tags: skiponlxc
 
 - name: Configure ipmi_watchdog module to load on boot
-  copy:
+  ansible.builtin.copy:
     content: "options ipmi_watchdog action={{ pve_watchdog_ipmi_action }} \
               timeout={{ pve_watchdog_ipmi_timeout }} panic_wdt_timeout=10"
     dest: /etc/modprobe.d/ipmi_watchdog.conf
-    mode: 0640
+    mode: "0640"
 
 - name: Configure PVE HA Manager to use ipmi_watchdog
-  copy:
+  ansible.builtin.copy:
     content: "WATCHDOG_MODULE=ipmi_watchdog"
     dest: /etc/default/pve-ha-manager
-    mode: 0640
+    mode: "0640"
   notify:
     - restart watchdog-mux

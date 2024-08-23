@@ -1,16 +1,22 @@
 ---
-- hosts: localhost
+- name: Package
+  hosts: localhost
   connection: local
   vars:
-    role_name: lae.proxmox
+    role_name: lae.proxmox # noqa var-naming[read-only]
   tasks:
-    - block:
-        - shell: pwd
+    - name: Package
+      block:
+        - name: Get current working directory
+          ansible.builtin.command: pwd
+          changed_when: false
         - name: Package up current working role
-          shell: "cd $(git rev-parse --show-toplevel); git ls-files -z | xargs -0 tar -czvf $OLDPWD/{{ role_name }}.tar.gz"
+          ansible.builtin.shell: "set -o pipefail && cd $(git rev-parse --show-toplevel); git ls-files -z | xargs -0 tar -czvf $OLDPWD/{{ role_name }}.tar.gz"
+          changed_when: true
         - name: Install packaged role
-          shell: "ansible-galaxy install {{ role_name }}.tar.gz,devel-$(git rev-parse HEAD),{{ role_name }} --force"
+          ansible.builtin.command: "ansible-galaxy install {{ role_name }}.tar.gz,devel-$(git rev-parse HEAD),{{ role_name }} --force"
+          changed_when: true
         - name: Remove packaged role artifact
-          file:
+          ansible.builtin.file:
             dest: "{{ role_name }}.tar.gz"
             state: absent

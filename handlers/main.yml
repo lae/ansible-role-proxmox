@@ -1,43 +1,45 @@
 ---
 # handlers file for ansible-role-proxmox
-- name: restart pvedaemon
-  service:
+- name: Restart pvedaemon
+  ansible.builtin.service:
     name: pvedaemon
     state: restarted
 
-- name: restart pveproxy
-  service:
+- name: Restart pveproxy
+  ansible.builtin.service:
     name: pveproxy
     state: restarted
 
-- name: reload ssh server configuration
+- name: Reload ssh server configuration
   ansible.builtin.systemd:
     name: ssh.service
     state: reloaded
 
-- name: restart watchdog-mux
-  service:
+- name: Restart watchdog-mux
+  ansible.builtin.service:
     name: watchdog-mux
     state: restarted
 
-- name: restart zfs-zed
-  service:
+- name: Restart zfs-zed
+  ansible.builtin.service:
     name: zfs-zed
     state: restarted
 
-- name: restart ceph
+- name: Restart ceph
   # Needs to use the systemd module directly to be able to
   # reload the systemd daemon
-  systemd:
+  ansible.builtin.systemd:
     name: ceph.service
     state: restarted
     daemon_reload: true
 
-- name: update-initramfs
-  command: update-initramfs -u -k all
+- name: Update-initramfs
+  ansible.builtin.command: update-initramfs -u -k all
+  changed_when: true
 
-- name: update-grub
-  command: update-grub
+- name: Update-grub
+  ansible.builtin.command: update-grub
   register: _pve_grub_update
+  changed_when: true
   failed_when: ('error' in _pve_grub_update.stderr)
   tags: skiponlxc

@@ -1,5 +1,6 @@
 ---
-- hosts: all
-  become: True
+- name: Deploy
+  hosts: all
+  become: true
   roles:
     - lae.proxmox

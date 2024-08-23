@@ -1,6 +1,7 @@
 .*.swp
 *.*~*
 *.bak
+library/__pycache__/
 
 /ansible.cfg
 *.retry

@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 - name: Modify vfio IOMMU references and configuration in default grub
   ansible.builtin.blockinfile:
     dest: /etc/default/grub
@@ -91,3 +92,4 @@
           mdev
       when: >
         (pve_mediated_devices_enabled | bool)
+# yamllint enable rule:line-length

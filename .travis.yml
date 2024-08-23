@@ -3,7 +3,7 @@ language: python
 sudo: required
 dist: bionic
 cache:
-  directories: [ '$HOME/lxc' ]
+  directories: ['$HOME/lxc']
   pip: true
 matrix:
   fast_finish: true
@@ -15,24 +15,24 @@ matrix:
     - env: ANSIBLE_VERSION='~=2.9.0'
     - env: ANSIBLE_VERSION='~=2.8.0'
 install:
-- if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
-  else pip install "ansible${ANSIBLE_VERSION}"; fi;
-  pip install --pre ansible-lint; pip install jmespath netaddr
-- ansible --version
-- ansible-galaxy install lae.travis-lxc,v0.10.1
-- ansible-playbook tests/install.yml -i tests/inventory
-- git archive --format tar.gz HEAD > lae.proxmox.tar.gz && ansible-galaxy install
-  lae.proxmox.tar.gz,$(git rev-parse HEAD),lae.proxmox && rm lae.proxmox.tar.gz
+  - if [ "$ANSIBLE_GIT_VERSION" ]; then pip install "https://github.com/ansible/ansible/archive/${ANSIBLE_GIT_VERSION}.tar.gz";
+    else pip install "ansible${ANSIBLE_VERSION}"; fi;
+    pip install --pre ansible-lint; pip install jmespath netaddr
+  - ansible --version
+  - ansible-galaxy install lae.travis-lxc,v0.10.1
+  - ansible-playbook tests/install.yml -i tests/inventory
+  - git archive --format tar.gz HEAD > lae.proxmox.tar.gz && ansible-galaxy install
+    lae.proxmox.tar.gz,$(git rev-parse HEAD),lae.proxmox && rm lae.proxmox.tar.gz
 before_script: cd tests/
 script:
-- ansible-lint ../ || true
-- ansible-playbook -i inventory deploy.yml --syntax-check
-- 'ansible-playbook -i inventory -v deploy.yml --skip skiponlxc & pid=$!; { while true; do sleep 1; kill -0 $pid 2>/dev/null || break; printf "\0"; done }'
-- 'ANSIBLE_STDOUT_CALLBACK=debug ANSIBLE_DISPLAY_SKIPPED_HOSTS=no ANSIBLE_DISPLAY_OK_HOSTS=no
-  unbuffer ansible-playbook --skip skiponlxc -vv -i inventory deploy.yml &> idempotency.log'
-- 'grep -A1 "PLAY RECAP" idempotency.log | grep -qP "changed=0 .*failed=0 .*" &&
-  (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; cat idempotency.log; exit 1)'
-- ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -i inventory -v test.yml
+  - ansible-lint ../ || true
+  - ansible-playbook -i inventory deploy.yml --syntax-check
+  - 'ansible-playbook -i inventory -v deploy.yml --skip skiponlxc & pid=$!; { while true; do sleep 1; kill -0 $pid 2>/dev/null || break; printf "\0"; done }'
+  - 'ANSIBLE_STDOUT_CALLBACK=debug ANSIBLE_DISPLAY_SKIPPED_HOSTS=no ANSIBLE_DISPLAY_OK_HOSTS=no
+    unbuffer ansible-playbook --skip skiponlxc -vv -i inventory deploy.yml &> idempotency.log'
+  - 'grep -A1 "PLAY RECAP" idempotency.log | grep -qP "changed=0 .*failed=0 .*" &&
+    (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; cat idempotency.log; exit 1)'
+  - ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -i inventory -v test.yml
 notifications:
   webhooks:
     urls:

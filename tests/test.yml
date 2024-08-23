@@ -1,40 +1,41 @@
 ---
-- hosts: all
+- name: Test the Proxmox VE installation
+  hosts: all
   tasks:
     - name: Ensure Proxmox Web UI returns a successful HTTP response
-      uri:
+      ansible.builtin.uri:
         url: "https://{{ inventory_hostname }}:8006"
 
     - name: Query PVE cluster status
-      shell: "pvesh get /cluster/status --output=json"
+      ansible.builtin.command: "pvesh get /cluster/status --output=json"
       register: _pve_cluster
-      changed_when: False
+      changed_when: false
 
     - name: Check that this node is within the cluster and it is in quorum
-      assert:
+      ansible.builtin.assert:
         that: "(_pve_cluster.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "([?type=='cluster'].quorate)[0]"
 
     - name: Query PVE realms
-      shell: "pvesh get /access/domains --output=json"
+      ansible.builtin.command: "pvesh get /access/domains --output=json"
       register: _pve_realms
-      changed_when: False
+      changed_when: false
 
     - name: Construct realm list
-      set_fact:
+      ansible.builtin.set_fact:
         realm_list: "{{ realm_list | default([]) }} + [ '{{ item.type }}' ]"
       with_items: "{{ pve_domains_cfg }}"
 
-    - name: Check that PVE realms exist
-      assert:
+    - name: Check that PVE realms exist # noqa run-once[task]
+      ansible.builtin.assert:
         that: "realm_list is subset(_pve_realms.stdout | from_json | json_query(query))"
       vars:
         query: "[*].type"
-      run_once: True
+      run_once: true
 
     - name: Check PVE realms configuration
-      assert:
+      ansible.builtin.assert:
         that:
           - item.type == realm.type
           - item.name == realm.realm
@@ -45,81 +46,82 @@
       with_items: "{{ pve_domains_cfg }}"
 
     - name: Query PVE groups
-      shell: "pvesh get /access/groups --output=json"
+      ansible.builtin.command: "pvesh get /access/groups --output=json"
       register: _pve_groups
-      changed_when: False
+      changed_when: false
 
-    - name: Check that PVE groups exist
-      assert:
+    - name: Check that PVE groups exist # noqa run-once[task]
+      ansible.builtin.assert:
         that: "(_pve_groups.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?groupid=='{{ item.name }}'])"
-      run_once: True
+      run_once: true
       with_items: "{{ pve_groups }}"
 
     - name: Query PVE users
-      shell: "pvesh get /access/users --output=json"
+      ansible.builtin.command: "pvesh get /access/users --output=json"
       register: _pve_users
-      changed_when: False
+      changed_when: false
 
-    - name: Check that PVE users exist
-      assert:
+    - name: Check that PVE users exist # noqa run-once[task]
+      ansible.builtin.assert:
         that: "(_pve_users.stdout | from_json | json_query(query)) == 1"
       vars:
         query: "length([?userid=='{{ item.name }}'])"
-      run_once: True
+      run_once: true
       with_items: "{{ pve_users }}"
 
     - name: Query PVE ACLs
-      shell: "pvesh get /access/acl --output=json"
+      ansible.builtin.command: "pvesh get /access/acl --output=json"
       register: _pve_acl
-      changed_when: False
+      changed_when: false
 
-    - name: Check that PVE ACLs exist
-      assert:
+    - name: Check that PVE ACLs exist # noqa run-once[task]
+      ansible.builtin.assert:
         that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
       vars:
         query: "length([])"
-      run_once: True
+      run_once: true
 
     - name: Query PVE storages
-      shell: "pvesh get /storage --output=json"
+      ansible.builtin.command: "pvesh get /storage --output=json"
       register: _pve_storage
-      changed_when: False
+      changed_when: false
 
     - name: Construct storage list
-      set_fact:
+      ansible.builtin.set_fact:
         sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
       with_items: "{{ pve_storages }}"
 
-    - name: Check that PVE storages exist
-      assert:
+    - name: Check that PVE storages exist # noqa run-once[task]
+      ansible.builtin.assert:
         that: "sto_list is subset(_pve_storage.stdout | from_json | json_query(query))"
       vars:
         query: "[*].storage"
-      run_once: True
+      run_once: true
 
     - name: Check that User specified ZFS Volumes exist
-      zfs_facts:
+      community.general.zfs_facts:
         dataset: "{{ item }}"
       with_items: "{{ pve_zfs_create_volumes }}"
 
     - name: Read datacenter.cfg file
-      slurp:
+      ansible.builtin.slurp:
         src: "/etc/pve/datacenter.cfg"
       register: datacenter_cfg
 
     - name: Check datacenter.cfg content
-      assert:
+      ansible.builtin.assert:
         that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
 
-    - name: Query PVE HA groups
-      command: "pvesh get /cluster/ha/groups --output=json"
+    - name: Query PVE HA groups # noqa run-once[task]
+      ansible.builtin.command: "pvesh get /cluster/ha/groups --output=json"
       register: _ha_group_list
       run_once: true
+      changed_when: false
 
     - name: Check PVE HA group configuration
-      assert:
+      ansible.builtin.assert:
         that:
           - item.name == ha_group.group
           - item.comment == ha_group.comment
@@ -131,17 +133,18 @@
                       | json_query("[?group==''" + item.name + "'']") | first }}'
       with_items: "{{ pve_cluster_ha_groups }}"
 
-    - block:
-        - name: pvedaemon service status
-          shell: "journalctl --no-pager -xu pvedaemon.service"
-          changed_when: False
-        - name: pve-cluster service status
-          shell: "journalctl --no-pager -xu pve-cluster.service"
-          changed_when: False
-        - name: pveproxy service status
-          shell: "journalctl --no-pager -xu pveproxy.service"
-          changed_when: False
-        - name: hosts file
-          shell: "cat /etc/hosts"
-          changed_when: False
-      ignore_errors: yes
+    - name: Get status # noqa ignore-errors
+      ignore_errors: true
+      block:
+        - name: Service pvedaemon status
+          ansible.builtin.command: "journalctl --no-pager -xu pvedaemon.service"
+          changed_when: false
+        - name: Service pve-cluster status
+          ansible.builtin.command: "journalctl --no-pager -xu pve-cluster.service"
+          changed_when: false
+        - name: Service pveproxy status
+          ansible.builtin.command: "journalctl --no-pager -xu pveproxy.service"
+          changed_when: false
+        - name: Hosts file
+          ansible.builtin.command: "cat /etc/hosts"
+          changed_when: false

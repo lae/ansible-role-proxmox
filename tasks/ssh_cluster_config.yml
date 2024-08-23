@@ -1,34 +1,34 @@
 ---
 - name: Create SSH directory for root
-  file:
+  ansible.builtin.file:
     path: /root/.ssh/
     state: directory
-    mode: 0700
+    mode: "0700"
 
 - name: Create root SSH key pair for PVE
-  user:
+  ansible.builtin.user:
     name: root
-    generate_ssh_key: yes
+    generate_ssh_key: true
     ssh_key_file: /root/.ssh/id_rsa
     ssh_key_type: rsa
     ssh_key_comment: "root@{{ inventory_hostname_short }}"
 
 - name: Fetch root SSH public key
-  slurp:
+  ansible.builtin.slurp:
     src: /root/.ssh/id_rsa.pub
   register: proxmox_root_id_rsa_pub
 
 - name: Authorize all hosts' root SSH public keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     key: "{{ hostvars[item].proxmox_root_id_rsa_pub.content | b64decode }}"
   with_items: "{{ groups[pve_group] }}"
 
 - name: Configure SSH clients for connecting to PVE cluster hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     dest: /etc/ssh/ssh_config
-    create: yes
-    mode: 0644
+    create: true
+    mode: "0644"
     marker: "# {mark}: PVE host configuration options (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
@@ -38,7 +38,7 @@
       {% endfor %}
 
 - name: Allow root logins from PVE cluster hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     dest: /etc/ssh/sshd_config
     marker: "# {mark}: Allow root logins from PVE hosts (managed by ansible)."
     content: |
@@ -53,7 +53,7 @@
 - name: Enable and start SSH server
   ansible.builtin.systemd:
     name: ssh.service
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Fetch a SSH public key to use for cluster joins
@@ -62,10 +62,10 @@
   register: _pve_ssh_public_key
 
 - name: Add PVE-provided ciphers to SSH client config
-  lineinfile:
+  ansible.builtin.lineinfile:
     line: "Ciphers {{ pve_ssh_ciphers }}"
     regexp: "^Ciphers .*"
     insertbefore: BOF
-    create: yes
-    mode: 0644
+    create: true
+    mode: "0644"
     dest: /root/.ssh/config

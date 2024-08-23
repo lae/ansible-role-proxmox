@@ -1,23 +1,26 @@
 ---
-- hosts: all
-  become: True
+- name: Provision
+  hosts: all
+  become: true
   pre_tasks:
     - name: Copy apt proxy detection script
       ansible.builtin.template:
         src: detect-http-proxy.j2
         dest: /etc/apt/detect-http-proxy
-        mode: 0755
+        mode: "0755"
     - name: Configure apt to use detection script
       ansible.builtin.copy:
         content: "Acquire::Retries 0;\nAcquire::http::ProxyAutoDetect \"/etc/apt/detect-http-proxy\";"
         dest: /etc/apt/apt.conf.d/30detectproxy
+        mode: "0644"
     - name: Install gnupg2
-      apt:
+      ansible.builtin.apt:
         name: gnupg2
     - name: Replace /etc/network/interfaces
       ansible.builtin.copy:
         src: files/interfaces
         dest: /etc/network/interfaces
+        mode: "0644"
   roles:
     - geerlingguy.ntp
     - lae.proxmox
