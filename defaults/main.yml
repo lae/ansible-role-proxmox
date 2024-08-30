@@ -56,6 +56,7 @@ pve_groups: []
 pve_users: []
 pve_acls: []
 pve_storages: []
+pve_metric_servers: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
