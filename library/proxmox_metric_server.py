@@ -122,8 +122,9 @@ RETURN = """
 
 from ansible.module_utils.basic import AnsibleModule  # noqa: E402
 from ansible.module_utils._text import to_text  # noqa: E402, F401
-from ansible_collections.weytop.vmfarm.plugins.module_utils.pvesh import ProxmoxShellError # type: ignore # noqa: E402
-import ansible_collections.weytop.vmfarm.plugins.module_utils.pvesh as pvesh # type: ignore # noqa: E402
+from ansible.module_utils.pvesh import ProxmoxShellError  # type: ignore # noqa: E402
+import ansible.module_utils.pvesh as pvesh  # type: ignore # noqa: E402
+
 
 class ProxmoxMetricServer(object):
     def __init__(self, module):
@@ -146,7 +147,7 @@ class ProxmoxMetricServer(object):
         self.state = module.params["state"]
 
         try:
-            self.existing_server = pvesh.get("cluster/metrics/server")
+            self.existing_servers = pvesh.get("cluster/metrics/server")
         except ProxmoxShellError as e:
             self.module.fail_json(msg=e.message, status_code=e.status_code)
 
@@ -154,30 +155,27 @@ class ProxmoxMetricServer(object):
 
     def parse_servers(self):
         self.servers = []
-        for existing_server in self.existing_server: # type: ignore
-            self.servers.append(existing_server.get("id"))
+        self.servers.extend(
+            existing_servers.get("id")
+            for existing_servers in self.existing_servers
+        )
 
     def lookup(self):
-        self.servers = []
-        for existing_server in self.existing_server: # type: ignore
-            if existing_server.get("id") == self.id:
-                args = {}
-                args["id"] = existing_server.get("id")
-                return args
-
-        return None
+        return next(
+            (
+                {"id": existing_servers.get("id")}
+                for existing_servers in self.existing_servers
+                if existing_servers.get("id") == self.id
+            ),
+            None,
+        )
 
     def exists(self):
-        if self.id not in self.servers:
-            return False
-
-        return True
+        return self.id in self.servers
 
     def prepare_server_args(self, create=True):
-        args = {}
+        args = {"port": self.port, "server": self.server}
 
-        args["port"] = self.port
-        args["server"] = self.server
         if create:
             args["type"] = self.type
         if self.protocol is not None:
@@ -206,7 +204,7 @@ class ProxmoxMetricServer(object):
 
     def remove_server(self):
         try:
-            pvesh.delete("cluster/metrics/server/{}".format(self.id))
+            pvesh.delete(f"cluster/metrics/server/{self.id}")
             return (True, None)
         except ProxmoxShellError as e:
             return (False, e.message)
@@ -215,23 +213,23 @@ class ProxmoxMetricServer(object):
         new_server = self.prepare_server_args()
 
         try:
-            pvesh.create("cluster/metrics/server/{}".format(self.id), **new_server)
+            pvesh.create(f"cluster/metrics/server/{self.id}", **new_server)
             return (True, None)
         except ProxmoxShellError as e:
             return (False, e.message)
 
     def modify_server(self):
-        existing_server = self.lookup()
+        existing_servers = self.lookup()
         modified_server = self.prepare_server_args(create=False)
         updated_fields = []
         error = None
 
         for key in modified_server:
-            if key not in existing_server:
+            if key not in existing_servers:  # type: ignore
                 updated_fields.append(key)
             else:
                 new_value = modified_server.get(key)
-                old_value = existing_server.get(key) # type: ignore
+                old_value = existing_servers.get(key)  # type: ignore
                 if isinstance(old_value, list):
                     old_value = ",".join(sorted(old_value))
                 if isinstance(new_value, list):
@@ -250,7 +248,7 @@ class ProxmoxMetricServer(object):
             return (updated_fields, error)
 
         try:
-            pvesh.set("cluster/metrics/server/{}".format(self.id), **modified_server)
+            pvesh.set(f"cluster/metrics/server/{self.id}", **modified_server)
         except ProxmoxShellError as e:
             error = e.message
 
@@ -340,10 +338,9 @@ def main():
             msg="The 'protocol' parameter must be 'tcp' or 'udp' for 'graphite' type."
         )
 
-    if module.params["type"] == "graphite" and (
-        module.params["bucket"] is not None
-        or module.params["organization"] is not None,
-        module.params["token"] is not None,
+    if module.params["type"] == "graphite" and any(
+        module.params.get(param) is not None
+        for param in ["bucket", "organization", "token"]
     ):
         module.fail_json(
             msg="The 'bucket', 'organization' and 'token' parameters are only available for 'influxdb' type."
@@ -373,11 +370,7 @@ def main():
 
     changed = False
     error = None
-    result = {}
-    result["id"] = server.id
-    result["state"] = server.state
-    result["changed"] = False
-
+    result = {"id": server.id, "state": server.state, "changed": False}
     if server.state == "absent":
         if server.exists():
             if module.check_mode:
@@ -400,7 +393,7 @@ def main():
     # Very gross hack to ignore the error message when Proxmox tries to remove non-existent credentials file
     # See : https://forum.proxmox.com/threads/interface-comes-up-with-all-question-marks.83287/post-382099
     # TODO: Check if the error message is still appearing in version < 7.4-17
-    if error is not None and not error.startswith("removing {} credentials file".format(server.type)):
+    if error is not None and not error.startswith(f"removing {server.type} credentials file"):
         module.fail_json(name=server.id, msg=error)
 
     result["changed"] = changed

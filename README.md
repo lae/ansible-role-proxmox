@@ -841,7 +841,7 @@ Then system interrupt remapping is supported and you do not need to enable unsaf
 
 ## Metrics Server Configuration
 
-You can configure metric servers in Proxmox VE using the `proxmox_metric_server` module. Below is an example configuration for different types of metric servers:
+You can configure metric servers in Proxmox VE using the `pve_metric_servers` role variable. Below is an example configuration for different types of metric servers:
 
 ```yaml
 pve_metric_servers:
@@ -853,7 +853,6 @@ pve_metric_servers:
     organization: myorg
     bucket: mybucket
     token: mytoken
-    disable: false
     timeout: 30
     max_body_size: 25000000
     verify_certificate: true
@@ -863,7 +862,6 @@ pve_metric_servers:
     type: graphite
     protocol: tcp
     path: mygraphitepath
-    disable: false
     mtu: 1500
 ```
 
@@ -884,25 +882,6 @@ pve_metric_servers:
 - `max_body_size`: (optional) Maximum body size in bytes. Available only for influxdb with the http v2 API. Default is `25000000`.
 - `mtu`: (optional) MTU for UDP metric transmission.
 - `verify_certificate`: (optional) Verify SSL certificate. Available only for influxdb with https.
-
-### Example Configuration
-
-Here is an example configuration to create a new InfluxDB metric server:
-
-```yaml
-- name: Create a new InfluxDB metric server
-  proxmox_metric_server:
-    id: "influxdb"
-    port: 8086
-    server: "influxdb.example.com"
-    type: "influxdb"
-    protocol: "http"
-    organization: "myorg"
-    bucket: "mybucket"
-    token: "mytoken"
-```
-
-For more information, refer to the Proxmox VE API documentation: [Proxmox VE API Viewer](https://pve.proxmox.com/pve-docs/api-viewer/index.html#/cluster/metrics/server/{id}).
 
 ## Developer Notes
 
