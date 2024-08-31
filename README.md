@@ -926,6 +926,7 @@ John Marion ([@jmariondev](https://github.com/jmariondev))
 foerkede ([@foerkede](https://github.com/foerkede)) - ZFS storage support  
 Guiffo Joel ([@futuriste](https://github.com/futuriste)) - Pool configuration support  
 Adam Delo ([@ol3d](https://github.com/ol3d)) - PCIe Passthrough Support
+Antoine Thys ([@thystips](https://github.com/thystips)) - Metric Servers Support
 
 [Full list of contributors](https://github.com/lae/ansible-role-proxmox/graphs/contributors)
 
