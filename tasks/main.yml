@@ -415,6 +415,27 @@
     - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
     - pve_domains_cfg | length > 0
 
+- name: Add metric servers
+  proxmox_metric_server:
+    id: "{{ item.id | default(omit) }}"
+    port: "{{ item.port | default(omit) }}"
+    server: "{{ item.server | default(omit) }}"
+    type: "{{ item.type | default(omit) }}"
+    protocol: "{{ item.protocol | default(omit) }}"
+    disable: "{{ item.disable | default(omit) }}"
+    organization: "{{ item.organization | default(omit) }}"
+    bucket: "{{ item.bucket | default(omit) }}"
+    token: "{{ item.token | default(omit) }}"
+    path: "{{ item.path | default(omit) }}"
+    api_path_prefix: "{{ item.api_path_prefix | default(omit) }}"
+    timeout: "{{ item.timeout | default(omit) }}"
+    max_body_size: "{{ item.max_body_size | default(omit) }}"
+    mtu: "{{ item.mtu | default(omit) }}"
+    verify_certificate: "{{ item.verify_certificate | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ pve_metric_servers }}"
+  when: pve_metric_servers is defined and pve_metric_servers | length > 0
+
 - import_tasks: ssl_config.yml
   when:
     - "pve_ssl_private_key is defined"

@@ -218,6 +218,9 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 The backend needs to be supported by [Proxmox][pvesm]. Read the **Storage
 Management** section for more info.
 
+`pve_metric_servers` allows you to configure a metric server for the PVE cluster.
+This is useful if you want to use InfluxDB, Graphite or other (with telegraf).
+
 `pve_ssh_port` allows you to change the SSH port. If your SSH is listening on
 a port other than the default 22, please set this variable. If a new node is
 joining the cluster, the PVE cluster needs to communicate once via SSH.
@@ -420,6 +423,7 @@ pve_roles: [] # Added more roles with specific privileges. See section on User M
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
+pve_metric_servers: [] # List of metric servers to configure in PVE.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
 pve_no_log: false # Set this to true in production to prevent leaking of storage credentials in run logs. (may be used in other tasks in the future)
@@ -835,6 +839,50 @@ Then system interrupt remapping is supported and you do not need to enable unsaf
 
 `pve_pcie_report_msrs` can be used to enable or disable logging messages of msrs warnings. If you see a lot of warning messages in your 'dmesg' system log, this value can be used to silence msrs warnings.
 
+## Metrics Server Configuration
+
+You can configure metric servers in Proxmox VE using the `pve_metric_servers` role variable. Below is an example configuration for different types of metric servers:
+
+```yaml
+pve_metric_servers:
+  - id: influxdb1
+    port: 8086
+    server: influxdb.example.com
+    type: influxdb
+    protocol: http
+    organization: myorg
+    bucket: mybucket
+    token: mytoken
+    timeout: 30
+    max_body_size: 25000000
+    verify_certificate: true
+  - id: graphite1
+    port: 2003
+    server: graphite.example.com
+    type: graphite
+    protocol: tcp
+    path: mygraphitepath
+    mtu: 1500
+```
+
+### Configuration Variables
+
+- `id`: (required) Unique identifier for the metric server.
+- `port`: (optional) Port of the metric server. Default is `8089`.
+- `server`: (required) DNS name or IP address of the metric server.
+- `type`: (optional) Type of metric server. Possible values: `influxdb`, `graphite`. Default is `influxdb`.
+- `protocol`: (optional) Protocol used to send metrics. Possible values: `udp`, `tcp`, `http`, `https`. Default is `udp`.
+- `disable`: (optional) Disable the metric server. Default is `false`.
+- `organization`: (optional) Organization name. Available only for influxdb with the http v2 API.
+- `bucket`: (optional) Bucket name for influxdb. Useful only with the http v2 API or compatible.
+- `token`: (optional) InfluxDB access token. Required only when using the http v2 API.
+- `path`: (optional) Graphite root path. Available only for graphite.
+- `api_path_prefix`: (optional) API path prefix inserted between `<host>:<port>/` and `/api2/`. Useful if the InfluxDB service is running behind a reverse proxy. Available only for influxdb with the http v2 API.
+- `timeout`: (optional) Timeout in seconds. Available only for influxdb with the http v2 API or Graphite TCP socket.
+- `max_body_size`: (optional) Maximum body size in bytes. Available only for influxdb with the http v2 API. Default is `25000000`.
+- `mtu`: (optional) MTU for UDP metric transmission.
+- `verify_certificate`: (optional) Verify SSL certificate. Available only for influxdb with https.
+
 ## Developer Notes
 
 When developing new features or fixing something in this role, you can test out
@@ -878,6 +926,7 @@ John Marion ([@jmariondev](https://github.com/jmariondev))
 foerkede ([@foerkede](https://github.com/foerkede)) - ZFS storage support  
 Guiffo Joel ([@futuriste](https://github.com/futuriste)) - Pool configuration support  
 Adam Delo ([@ol3d](https://github.com/ol3d)) - PCIe Passthrough Support
+Antoine Thys ([@thystips](https://github.com/thystips)) - Metric Servers Support
 
 [Full list of contributors](https://github.com/lae/ansible-role-proxmox/graphs/contributors)
 
