@@ -169,6 +169,21 @@
 
 - import_tasks: identify_needed_packages.yml
 
+- name: Pin Proxmox kernel to specific version
+  ansible.builtin.copy:
+    content: |
+      Package: proxmox-default-kernel
+      Pin: version {{ pve_default_kernel_version }}
+      Pin-Priority: 1000
+    dest: /etc/apt/preferences.d/proxmox-default-kernel
+  when: pve_default_kernel_version is defined
+
+- name: Ensure preferences exist for kernel pinning only if needed
+  ansible.builtin.file:
+    path: /etc/apt/preferences.d/proxmox-default-kernel
+    mode: '0644'
+    state: "{{ 'file' if pve_default_kernel_version is defined else 'absent' }}"
+
 - name: Install Proxmox VE and related packages
   apt:
     update_cache: yes
