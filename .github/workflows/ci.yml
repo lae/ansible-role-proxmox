@@ -50,4 +50,10 @@ jobs:
           sudo apt-get build-dep -y vagrant ruby-libvirt
           sudo apt-get install -y --no-install-recommends libxslt-dev libxml2-dev libvirt-dev ruby-bundler ruby-dev zlib1g-dev
           vagrant plugin install vagrant-libvirt
-      - run: sudo -E -u ${USER} PATH=$PIPX_BIN_DIR:$PATH vagrant up --no-tty
+      - run: >
+          sudo -E -u ${USER}
+          ANSIBLE_STDOUT_CALLBACK=debug
+          ANSIBLE_DISPLAY_SKIPPED_HOSTS=no
+          ANSIBLE_DISPLAY_OK_HOSTS=no
+          PATH=$PIPX_BIN_DIR:$PATH
+          vagrant up --no-tty
