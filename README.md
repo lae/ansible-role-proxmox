@@ -389,6 +389,7 @@ pve_check_for_kernel_update: true # Runs a script on the host to check kernel ve
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_reboot_on_kernel_update_delay: 60 # Number of seconds to wait before and after a reboot process to proceed with next task in cluster mode
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
+# pve_default_kernel_version: # version to pin proxmox-default-kernel to (see https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8)
 pve_pcie_passthrough_enabled: false # Set this to true to enable PCIe passthrough.
 pve_iommu_passthrough_mode: false # Set this to true to allow VMs to bypass the DMA translation. This might increase performance for IOMMU passthrough.
 pve_iommu_unsafe_interrupts: false # Set this to true if your system doesn't support interrupt remapping.
@@ -882,6 +883,20 @@ pve_metric_servers:
 - `max_body_size`: (optional) Maximum body size in bytes. Available only for influxdb with the http v2 API. Default is `25000000`.
 - `mtu`: (optional) MTU for UDP metric transmission.
 - `verify_certificate`: (optional) Verify SSL certificate. Available only for influxdb with https.
+
+## Non-default scenarios and other use cases
+
+### Preventing upgrade to Linux kernel 6.8
+
+Proxmox 8.2 introduces Linux 6.8, which may cause issues in some deployments.
+To work around this, you can pin the kernel version used to 6.5 by adding the following role variable:
+
+```yaml
+pve_default_kernel_version: 1.0.1
+```
+
+This creates a pin on the `proxmox-default-kernel` package, which is [the method suggested by PVE](https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8).
+It can be later removed by unsetting this role variable.
 
 ## Developer Notes
 
