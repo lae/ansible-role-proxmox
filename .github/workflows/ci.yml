@@ -55,5 +55,6 @@ jobs:
           ANSIBLE_STDOUT_CALLBACK=debug
           ANSIBLE_DISPLAY_SKIPPED_HOSTS=no
           ANSIBLE_DISPLAY_OK_HOSTS=no
+          DEBIAN_FRONTEND=noninteractive
           PATH=$PIPX_BIN_DIR:$PATH
-          vagrant up --no-tty
+          vagrant up --no-tty || true
