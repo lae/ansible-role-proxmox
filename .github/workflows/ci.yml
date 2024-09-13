@@ -22,7 +22,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt install python3-jmespath python3-netaddr nfs-kernel-server
+      - run: sudo apt install nfs-kernel-server
+      - run: sudo pipx inject ansible-core jmespath netaddr
       - run: ansible-galaxy install geerlingguy.ntp
       - name: setup vagrant
         run: |
@@ -48,4 +49,4 @@ jobs:
           sudo apt-get build-dep -y vagrant ruby-libvirt
           sudo apt-get install -y --no-install-recommends libxslt-dev libxml2-dev libvirt-dev ruby-bundler ruby-dev zlib1g-dev
           sudo vagrant plugin install vagrant-libvirt
-      - run: sudo vagrant up --no-tty
+      - run: sudo PATH=$PIPX_BIN_DIR:$PATH vagrant up --no-tty
