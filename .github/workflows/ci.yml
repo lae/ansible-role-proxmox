@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt install python3-jmespath python3-netaddr
+      - run: sudo apt install python3-jmespath python3-netaddr nfs-kernel-server
       - run: ansible-galaxy install geerlingguy.ntp
       - name: setup vagrant
         run: |
