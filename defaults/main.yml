@@ -8,6 +8,7 @@ pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_reboot_on_kernel_update_delay: 60
 pve_remove_old_kernels: true
+# pve_default_kernel_version:
 pve_run_system_upgrades: false
 pve_run_proxmox_upgrades: true
 pve_pcie_passthrough_enabled: false
@@ -56,6 +57,7 @@ pve_groups: []
 pve_users: []
 pve_acls: []
 pve_storages: []
+pve_metric_servers: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
