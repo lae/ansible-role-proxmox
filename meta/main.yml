@@ -6,7 +6,7 @@ galaxy_info:
   description: Installs and configures Proxmox Virtual Environment 6.x/7.x on Debian servers.
   license: MIT
 
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
 
   platforms:
     - name: Debian

@@ -103,6 +103,22 @@ options:
         description:
             - Specifies whether or not the given path is an externally managed
             mountpoint.
+    namespace:
+        required: false
+        description:
+            - Specifies the Namespace that should be used on PBS
+    share:
+        required: false
+        description:
+            - Specifies the CIFS-Share to use
+    subdir:
+        required: false
+            - specifies the folder in the share dir to use for proxmox
+              (useful to seperate proxmox content from other content)
+    domain:
+        required: false
+            - Specifies Realm to use for NTLM/LDAPS Authentification if using
+              an AD-Enabled share
 
 author:
     - Fabien Brachere (@fbrachere)
@@ -170,6 +186,7 @@ EXAMPLES = '''
     datastore: main
     fingerprint: f2:fb:85:76:d2:2a:c4:96:5c:6e:d8:71:37:36:06:17:09:55:f7:04:e3:74:bb:aa:9e:26:85:92:63:c8:b9:23
     encryption_key: autogen
+    namespace: Top/something
 - name: Create a ZFS storage type
   proxmox_storage:
     name: zfs1
@@ -177,6 +194,17 @@ EXAMPLES = '''
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+- name: CIFS-Share
+  proxmox_storage:
+    name: cifs1
+    server: cifs-host.domain.tld
+    type: cifs
+    content: [ "snippets", "vztmpl", "iso" ]
+    share: sharename
+    subdir: /subdir
+    username: user
+    password: supersecurepass
+    domain: addomain.tld
 '''
 
 RETURN = '''
@@ -220,6 +248,13 @@ class ProxmoxStorage(object):
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
         self.is_mountpoint = module.params['is_mountpoint']
+
+        # namespace for pbs
+        self.namespace = module.params['namespace']
+        # CIFS properties
+        self.domain = module.params['domain']
+        self.subdir = module.params['subdir']
+        self.share = module.params['share']
 
         # Validate the parameters given to us
         fingerprint_re = re.compile('^([A-Fa-f0-9]{2}:){31}[A-Fa-f0-9]{2}$')
@@ -305,11 +340,21 @@ class ProxmoxStorage(object):
             args['vgname'] = self.vgname
         if self.thinpool is not None:
             args['thinpool'] = self.thinpool
+        if self.namespace is not None:
+            args['namespace'] = self.namespace
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
         if self.is_mountpoint is not None:
             args['is_mountpoint'] = 1 if self.is_mountpoint else 0
 
+        # CIFS
+        if self.subdir is not None:
+            args['subdir'] = self.subdir
+        if self.domain is not None:
+            args['domain'] = self.domain
+        if self.share is not None:
+            args['share'] = self.share
+        # end cifs
         if self.maxfiles is not None and 'backup' not in self.content:
             self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
         if self.krbd is not None and self.type != 'rbd':
@@ -386,7 +431,7 @@ def main():
         nodes=dict(type='list', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
-                           "zfspool", "btrfs", "pbs"]),
+                           "zfspool", "btrfs", "pbs", "cifs"]),
         # Remaining PVE API arguments (depending on type) past this point
         datastore=dict(default=None, type='str', required=False),
         encryption_key=dict(default=None, type='str', required=False),
@@ -406,6 +451,10 @@ def main():
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
         is_mountpoint=dict(default=None, type='bool', required=False),
+        namespace=dict(default=None, type='str', required=False),
+        subdir=dict(default=None, type='str', required=False),
+        domain=dict(default=None, type='str', required=False),
+        share=dict(default=None, type='str', required=False),
     )
 
     module = AnsibleModule(
@@ -420,7 +469,8 @@ def main():
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
             ["type", "btrfs", ["path", "content"]],
-            ["type", "pbs", ["server", "username", "password", "datastore"]]
+            ["type", "pbs", ["server", "username", "password", "datastore"]],
+            ["type", "cifs", ["server", "share"]],
         ],
         required_by={
             "master_pubkey": "encryption_key"

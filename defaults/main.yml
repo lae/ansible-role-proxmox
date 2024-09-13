@@ -8,8 +8,18 @@ pve_check_for_kernel_update: true
 pve_reboot_on_kernel_update: false
 pve_reboot_on_kernel_update_delay: 60
 pve_remove_old_kernels: true
+# pve_default_kernel_version:
 pve_run_system_upgrades: false
 pve_run_proxmox_upgrades: true
+pve_pcie_passthrough_enabled: false
+pve_iommu_passthrough_mode: false
+pve_iommu_unsafe_interrupts: false
+pve_mediated_devices_enabled: false
+pve_pcie_ovmf_enabled: false
+pve_pci_device_ids: []
+pve_vfio_blacklist_drivers: []
+pve_pcie_ignore_msrs: false
+pve_pcie_report_msrs: true
 pve_watchdog: none
 pve_watchdog_ipmi_action: power_cycle
 pve_watchdog_ipmi_timeout: 10
@@ -19,7 +29,7 @@ pve_zfs_enabled: no
 pve_zfs_create_volumes: []
 pve_ceph_enabled: false
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'buster' %}ceph-nautilus buster{% else %}ceph-quincy bullseye{% endif %} main"
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}"
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
 pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
@@ -35,7 +45,10 @@ pve_cluster_clustername: "{{ pve_group }}"
 pve_manage_hosts_enabled: yes
 pve_cluster_addr0: "{{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}"
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
+# pve_cluster_addr0_priority: 0
+# pve_cluster_addr1_priority: 1
 pve_datacenter_cfg: {}
+pve_domains_cfg: []
 pve_cluster_ha_groups: []
 # additional roles for your cluster (f.e. for monitoring)
 pve_pools: []
@@ -44,6 +57,8 @@ pve_groups: []
 pve_users: []
 pve_acls: []
 pve_storages: []
+pve_metric_servers: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
+pve_no_log: false

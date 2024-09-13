@@ -14,6 +14,15 @@
   with_items: "{{ groups[pve_group] }}"
   when: "pve_cluster_enabled | bool"
 
+- name: Ensure that group has more than one host to enable PVE clustering
+  assert:
+    that:
+      - "groups[pve_group] | length | int >= 2"
+    msg: "Clustering is enabled for {{ pve_group }} but does not meet the \
+          minimum host requirement of 2. Please either remove/disable \
+          pve_cluster_enabled, or update your inventory as needed."
+  when: "pve_cluster_enabled | bool"
+
 - name: Ensure this host is in the group specified
   assert:
     that:
@@ -160,6 +169,21 @@
 
 - import_tasks: identify_needed_packages.yml
 
+- name: Pin Proxmox kernel to specific version
+  ansible.builtin.copy:
+    content: |
+      Package: proxmox-default-kernel
+      Pin: version {{ pve_default_kernel_version }}
+      Pin-Priority: 1000
+    dest: /etc/apt/preferences.d/proxmox-default-kernel
+  when: pve_default_kernel_version is defined
+
+- name: Ensure preferences exist for kernel pinning only if needed
+  ansible.builtin.file:
+    path: /etc/apt/preferences.d/proxmox-default-kernel
+    mode: '0644'
+    state: "{{ 'file' if pve_default_kernel_version is defined else 'absent' }}"
+
 - name: Install Proxmox VE and related packages
   apt:
     update_cache: yes
@@ -191,6 +215,9 @@
         - "pve_remove_subscription_warning | bool"
   when:
     - "'pve-no-subscription' in pve_repository_line"
+
+- import_tasks: pcie_passthrough.yml
+  when: "pve_pcie_passthrough_enabled | bool"
 
 - import_tasks: kernel_updates.yml
 
@@ -249,6 +276,27 @@
   with_items: "{{ pve_users }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
+- import_tasks: realms_config.yml
+  when:
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_domains_cfg | length > 0
+
+- name: Select ldap-based realms with sync
+  set_fact:
+    pve_ldap_realms_with_sync: |
+      {{ pve_domains_cfg | selectattr('type', 'in', ['ad', 'ldap'])
+                         | selectattr('sync', 'defined') }}
+
+- name: Sync ldap-based realms
+  include_tasks: realms_sync.yml
+  loop: "{{ pve_ldap_realms_with_sync | flatten(levels=1) }}"
+  loop_control:
+    loop_var: pve_ldap_realm
+  when:
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
+    - pve_domains_cfg | length > 0
+    - pve_ldap_realm.sync | bool
+
 - name: Configure Proxmox ACLs
   proxmox_acl:
     path: "{{ item.path }}"
@@ -300,6 +348,11 @@
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
+    namespace: "{{ item.namespace | default(omit) }}"
+    domain: "{{ item.domain | default(omit) }}"
+    subdir: "{{ item.subdir | default(omit) }}"
+    share: "{{ item.share | default(omit) }}"
+  no_log: "{{ pve_no_log }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
   tags: storage
@@ -335,6 +388,27 @@
   when:
     - "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
     - "pve_datacenter_cfg | length > 0"
+
+- name: Add metric servers
+  proxmox_metric_server:
+    id: "{{ item.id | default(omit) }}"
+    port: "{{ item.port | default(omit) }}"
+    server: "{{ item.server | default(omit) }}"
+    type: "{{ item.type | default(omit) }}"
+    protocol: "{{ item.protocol | default(omit) }}"
+    disable: "{{ item.disable | default(omit) }}"
+    organization: "{{ item.organization | default(omit) }}"
+    bucket: "{{ item.bucket | default(omit) }}"
+    token: "{{ item.token | default(omit) }}"
+    path: "{{ item.path | default(omit) }}"
+    api_path_prefix: "{{ item.api_path_prefix | default(omit) }}"
+    timeout: "{{ item.timeout | default(omit) }}"
+    max_body_size: "{{ item.max_body_size | default(omit) }}"
+    mtu: "{{ item.mtu | default(omit) }}"
+    verify_certificate: "{{ item.verify_certificate | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ pve_metric_servers }}"
+  when: pve_metric_servers is defined and pve_metric_servers | length > 0
 
 - import_tasks: ssl_config.yml
   when:

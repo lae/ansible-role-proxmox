@@ -15,6 +15,35 @@ pve_ssl_certificate: "{{ lookup('file', ssl_host_cert_path) }}"
 pve_cluster_enabled: yes
 pve_datacenter_cfg:
   console: xtermjs
+pve_domains_cfg:
+  - name: pam
+    type: pam
+    attributes:
+      comment: Linux PAM standard authentication
+  - name: pve
+    type: pve
+    attributes:
+      comment: Proxmox VE authentication server
+  - name: ad
+    type: ad
+    attributes:
+      comment: Active Directory authentication
+      domain: yourdomain.com
+      server1: dc01.yourdomain.com
+      default: 1
+      secure: 1
+      server2: dc02.yourdomain.com
+  - name: ldap
+    type: ldap
+    attributes:
+      comment: LDAP authentication
+      base_dn: CN=Users,dc=yourdomain,dc=com
+      bind_dn: "uid=svc-reader,CN=Users,dc=yourdomain,dc=com"
+      bind_password: "my-password"
+      server1: ldap1.yourdomain.com
+      user_attr: uid
+      secure: 1
+      server2: ldap2.yourdomain.com
 pve_cluster_ha_groups:
   - name: proxmox_5_01
     comment: "Resources on proxmox-5-01"

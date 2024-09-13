@@ -53,3 +53,41 @@
         - name: Create host SSL certificate
           shell: "openssl x509 -req -in {{ ssl_host_csr_path }} -CA {{ ssl_ca_cert_path }} -CAkey {{ ssl_ca_key_path }} -days 1 -CAcreateserial -sha256 -out {{ ssl_host_cert_path }}"
       delegate_to: localhost
+    - name: Install telegraf for metric server testing
+      block:
+        - name: Get the GPG key
+          ansible.builtin.get_url:
+            url: https://repos.influxdata.com/influxdata-archive.key
+            dest: /etc/apt/trusted.gpg.d/influxdata-archive.asc
+            mode: "0644"
+            owner: root
+            group: root
+        - name: Add the repository
+          ansible.builtin.apt_repository:
+            repo: "deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive.asc] https://repos.influxdata.com/debian stable main"
+            state: present
+            update_cache: true
+            filename: "influxdata"
+        - name: Install Telegraf
+          ansible.builtin.apt:
+            name: telegraf
+            state: present
+        - name: Configure Telegraf
+          ansible.builtin.copy:
+            dest: /etc/telegraf/telegraf.conf
+            mode: "0644"
+            content: |
+              [agent]
+                interval = "10s"
+                collection_jitter = "0s"
+                flush_interval = "10s"
+                flush_jitter = "0s"
+                precision = ""
+                hostname = "{{ ansible_hostname }}"
+                omit_hostname = false
+              [[inputs.socket_listener]]
+                service_address = "udp://127.0.0.1:8089"
+        - name: Restart Telegraf
+          ansible.builtin.systemd:
+            name: telegraf
+            state: restarted

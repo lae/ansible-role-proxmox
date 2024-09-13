@@ -218,6 +218,9 @@ of the `ops` group. Read the **User and ACL Management** section for more info.
 The backend needs to be supported by [Proxmox][pvesm]. Read the **Storage
 Management** section for more info.
 
+`pve_metric_servers` allows you to configure a metric server for the PVE cluster.
+This is useful if you want to use InfluxDB, Graphite or other (with telegraf).
+
 `pve_ssh_port` allows you to change the SSH port. If your SSH is listening on
 a port other than the default 22, please set this variable. If a new node is
 joining the cluster, the PVE cluster needs to communicate once via SSH.
@@ -386,6 +389,16 @@ pve_check_for_kernel_update: true # Runs a script on the host to check kernel ve
 pve_reboot_on_kernel_update: false # If set to true, will automatically reboot the machine on kernel updates
 pve_reboot_on_kernel_update_delay: 60 # Number of seconds to wait before and after a reboot process to proceed with next task in cluster mode
 pve_remove_old_kernels: true # Currently removes kernel from main Debian repository
+# pve_default_kernel_version: # version to pin proxmox-default-kernel to (see https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8)
+pve_pcie_passthrough_enabled: false # Set this to true to enable PCIe passthrough.
+pve_iommu_passthrough_mode: false # Set this to true to allow VMs to bypass the DMA translation. This might increase performance for IOMMU passthrough.
+pve_iommu_unsafe_interrupts: false # Set this to true if your system doesn't support interrupt remapping.
+pve_mediated_devices_enabled: false # Set this to true if your device supports gtv-g and you wish to enable split functionality.
+pve_pcie_ovmf_enabled: false # Set this to true to enable GPU OVMF PCI passthrough.
+pve_pci_device_ids: [] # List of pci device ID's (see https://pve.proxmox.com/wiki/Pci_passthrough#GPU_Passthrough).
+pve_vfio_blacklist_drivers: [] # List of device drivers to blacklist from the Proxmox host (see https://pve.proxmox.com/wiki/PCI(e)_Passthrough).
+pve_pcie_ignore_msrs: false # Set this to true if passing through to Windows machine to prevent VM crashing.
+pve_pcie_report_msrs: true # Set this to false to prevent dmesg system from logging msrs crash reports.
 pve_watchdog: none # Set this to "ipmi" if you want to configure a hardware watchdog. Proxmox uses a software watchdog (nmi_watchdog) by default.
 pve_watchdog_ipmi_action: power_cycle # Can be one of "reset", "power_cycle", and "power_off".
 pve_watchdog_ipmi_timeout: 10 # Number of seconds the watchdog should wait
@@ -395,7 +408,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
+pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
@@ -411,7 +424,10 @@ pve_roles: [] # Added more roles with specific privileges. See section on User M
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
+pve_metric_servers: [] # List of metric servers to configure in PVE.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
+pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
+pve_no_log: false # Set this to true in production to prevent leaking of storage credentials in run logs. (may be used in other tasks in the future)
 ```
 
 To enable clustering with this role, configure the following variables appropriately:
@@ -424,12 +440,17 @@ pve_manage_hosts_enabled : yes # Set this to no to NOT configure hosts file (cas
 
 The following variables are used to provide networking information to corosync.
 These are known as ring0_addr/ring1_addr or link0_addr/link1_addr, depending on
-PVE version. They should be IPv4 or IPv6 addresses. For more information, refer
-to the [Cluster Manager][pvecm-network] chapter in the PVE Documentation.
+PVE version. They should be IPv4 or IPv6 addresses. You can also configure the
+[priority of these interfaces][pvecm-network-priority] to hint to corosync
+which interface should handle cluster traffic (lower numbers indicate higher
+priority). For more information, refer to the [Cluster Manager][pvecm-network]
+chapter in the PVE Documentation.
 
 ```
 # pve_cluster_addr0: "{{ defaults to the default interface ipv4 or ipv6 if detected }}"
 # pve_cluster_addr1: "another interface's IP address or hostname"
+# pve_cluster_addr0_priority: 255
+# pve_cluster_addr1_priority: 0
 ```
 
 You can set options in the datacenter.cfg configuration file:
@@ -461,6 +482,45 @@ in the [Proxmox manual datacenter.cfg section][datacenter-cfg].
 In order for live reloading of network interfaces to work via the PVE web UI,
 you need to install the `ifupdown2` package. Note that this will remove
 `ifupdown`. You can specify this using the `pve_extra_packages` role variable.
+
+You can set realms / domains as authentication sources in the `domains.cfg` configuration file.
+If this file is not present, only the `Linux PAM` and `Proxmox VE authentication server` realms
+are available. Supported types are `pam`, `pve`, `ad` and `ldap`.
+It’s possible to automatically sync users and groups for LDAP-based realms (LDAP & Microsoft Active Directory) with `sync: true`.
+One realm should have the `default: 1` property to mark it as the default:
+
+```
+pve_domains_cfg:
+  - name: pam
+    type: pam
+    attributes:
+      comment: Linux PAM standard authentication
+  - name: pve
+    type: pve
+    attributes:
+      comment: Proxmox VE authentication server
+  - name: ad
+    type: ad
+    attributes:
+      comment: Active Directory authentication
+      domain: yourdomain.com
+      server1: dc01.yourdomain.com
+      default: 1
+      secure: 1
+      server2: dc02.yourdomain.com
+  - name: ldap
+    type: ldap
+    sync: true
+    attributes:
+      comment: LDAP authentication
+      base_dn: CN=Users,dc=yourdomain,dc=com
+      bind_dn: "uid=svc-reader,CN=Users,dc=yourdomain,dc=com"
+      bind_password: "{{ secret_ldap_svc_reader_password }}"
+      server1: ldap1.yourdomain.com
+      user_attr: uid
+      secure: 1
+      server2: ldap2.yourdomain.com
+```
 
 ## Dependencies
 
@@ -543,9 +603,9 @@ Refer to `library/proxmox_role.py` [link][user-module] and
 
 ## Storage Management
 
-You can use this role to manage storage within Proxmox VE (both in
-single server deployments and cluster deployments). For now, the only supported
-types are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`,
+You can use this role to manage storage within Proxmox VE (both in single
+server deployments and cluster deployments). For now, the only supported types
+are `dir`, `rbd`, `nfs`, `cephfs`, `lvm`,`lvmthin`, `zfspool`, `btrfs`, `cifs`
 and `pbs`. Here are some examples.
 
 ```
@@ -596,6 +656,7 @@ pve_storages:
     username: user@pbs
     password: PBSPassword1
     datastore: main
+    namespace: Top/something # Optional
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]
@@ -607,6 +668,15 @@ pve_storages:
     nodes: [ "lab-node01.local", "lab-node02.local" ]
     path: /mnt/proxmox_storage
     is_mountpoint: true
+  - name: cifs1
+    server: cifs-host.domain.tld
+    type: cifs
+    content: [ "snippets", "vztmpl", "iso" ]
+    share: sharename
+    subdir: /subdir
+    username: user
+    password: supersecurepass
+    domain: addomain.tld
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
@@ -709,8 +779,9 @@ pve_ceph_fs:
     mountpoint: /srv/proxmox/backup
 ```
 
-`pve_ceph_network` by default uses the `ipaddr` filter, which requires the
-`netaddr` library to be installed and usable by your Ansible controller.
+`pve_ceph_network` by default uses the `ansible.utils.ipaddr` filter, which
+requires the `netaddr` library to be installed and usable by your Ansible
+controller.
 
 `pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify
 on which nodes install Ceph (e.g. if you don't want to install Ceph on all your
@@ -718,6 +789,114 @@ nodes).
 
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted
 volumes the parameter `encrypted` has to be set per drive to `true`.
+
+## PCIe Passthrough
+
+This role can be configured to allow PCI device passthrough from the Proxmox host to VMs. This feature is not enabled by default since not all motherboards and CPUs support this feature. To enable passthrough, the devices CPU must support hardware virtualization (VT-d for Intel based systems and AMD-V for AMD based systems). Refer to the manuals of all components to determine whether this feature is supported or not. Naming conventions of will vary, but is usually referred to as IOMMU, VT-d, or AMD-V.
+
+By enabling this feature, dedicated devices (such as a GPU or USB devices) can be passed through to the VMs. Along with dedicated devices, various integrated devices such as Intel or AMD's integrated GPU's are also able to be passed through to VMs.
+
+Some devices are able to take advantage of Mediated usage. Mediated devices are able to be passed through to multiple VMs to share resources, while still remaining usable by the host system. Splitting of devices is not always supported and should be validated before being enabled to prevent errors. Refer to the manual of the device you want to pass through to determine whether the device is capable of mediated usage (Currently this role only supports GVT-g; SR-IOV is not currently supported and must be enable manually after role completion).
+
+The following is an example configuration which enables PCIe passthrough:
+
+```yaml
+pve_pcie_passthrough_enabled: true
+pve_iommu_passthrough_mode: true
+pve_iommu_unsafe_interrupts: false
+pve_mediated_devices_enabled: false
+pve_pcie_ovmf_enabled: false
+pve_pci_device_ids:
+  - id: "10de:1381"
+  - id: "10de:0fbc"
+pve_vfio_blacklist_drivers:
+  - name: "radeon"
+  - name: "nouveau"
+  - name: "nvidia"
+pve_pcie_ignore_msrs: false
+pve_pcie_report_msrs: true
+```
+
+`pve_pcie_passthrough_enabled` is required to use any PCIe passthrough functionality. Without this enabled, all other PCIe related fields will be unused.
+
+`pve_iommu_passthrough_mode` enabling IOMMU passthrough mode might increase device performance. By enabling this feature, it allows VMs to bypass the default DMA translation which would normally be performed by the hyper-visor. Instead, VMs pass DMA requests directly to the hardware IOMMU.
+
+`pve_iommu_unsafe_interrupts` is required to be enabled to allow PCI passthrough if your system doesn't support interrupt remapping. You can find check whether the device supports interrupt remapping by using `dmesg | grep 'remapping'`. If you see one of the following lines:
+
+- "AMD-Vi: Interrupt remapping enabled"
+- "DMAR-IR: Enabled IRQ remapping in x2apic mode" ('x2apic' can be different on old CPUs, but should still work)
+
+Then system interrupt remapping is supported and you do not need to enable unsafe interrupts. Be aware that by enabling this value your system can become unstable.
+
+`pve_mediated_devices_enabled` enables GVT-g support for integrated devices such as Intel iGPU's. Not all devices support GVT-g so it is recommended to check with your specific device beforehand to ensure it is allowed.
+
+`pve_pcie_ovmf_enabled` enables GPU OVMF PCI passthrough. When using OVMF you should select 'OVMF' as the BIOS option for the VM instead of 'SeaBIOS' within Proxmox. This setting will try to opt-out devices from VGA arbitration if possible.
+
+`pve_pci_device_ids` is a list of device and vendor ids that is wished to be passed through to VMs from the host. See the section 'GPU Passthrough' on the [Proxmox WIKI](https://pve.proxmox.com/wiki/Pci_passthrough) to find your specific device and vendor id's. When setting this value, it is required to specify an 'id' for each new element in the array.
+
+`pve_vfio_blacklist_drivers` is a list of drivers to be excluded/blacklisted from the host. This is required when passing through a PCI device to prevent the host from using the device before it can be assigned to a VM. When setting this value, it is required to specify a 'name' for each new element in the array.
+
+`pve_pcie_ignore_msrs` prevents some Windows applications like GeForce Experience, Passmark Performance Test and SiSoftware Sandra from crashing the VM. This value is only required when passing PCI devices to Windows based systems.
+
+`pve_pcie_report_msrs` can be used to enable or disable logging messages of msrs warnings. If you see a lot of warning messages in your 'dmesg' system log, this value can be used to silence msrs warnings.
+
+## Metrics Server Configuration
+
+You can configure metric servers in Proxmox VE using the `pve_metric_servers` role variable. Below is an example configuration for different types of metric servers:
+
+```yaml
+pve_metric_servers:
+  - id: influxdb1
+    port: 8086
+    server: influxdb.example.com
+    type: influxdb
+    protocol: http
+    organization: myorg
+    bucket: mybucket
+    token: mytoken
+    timeout: 30
+    max_body_size: 25000000
+    verify_certificate: true
+  - id: graphite1
+    port: 2003
+    server: graphite.example.com
+    type: graphite
+    protocol: tcp
+    path: mygraphitepath
+    mtu: 1500
+```
+
+### Configuration Variables
+
+- `id`: (required) Unique identifier for the metric server.
+- `port`: (optional) Port of the metric server. Default is `8089`.
+- `server`: (required) DNS name or IP address of the metric server.
+- `type`: (optional) Type of metric server. Possible values: `influxdb`, `graphite`. Default is `influxdb`.
+- `protocol`: (optional) Protocol used to send metrics. Possible values: `udp`, `tcp`, `http`, `https`. Default is `udp`.
+- `disable`: (optional) Disable the metric server. Default is `false`.
+- `organization`: (optional) Organization name. Available only for influxdb with the http v2 API.
+- `bucket`: (optional) Bucket name for influxdb. Useful only with the http v2 API or compatible.
+- `token`: (optional) InfluxDB access token. Required only when using the http v2 API.
+- `path`: (optional) Graphite root path. Available only for graphite.
+- `api_path_prefix`: (optional) API path prefix inserted between `<host>:<port>/` and `/api2/`. Useful if the InfluxDB service is running behind a reverse proxy. Available only for influxdb with the http v2 API.
+- `timeout`: (optional) Timeout in seconds. Available only for influxdb with the http v2 API or Graphite TCP socket.
+- `max_body_size`: (optional) Maximum body size in bytes. Available only for influxdb with the http v2 API. Default is `25000000`.
+- `mtu`: (optional) MTU for UDP metric transmission.
+- `verify_certificate`: (optional) Verify SSL certificate. Available only for influxdb with https.
+
+## Non-default scenarios and other use cases
+
+### Preventing upgrade to Linux kernel 6.8
+
+Proxmox 8.2 introduces Linux 6.8, which may cause issues in some deployments.
+To work around this, you can pin the kernel version used to 6.5 by adding the following role variable:
+
+```yaml
+pve_default_kernel_version: 1.0.1
+```
+
+This creates a pin on the `proxmox-default-kernel` package, which is [the method suggested by PVE](https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8).
+It can be later removed by unsetting this role variable.
 
 ## Developer Notes
 
@@ -761,12 +940,15 @@ PendaGTP ([@PendaGTP](https://github.com/PendaGTP)) - Ceph support
 John Marion ([@jmariondev](https://github.com/jmariondev))  
 foerkede ([@foerkede](https://github.com/foerkede)) - ZFS storage support  
 Guiffo Joel ([@futuriste](https://github.com/futuriste)) - Pool configuration support  
+Adam Delo ([@ol3d](https://github.com/ol3d)) - PCIe Passthrough Support
+Antoine Thys ([@thystips](https://github.com/thystips)) - Metric Servers Support
 
 [Full list of contributors](https://github.com/lae/ansible-role-proxmox/graphs/contributors)
 
 [pve-cluster]: https://pve.proxmox.com/wiki/Cluster_Manager
 [install-ansible]: http://docs.ansible.com/ansible/intro_installation.html
 [pvecm-network]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_separate_cluster_network
+[pvecm-network-priority]: https://pve.proxmox.com/pve-docs/chapter-pvecm.html#_Corosync_Redundancy
 [pvesm]: https://pve.proxmox.com/pve-docs/chapter-pvesm.html
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py

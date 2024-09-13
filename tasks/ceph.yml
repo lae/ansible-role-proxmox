@@ -4,9 +4,9 @@
 - block:
     - name: Create initial Ceph config
       command: "pveceph init --network {{ pve_ceph_network }}  \
-      {% if pve_ceph_cluster_network is defined  %} \
+               {% if pve_ceph_cluster_network is defined  %} \
                   --cluster-network {{ pve_ceph_cluster_network }}
-      {% endif %}"
+               {% endif %}"
       args:
         creates: /etc/ceph/ceph.conf
 
@@ -241,7 +241,7 @@
     path: '{{ item.mountpoint }}'
     src: |-
       {% for h in groups[pve_ceph_mon_group] -%}
-      {{ hostvars[h].ansible_all_ipv4_addresses | ipaddr(pve_ceph_network) | first -}}
+      {{ hostvars[h].ansible_all_ipv4_addresses | ansible.utils.ipaddr(pve_ceph_network) | first -}}
       {{ loop.last | ternary("", ",") -}}
       {% endfor %}:/
     fstype: 'ceph'
