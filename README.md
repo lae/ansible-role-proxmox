@@ -198,7 +198,9 @@ this group name as well, unless otherwise specified by `pve_cluster_clustername`
 Leaving this undefined will default to `proxmox`.
 
 `pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
-manager to use it. Leave this undefined if you don't want to configure it.
+manager to use it. Use `None` or leave this undefined to use the default
+proxmox software watchdog. If set to anything else, the value is expected to be
+a watchdog kernel module.
 
 `pve_ssl_private_key` and `pve_ssl_certificate` point to the SSL certificates for
 pvecluster. Here, a file lookup is used to read the contents of a file in the
