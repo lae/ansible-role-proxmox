@@ -69,3 +69,12 @@
     create: yes
     mode: 0644
     dest: /root/.ssh/config
+    state: present
+  when: pve_ssh_ciphers is defined
+
+- name: Drop PVE-provided ciphers, when undefined
+  lineinfile:
+    regexp: "^Ciphers .*"
+    dest: /root/.ssh/config
+    state: absent
+  when: pve_ssh_ciphers is not defined
