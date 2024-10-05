@@ -59,6 +59,7 @@ pve_acls: []
 pve_storages: []
 pve_metric_servers: []
 pve_ssh_port: 22
+pve_ssh_extra_keys: []
 pve_manage_ssh: true
 pve_hooks: {}
 pve_no_log: false
