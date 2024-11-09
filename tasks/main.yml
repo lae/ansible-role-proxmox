@@ -31,6 +31,10 @@
           did you specify the pve_group host variable correctly?"
   when: "pve_cluster_enabled | bool"
 
+- import_tasks: ssh_config.yml
+  when:
+    - "pve_manage_ssh | bool"
+
 - import_tasks: ssh_cluster_config.yml
   when:
     - "pve_manage_ssh | bool and pve_cluster_enabled | bool"

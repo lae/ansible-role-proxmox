@@ -227,6 +227,11 @@ This is useful if you want to use InfluxDB, Graphite or other (with telegraf).
 a port other than the default 22, please set this variable. If a new node is
 joining the cluster, the PVE cluster needs to communicate once via SSH.
 
+`pve_ssh_extra_keys` allows you to add additional SSH public keys to the root
+users SSH authorized_keys, which are declaratively managed, so that keys that
+are not specified anymore, will get removed... requires `pve_groups` to be set
+right and `pve_manage_ssh` to be true.
+
 `pve_manage_ssh` (default true) allows you to disable any changes this module
 would make to your SSH server config. This is useful if you use another role
 to manage your SSH server. Note that setting this to false is not officially

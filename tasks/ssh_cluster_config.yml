@@ -1,29 +1,4 @@
 ---
-- name: Create SSH directory for root
-  file:
-    path: /root/.ssh/
-    state: directory
-    mode: 0700
-
-- name: Create root SSH key pair for PVE
-  user:
-    name: root
-    generate_ssh_key: yes
-    ssh_key_file: /root/.ssh/id_rsa
-    ssh_key_type: rsa
-    ssh_key_comment: "root@{{ inventory_hostname_short }}"
-
-- name: Fetch root SSH public key
-  slurp:
-    src: /root/.ssh/id_rsa.pub
-  register: proxmox_root_id_rsa_pub
-
-- name: Authorize all hosts' root SSH public keys
-  authorized_key:
-    user: root
-    key: "{{ hostvars[item].proxmox_root_id_rsa_pub.content | b64decode }}"
-  with_items: "{{ groups[pve_group] }}"
-
 - name: Configure SSH clients for connecting to PVE cluster hosts
   blockinfile:
     dest: /etc/ssh/ssh_config
