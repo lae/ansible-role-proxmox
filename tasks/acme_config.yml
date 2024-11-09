@@ -1,0 +1,5 @@
+---
+- name: Create the default ACME account
+  proxmox_acme_account:
+    contact: "{{ pve_acme_contact }}"
+    directory: "{{ pve_acme_directory | default(omit) }}"

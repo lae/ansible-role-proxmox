@@ -31,6 +31,18 @@
           did you specify the pve_group host variable correctly?"
   when: "pve_cluster_enabled | bool or pve_manage_ssh | bool"
 
+- name: Ensure ACME is not enabled when an SSL key/certificate is provided
+  fail:
+    msg: "You cannot use ACME/Let's Encrypt while using your own private key/certificate."
+  when:
+    - pve_ssl_private_key is defined and pve_acme_enabled
+
+- name: Ensure contact email is specified when using Let's Encrypt
+  fail:
+    msg: "Please set pve_acme_contact to a valid email."
+  when:
+    - pve_acme_enabled and pve_acme_contact is not defined
+
 - import_tasks: ssh_config.yml
   when:
     - "pve_manage_ssh | bool"
@@ -418,3 +430,6 @@
   when:
     - "pve_ssl_private_key is defined"
     - "pve_ssl_certificate is defined"
+
+- import_tasks: acme_config.yml
+  when: pve_acme_enabled
