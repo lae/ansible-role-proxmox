@@ -29,7 +29,7 @@
       - "inventory_hostname in groups[pve_group]"
     msg: "This host does not appear to be in the group {{ pve_group }}, \
           did you specify the pve_group host variable correctly?"
-  when: "pve_cluster_enabled | bool"
+  when: "pve_cluster_enabled | bool or pve_manage_ssh | bool"
 
 - import_tasks: ssh_config.yml
   when:
