@@ -1,0 +1,12 @@
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /.github/
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor:
+        update-types:
+          - minor
+          - patch
