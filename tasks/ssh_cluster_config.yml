@@ -1,12 +1,12 @@
 ---
 - name: Create SSH directory for root
-  file:
+  ansible.builtin.file:
     path: /root/.ssh/
     state: directory
-    mode: 0700
+    mode: "0700"
 
 - name: Create root SSH key pair for PVE
-  user:
+  ansible.builtin.user:
     name: root
     generate_ssh_key: yes
     ssh_key_bits: 521
@@ -15,18 +15,18 @@
     ssh_key_comment: "root@{{ inventory_hostname_short }}"
 
 - name: Fetch root SSH public key
-  slurp:
+  ansible.builtin.slurp:
     src: /root/.ssh/id_ed25519.pub
   register: _proxmox_root_ssh_pubkey
 
 - name: Authorize all hosts' root SSH public keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     key: "{{ hostvars[item]._proxmox_root_ssh_pubkey.content | b64decode }}"
   with_items: "{{ groups[pve_group] }}"
 
 - name: Configure SSH clients for connecting to PVE cluster hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     dest: /etc/ssh/ssh_config
     create: yes
     marker: "# {mark}: PVE host configuration options (managed by ansible)."
@@ -38,7 +38,7 @@
       {% endfor %}
 
 - name: Allow root logins from PVE cluster hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     dest: /etc/ssh/sshd_config
     marker: "# {mark}: Allow root logins from PVE hosts (managed by ansible)."
     content: |
@@ -80,7 +80,7 @@
     - "not (_pve_known_hosts_file.stat.islnk is defined and _pve_known_hosts_file.stat.islnk)"
 
 - name: Add PVE-provided ciphers to SSH client config
-  lineinfile:
+  ansible.builtin.lineinfile:
     line: "Ciphers {{ pve_ssh_ciphers }}"
     regexp: "^Ciphers .*"
     insertbefore: BOF
