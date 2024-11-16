@@ -902,6 +902,17 @@ pve_default_kernel_version: 1.0.1
 This creates a pin on the `proxmox-default-kernel` package, which is [the method suggested by PVE](https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8).
 It can be later removed by unsetting this role variable.
 
+## Troubleshooting
+
+### The APT installation of proxmox-ve no longer responds, Ansible aborts, the SSH session stops.
+Add this section to your ``ansible.cfg``.
+
+```yaml
+[ssh_connection]
+ssh_args = -o ServerAliveInterval=20
+```
+[Reference Issue](https://github.com/lae/ansible-role-proxmox/issues/279)
+
 ## Developer Notes
 
 When developing new features or fixing something in this role, you can test out
