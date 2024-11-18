@@ -47,6 +47,12 @@ options:
         type: list
         description:
             - List of cluster node names where this storage is usable.
+    shared:
+        required: false
+        type: bool
+        description:
+            - Indicate that this is a single storage with the same contents on all nodes (or all listed in the O(nodes) option).
+            - It will not make the contents of a local storage automatically accessible to other nodes, it just marks an already shared storage as such!
     path:
         required: false
         description:
@@ -74,6 +80,39 @@ options:
         default: 0
         description:
             - Maximal number of backup files per VM. 0 for unlimited.
+            - Deprecated, use O(prune_backups) instead. Replace either by C(keep-last) or, in case C(maxfiles) was C(0) for unlimited retention, by C(keep-all).
+    prune_backups:
+        required: false
+        type: list
+        elements: dict
+        description:
+            - Specifies how to prune backups.
+            - The retention options are processed in the order given. Each option only covers backups within its time period. The next option does not take care of already covered backups. It will only consider older backups.
+        suboptions:
+            option:
+                required: true
+                choices:
+                    - keep-all
+                    - keep-last
+                    - keep-hourly
+                    - keep-daily
+                    - keep-weekly
+                    - keep-monthly
+                    - keep-yearly
+                description:
+                    - The retention option to use.
+                    - C(keep-all): Keep all backups. This option is mutually exclusive with the other options.
+                    - C(keep-last): Keep the last n backups.
+                    - C(keep-hourly): Keep backups for the last n hours. If there is more than one backup for a single hour, only the latest is kept.
+                    - C(keep-daily): Keep backups for the last n days. If there is more than one backup for a single day, only the latest is kept.
+                    - C(keep-weekly): Keep backups for the last n weeks. If there is more than one backup for a single week, only the latest is kept. Weeks start on Monday and end on Sunday. The software uses the ISO week date-system and handles weeks at the end of the year correctly.
+                    - C(keep-monthly): Keep backups for the last n months. If there is more than one backup for a single month, only the latest is kept.
+                    - C(keep-yearly): Keep backups for the last n years. If there is more than one backup for a single year, only the latest is kept.
+            value:
+                required: true
+                description:
+                    - The number of backups to keep.
+                    - For C(keep-all) option, this value must be a C(bool). For all other options, this value must be an C(int).
     export:
         required: false
         description:
@@ -114,7 +153,7 @@ options:
     subdir:
         required: false
             - specifies the folder in the share dir to use for proxmox
-              (useful to seperate proxmox content from other content)
+              (useful to separate proxmox content from other content)
     domain:
         required: false
             - Specifies Realm to use for NTLM/LDAPS Authentification if using
@@ -131,7 +170,9 @@ EXAMPLES = '''
     type: dir
     path: /mydir
     content: [ "images", "iso", "backup" ]
-    maxfiles: 3
+    prune_backups:
+      - option: keep-all
+        value: 1
 - name: Create an RBD storage type
   proxmox_storage:
     name: ceph1
@@ -170,7 +211,7 @@ EXAMPLES = '''
     name: cephfs1
     type: cephfs
     content: [ "snippets", "vztmpl", "iso" ]
-    nodes: [ "proxmox1", "proxmox2"]
+    nodes: [ "proxmox1", "proxmox2" ]
     monhost:
       - 10.0.0.1
       - 10.0.0.2
@@ -228,6 +269,7 @@ class ProxmoxStorage(object):
         self.disable = module.params['disable']
         self.content = module.params['content']
         self.nodes = module.params['nodes']
+        self.shared = module.params['shared']
         self.type = module.params['type']
         # Remaining PVE API arguments (depending on type) past this point
         self.datastore = module.params['datastore']
@@ -241,6 +283,7 @@ class ProxmoxStorage(object):
         self.username = module.params['username']
         self.krbd = module.params['krbd']
         self.maxfiles = module.params['maxfiles']
+        self.prune_backups = module.params['prune_backups']
         self.server = module.params['server']
         self.export = module.params['export']
         self.options = module.params['options']
@@ -306,6 +349,8 @@ class ProxmoxStorage(object):
             args['content'] = 'none'
         if self.nodes is not None:
             args['nodes'] = ','.join(self.nodes)
+        if self.shared is not None:
+            args['shared'] = 1 if self.shared else 0
         if self.disable is not None:
             args['disable'] = 1 if self.disable else 0
         if self.datastore is not None:
@@ -355,8 +400,44 @@ class ProxmoxStorage(object):
         if self.share is not None:
             args['share'] = self.share
         # end cifs
-        if self.maxfiles is not None and 'backup' not in self.content:
-            self.module.fail_json(msg="maxfiles is not allowed when there is no 'backup' in content")
+        if self.maxfiles is not None:
+            self.module.warn("'maxfiles' parameter is deprecated, use 'prune_backups' parameter instead")
+            if "backup" not in self.content:
+                self.module.fail_json(
+                    msg="'maxfiles' parameter is not allowed when there is no 'backup' in 'content' parameter"
+                )
+        if self.prune_backups is not None:
+            if "backup" not in self.content:
+                self.module.fail_json(
+                    msg="'prune_backups' parameter is not allowed when there is no 'backup' in 'content' parameter"
+                )
+
+            if len(self.prune_backups) != len(set(cfg["option"] for cfg in self.prune_backups)):
+                self.module.fail_json(msg="'prune_backups' parameter has duplicate entries")
+
+            keep_all_entries = [cfg for cfg in self.prune_backups if cfg["option"] == "keep-all"]
+            keep_all_entry = keep_all_entries[0] if len(keep_all_entries) > 0 else None
+            other_entries = [cfg for cfg in self.prune_backups if cfg["option"] != "keep-all"]
+            if keep_all_entry and len(other_entries) > 0:
+                self.module.fail_json(
+                    msg="'keep-all' is mutually exclusive with other options in 'prune_backups' parameter"
+                )
+
+            if keep_all_entry and type(keep_all_entry["value"]) is not bool:
+                self.module.fail_json(msg="value of 'keep-all' option must be a boolean in 'prune_backups' parameter")
+            if any(type(cfg["value"]) is not int for cfg in other_entries):
+                self.module.fail_json(
+                    msg="all values except for the 'keep-all' option must be integers in 'prune_backups' parameter"
+                )
+
+            args["prune-backups"] = (
+                "keep-all={value}".format(value=(1 if keep_all_entry["value"] else 0))
+                if keep_all_entry
+                else ",".join(
+                    map(lambda cfg: "{}={}".format(cfg["option"], cfg["value"]), other_entries)
+                )
+            )
+
         if self.krbd is not None and self.type != 'rbd':
             self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
 
@@ -429,21 +510,43 @@ def main():
         content=dict(type='list', required=True, aliases=['storagetype']),
         disable=dict(required=False, type='bool', default=False),
         nodes=dict(type='list', required=False, default=None),
+        shared=dict(type='bool', required=False, default=None),
         type=dict(default=None, type='str', required=True,
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
                            "zfspool", "btrfs", "pbs", "cifs"]),
         # Remaining PVE API arguments (depending on type) past this point
         datastore=dict(default=None, type='str', required=False),
-        encryption_key=dict(default=None, type='str', required=False),
+        encryption_key=dict(default=None, type='str', required=False, no_log=True),
         fingerprint=dict(default=None, type='str', required=False),
         master_pubkey=dict(default=None, type='str', required=False),
-        password=dict(default=None, type='str', required=False),
+        password=dict(default=None, type='str', required=False, no_log=True),
         path=dict(default=None, required=False, type='str'),
         pool=dict(default=None, type='str', required=False),
         monhost=dict(default=None, type='list', required=False),
         username=dict(default=None, type='str', required=False),
         krbd=dict(default=None, type='bool', required=False),
         maxfiles=dict(default=None, type='int', required=False),
+        prune_backups=dict(
+            default=None,
+            type='list',
+            elements='dict',
+            required=False,
+            options=dict(
+                option=dict(
+                    required=True,
+                    choices=[
+                        'keep-all',
+                        'keep-last',
+                        'keep-hourly',
+                        'keep-daily',
+                        'keep-weekly',
+                        'keep-monthly',
+                        'keep-yearly',
+                    ],
+                ),
+                value=dict(required=True, type='raw'),
+            ),
+        ),
         export=dict(default=None, type='str', required=False),
         server=dict(default=None, type='str', required=False),
         options=dict(default=None, type='str', required=False),
@@ -474,7 +577,10 @@ def main():
         ],
         required_by={
             "master_pubkey": "encryption_key"
-        }
+        },
+        mutually_exclusive=[
+            ["maxfiles", "prune_backups"],
+        ],
     )
     storage = ProxmoxStorage(module)
 
@@ -499,7 +605,7 @@ def main():
             error = storage.create_storage()
         else:
             # modify storage (check mode is ok)
-            (updated_fields,error) = storage.modify_storage()
+            (updated_fields, error) = storage.modify_storage()
 
             if updated_fields:
                 result['changed'] = True
