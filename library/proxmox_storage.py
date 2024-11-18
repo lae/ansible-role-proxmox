@@ -17,19 +17,24 @@ options:
     name:
         required: true
         aliases: [ "storage", "storageid" ]
+        type: str
         description:
             - Name of the storage.
     type:
         required: true
         aliases: [ "storagetype" ]
+        type: str
         choices: [ "dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs", "zfspool", "btrfs" ]
         description:
             - Type of storage, must be supported by Proxmox.
     disable:
         required: false
+        type: bool
+        default: false
         description: Disable the storage.
     state:
         required: false
+        type: str
         default: "present"
         choices: [ "present", "absent" ]
         description:
@@ -38,6 +43,7 @@ options:
         required: true
         aliases: [ "storagecontent" ]
         type: list
+        elements: str
         choices: [ "images", "rootdir", "vztmpl", "backup", "iso", "snippets" ]
         description:
             - Contents supported by the storage, not all storage
@@ -45,6 +51,7 @@ options:
     nodes:
         required: false
         type: list
+        elements: str
         description:
             - List of cluster node names where this storage is usable.
     shared:
@@ -55,28 +62,34 @@ options:
             - It will not make the contents of a local storage automatically accessible to other nodes, it just marks an already shared storage as such!
     path:
         required: false
+        type: str
         description:
             - File system path.
     pool:
         required: false
+        type: str
         description:
             - Ceph/ZFS pool name.
     monhost:
         required: false
         type: list
+        elements: str
         description:
             - Monitor addresses of the ceph cluster.
     username:
         required: false
+        type: str
         description:
             - User name (RBD) who access to ceph cluster.
     krbd:
         required: false
-        default: 0
+        type: bool
+        default: false
         description:
             - Always access rbd through krbd kernel module.
     maxfiles:
         required: false
+        type: int
         default: 0
         description:
             - Maximal number of backup files per VM. 0 for unlimited.
@@ -115,49 +128,60 @@ options:
                     - For C(keep-all) option, this value must be a C(bool). For all other options, this value must be an C(int).
     export:
         required: false
+        type: str
         description:
             - NFS export path
     server:
         required: false
+        type: str
         description:
             - Server IP or DNS name.
     options:
         required: false
+        type: str
         description:
             - NFS mount options.
     vgname:
         required: false
+        type: str
         description:
             - LVM volume group name. This must point to an existing volume group.
     thinpool:
         required: false
+        type: str
         description:
             - The name of the LVM thin pool.
     sparse:
         required: false
+        type: bool
         description:
             - Use ZFS thin-provisioning.
     is_mountpoint:
         required: false
+        type: bool
         description:
             - Specifies whether or not the given path is an externally managed
             mountpoint.
     namespace:
         required: false
+        type: str
         description:
             - Specifies the Namespace that should be used on PBS
     share:
         required: false
+        type: str
         description:
-            - Specifies the CIFS-Share to use
+            - Specifies the CIFS share to use
     subdir:
         required: false
-            - specifies the folder in the share dir to use for proxmox
-              (useful to separate proxmox content from other content)
+        type: str
+        description:
+            - Specifies the folder in the share dir to use for proxmox (useful to separate proxmox content from other content)
     domain:
         required: false
-            - Specifies Realm to use for NTLM/LDAPS Authentification if using
-              an AD-Enabled share
+        type: str
+        description:
+            - Specifies Realm to use for NTLM/LDAPS authentication if using an AD-enabled share
 
 author:
     - Fabien Brachere (@fbrachere)
