@@ -46,8 +46,7 @@ options:
         elements: str
         choices: [ "images", "rootdir", "vztmpl", "backup", "iso", "snippets" ]
         description:
-            - Contents supported by the storage, not all storage
-            types support all content types.
+            - Contents supported by the storage, not all storage types support all content types.
     nodes:
         required: false
         type: list
@@ -114,13 +113,13 @@ options:
                     - keep-yearly
                 description:
                     - The retention option to use.
-                    - C(keep-all): Keep all backups. This option is mutually exclusive with the other options.
-                    - C(keep-last): Keep the last n backups.
-                    - C(keep-hourly): Keep backups for the last n hours. If there is more than one backup for a single hour, only the latest is kept.
-                    - C(keep-daily): Keep backups for the last n days. If there is more than one backup for a single day, only the latest is kept.
-                    - C(keep-weekly): Keep backups for the last n weeks. If there is more than one backup for a single week, only the latest is kept. Weeks start on Monday and end on Sunday. The software uses the ISO week date-system and handles weeks at the end of the year correctly.
-                    - C(keep-monthly): Keep backups for the last n months. If there is more than one backup for a single month, only the latest is kept.
-                    - C(keep-yearly): Keep backups for the last n years. If there is more than one backup for a single year, only the latest is kept.
+                    - "C(keep-all): Keep all backups. This option is mutually exclusive with the other options."
+                    - "C(keep-last): Keep the last n backups."
+                    - "C(keep-hourly): Keep backups for the last n hours. If there is more than one backup for a single hour, only the latest is kept."
+                    - "C(keep-daily): Keep backups for the last n days. If there is more than one backup for a single day, only the latest is kept."
+                    - "C(keep-weekly): Keep backups for the last n weeks. If there is more than one backup for a single week, only the latest is kept. Weeks start on Monday and end on Sunday. The software uses the ISO week date-system and handles weeks at the end of the year correctly."
+                    - "C(keep-monthly): Keep backups for the last n months. If there is more than one backup for a single month, only the latest is kept."
+                    - "C(keep-yearly): Keep backups for the last n years. If there is more than one backup for a single year, only the latest is kept."
             value:
                 required: true
                 description:
@@ -426,46 +425,56 @@ class ProxmoxStorage(object):
         # end cifs
         if self.maxfiles is not None:
             self.module.warn("'maxfiles' parameter is deprecated, use 'prune_backups' parameter instead")
-            if "backup" not in self.content:
+            if 'backup' not in self.content:
                 self.module.fail_json(
                     msg="'maxfiles' parameter is not allowed when there is no 'backup' in 'content' parameter"
                 )
         if self.prune_backups is not None:
-            if "backup" not in self.content:
-                self.module.fail_json(
-                    msg="'prune_backups' parameter is not allowed when there is no 'backup' in 'content' parameter"
-                )
+            # order is important for prune_backups, hence we accept a list of options instead of a dict
+            keep_all_entry, other_entries = self.validate_storage_prune_backups_option()
 
-            if len(self.prune_backups) != len(set(cfg["option"] for cfg in self.prune_backups)):
-                self.module.fail_json(msg="'prune_backups' parameter has duplicate entries")
-
-            keep_all_entries = [cfg for cfg in self.prune_backups if cfg["option"] == "keep-all"]
-            keep_all_entry = keep_all_entries[0] if len(keep_all_entries) > 0 else None
-            other_entries = [cfg for cfg in self.prune_backups if cfg["option"] != "keep-all"]
-            if keep_all_entry and len(other_entries) > 0:
-                self.module.fail_json(
-                    msg="'keep-all' is mutually exclusive with other options in 'prune_backups' parameter"
-                )
-
-            if keep_all_entry and type(keep_all_entry["value"]) is not bool:
-                self.module.fail_json(msg="value of 'keep-all' option must be a boolean in 'prune_backups' parameter")
-            if any(type(cfg["value"]) is not int for cfg in other_entries):
-                self.module.fail_json(
-                    msg="all values except for the 'keep-all' option must be integers in 'prune_backups' parameter"
-                )
-
-            args["prune-backups"] = (
-                "keep-all={value}".format(value=(1 if keep_all_entry["value"] else 0))
+            # the format for the prune-backups argument is (see https://pve.proxmox.com/pve-docs/api-viewer/index.html#/storage/{storage}):
+            # [keep-all=<1|0>][,keep-daily=<N>][,keep-hourly=<N>][,keep-last=<N>][,keep-monthly=<N>][,keep-weekly=<N>][,keep-yearly=<N>]
+            args['prune-backups'] = (
+                # keep-all is mutually exclusive with the other options, we checked that earlier
+                # example: "keep-all=1"
+                'keep-all={}'.format(1 if keep_all_entry['value'] else 0)
                 if keep_all_entry
+                # example: "keep-last=3,keep-hourly=6"
                 else ",".join(
-                    map(lambda cfg: "{}={}".format(cfg["option"], cfg["value"]), other_entries)
+                    map(lambda cfg: '{}={}'.format(cfg['option'], cfg['value']), other_entries)
                 )
             )
-
         if self.krbd is not None and self.type != 'rbd':
             self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
 
         return args
+
+    def validate_storage_prune_backups_option(self):
+        if 'backup' not in self.content:
+            self.module.fail_json(
+                msg="'prune_backups' parameter is not allowed when there is no 'backup' in 'content' parameter"
+            )
+
+        if len(self.prune_backups) != len(set(cfg['option'] for cfg in self.prune_backups)):
+            self.module.fail_json(msg="'prune_backups' parameter has duplicate entries")
+
+        keep_all_entries = [cfg for cfg in self.prune_backups if cfg['option'] == 'keep-all']
+        keep_all_entry = keep_all_entries[0] if len(keep_all_entries) > 0 else None
+        other_entries = [cfg for cfg in self.prune_backups if cfg['option'] != 'keep-all']
+        if keep_all_entry and len(other_entries) > 0:
+            self.module.fail_json(
+                msg="'keep-all' is mutually exclusive with other options in 'prune_backups' parameter"
+            )
+
+        if keep_all_entry and type(keep_all_entry['value']) is not bool:
+            self.module.fail_json(msg="value of 'keep-all' option must be a boolean in 'prune_backups' parameter")
+        if any(type(cfg['value']) is not int for cfg in other_entries):
+            self.module.fail_json(
+                msg="all values except for the 'keep-all' option must be integers in 'prune_backups' parameter"
+            )
+
+        return keep_all_entry, other_entries
 
     def create_storage(self):
         new_storage = self.prepare_storage_args()
