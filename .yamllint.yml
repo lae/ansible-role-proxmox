@@ -1,5 +1,23 @@
 ---
-yaml:
-  rules:
-    line-length:
-      max: 120
+extends: default
+rules:
+  line-length:
+    max: 120
+  braces:
+    max-spaces-inside: 1
+    level: error
+  brackets:
+    max-spaces-inside: 1
+    level: error
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  truthy:
+    allowed-values:
+      - 'true'
+      - 'yes'
+      - 'false'
+      - 'no'

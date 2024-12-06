@@ -15,6 +15,11 @@
   when: "not pve_zfs_enabled | bool"
 
 - block:
+    - name: ensure valid watchdog
+      ansible.builtin.set_fact:
+        pve_watchdog: softdog
+      when: pve_watchdog is not defined or pve_watchdog | lower == 'none'
+
     - name: Re-enable nmi_watchdog via GRUB config
       lineinfile:
         dest: /etc/default/grub
@@ -27,13 +32,13 @@
         dest: /etc/modprobe.d/ipmi_watchdog.conf
         state: absent
 
-    - name: Load softdog
+    - name: Load watchdog driver
       modprobe:
-        name: softdog
+        name: "{{ pve_watchdog }}"
 
-    - name: Set PVE HA Manager watchdog configuration back to default
+    - name: Set PVE HA Manager watchdog to the configured driver
       copy:
-        content: "WATCHDOG_MODULE=softdog"
+        content: "WATCHDOG_MODULE={{ pve_watchdog }}"
         dest: /etc/default/pve-ha-manager
         mode: 0640
       notify:

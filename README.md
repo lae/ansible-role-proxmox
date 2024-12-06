@@ -6,7 +6,7 @@ lae.proxmox
 Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x on Debian servers.
 
 This role allows you to deploy and manage single-node PVE installations and PVE
-clusters (3+ nodes) on Debian Buster (10) and Bullseye (11). You are able to
+clusters (3+ nodes) on Debian Buster (10) and Bullseye (11) and Bookworm (12). You are able to
 configure the following with the assistance of this role:
 
   - PVE RBAC definitions (roles, groups, users, and access control lists)
@@ -198,7 +198,9 @@ this group name as well, unless otherwise specified by `pve_cluster_clustername`
 Leaving this undefined will default to `proxmox`.
 
 `pve_watchdog` here enables IPMI watchdog support and configures PVE's HA
-manager to use it. Leave this undefined if you don't want to configure it.
+manager to use it. Use `None` or leave this undefined to use the default
+proxmox software watchdog. If set to anything else, the value is expected to be
+a watchdog kernel module.
 
 `pve_ssl_private_key` and `pve_ssl_certificate` point to the SSL certificates for
 pvecluster. Here, a file lookup is used to read the contents of a file in the
@@ -377,10 +379,12 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 
 ## Role Variables
 
+*About default values: Some of the default values are selected at run time and so can differ from the example listed here.*
+
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-pve_repository_line: "deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+pve_repository_line: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_run_system_upgrades: false # Let role perform system upgrades
@@ -407,7 +411,7 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
+pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bookworm main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
@@ -898,13 +902,24 @@ pve_default_kernel_version: 1.0.1
 This creates a pin on the `proxmox-default-kernel` package, which is [the method suggested by PVE](https://pve.proxmox.com/wiki/Roadmap#Kernel_6.8).
 It can be later removed by unsetting this role variable.
 
+## Troubleshooting
+
+### The APT installation of proxmox-ve no longer responds, Ansible aborts, the SSH session stops.
+Add this section to your ``ansible.cfg``.
+
+```yaml
+[ssh_connection]
+ssh_args = -o ServerAliveInterval=20
+```
+[Reference Issue](https://github.com/lae/ansible-role-proxmox/issues/279)
+
 ## Developer Notes
 
 When developing new features or fixing something in this role, you can test out
 your changes by using Vagrant (only libvirt is supported currently). The
 playbook can be found in `tests/vagrant` (so be sure to modify group variables
-as needed). Be sure to test any changes on both Debian 10 and 11 (update the
-Vagrantfile locally to use `debian/buster64`) before submitting a PR.
+as needed). Be sure to test any changes on all supported versions of Debian (update the
+Vagrantfile locally to use `debian/bookworm64`, `debian/bullseye64`, or `debian/buster64`) before submitting a PR.
 
 You can also specify an apt caching proxy (e.g. `apt-cacher-ng`, and it must
 run on port 3142) with the `APT_CACHE_HOST` environment variable to speed up
