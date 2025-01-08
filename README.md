@@ -57,8 +57,8 @@ Copy the following playbook to a file like `install_proxmox.yml`:
               - clock.nyc.he.net
         - role: lae.proxmox
           vars:
-            - pve_group: all
-            - pve_reboot_on_kernel_update: true
+            pve_group: all
+            pve_reboot_on_kernel_update: true
 
 Install this role and a role for configuring NTP:
 
