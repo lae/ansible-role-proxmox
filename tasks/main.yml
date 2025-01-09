@@ -132,20 +132,70 @@
     name: os-prober
     state: absent
 
-- name: Add Proxmox repository
-  apt_repository:
-    repo: "{{ pve_repository_line }}"
-    filename: proxmox
-    state: present
-  register: _pve_repo
+- name: Update Proxmox repository to no-subscription if pve_enterprise_repository is false
+  block:
+    - name: Add no-subscription repository to /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+        state: present
+      register: _pve_repo
+    - name: Remove enterprise repository from /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        line: "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+        state: absent
+      register: _pve_repo
+  when: not pve_enterprise_repository
 
-- name: Add Proxmox Ceph repository
-  apt_repository:
-    repo: '{{ pve_ceph_repository_line }}'
-    filename: ceph
-    state: present
+- name: Update Proxmox repository to enterprise if pve_enterprise_repository is true
+  block:
+    - name: Remove no-subscription repository from /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list
+        line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+        state: absent
+      register: _pve_repo
+    - name: Add enterprise repository to /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        line: "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+        state: present
+      register: _pve_repo
+  when: pve_enterprise_repository
+
+- name: Update Ceph repository to no-subscription if pve_ceph_enterprise_repository is false
+  lineinfile:
+    path: /etc/apt/sources.list.d/ceph.list
+    regexp: '^deb https://enterprise.proxmox.com/debian/ceph-(.*) (.*) enterprise'
+    line: 'deb http://download.proxmox.com/debian/ceph-\1 \2 no-subscription'
+    backrefs: yes
   register: _pve_ceph_repo
-  when: "pve_ceph_enabled | bool"
+  when:
+    - pve_ceph_enabled 
+    - not pve_ceph_enterprise_repository
+
+- name: Update Ceph repository to enterprise if pve_ceph_enterprise_repository is true
+  lineinfile:
+    path: /etc/apt/sources.list.d/ceph.list
+    regexp: '^deb http://download.proxmox.com/debian/ceph-(.*) (.*) no-subscription'
+    line: 'deb https://enterprise.proxmox.com/debian/ceph-\1 \2 enterprise'
+    backrefs: yes
+  register: _pve_ceph_repo
+  when:
+    - pve_ceph_enabled
+    - pve_ceph_enterprise_repository
+
+- name: Update Ceph release version
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/ceph.list
+    regexp: 'ceph-(\w+)'
+    replace: "ceph-{{ pve_ceph_release }}"
+  register: _pve_ceph_repo
+  when:
+    - pve_ceph_enabled
+    - pve_ceph_release is defined
+    - pve_ceph_release | length > 0
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:
@@ -194,27 +244,16 @@
   register: _proxmox_install
   until: _proxmox_install is succeeded
 
-- block:
-    - name: Remove automatically installed PVE Enterprise repo configuration
-      apt_repository:
-        repo: "{{ item }}"
-        filename: pve-enterprise
-        state: absent
-      with_items:
-        - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
-        - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
-
-    - name: Remove subscription check wrapper function in web UI
-      ansible.builtin.lineinfile:
-        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-        line: '        orig_cmd(); return;'
-        insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
-        firstmatch: yes
-        backup: yes
-      when:
-        - "pve_remove_subscription_warning | bool"
+- name: Remove subscription check wrapper function in web UI
+  ansible.builtin.lineinfile:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    line: '        orig_cmd(); return;'
+    insertafter: '^\s+checked_command: function\(orig_cmd\) {$'
+    firstmatch: yes
+    backup: yes
   when:
-    - "'pve-no-subscription' in pve_repository_line"
+    - "pve_remove_subscription_warning | bool"
+    - not pve_enterprise_repository
 
 - import_tasks: pcie_passthrough.yml
   when: "pve_pcie_passthrough_enabled | bool"

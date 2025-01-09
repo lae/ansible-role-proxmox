@@ -1,7 +1,7 @@
 ---
 # defaults file for ansible-role-proxmox
 pve_group: proxmox
-pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+pve_enterprise_repository: false
 pve_remove_subscription_warning: true
 pve_extra_packages: []
 pve_check_for_kernel_update: true
@@ -28,7 +28,8 @@ pve_zfs_enabled: no
 # pve_zfs_zed_email: "email address for zfs events"
 pve_zfs_create_volumes: []
 pve_ceph_enabled: false
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/{% if ansible_distribution_release == 'buster' %}ceph-nautilus buster{% else %}ceph-quincy bullseye{% endif %} main"
+pve_ceph_enterprise_repository: false
+# pve_ceph_release: "" # if not set, the default ceph version that is configured with your PVE version is not changed. This variable can be used to override the ceph release, for example "quincy" or "squid"
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}"
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
