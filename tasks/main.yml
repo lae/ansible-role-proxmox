@@ -132,6 +132,10 @@
     name: os-prober
     state: absent
 
+- ansible.builtin.import_tasks: remove_enterprise_repos.yml
+  when:
+    - "'pve-no-subscription' in pve_repository_line"
+
 - name: Add Proxmox repository
   apt_repository:
     repo: "{{ pve_repository_line }}"
@@ -195,14 +199,7 @@
   until: _proxmox_install is succeeded
 
 - block:
-    - name: Remove automatically installed PVE Enterprise repo configuration
-      apt_repository:
-        repo: "{{ item }}"
-        filename: pve-enterprise
-        state: absent
-      with_items:
-        - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
-        - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+    - ansible.builtin.import_tasks: remove_enterprise_repos.yml
 
     - name: Remove subscription check wrapper function in web UI
       ansible.builtin.lineinfile:
