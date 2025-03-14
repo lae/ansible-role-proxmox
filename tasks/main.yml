@@ -141,6 +141,7 @@
     repo: "{{ pve_repository_line }}"
     filename: proxmox
     state: present
+    update_cache: no
   register: _pve_repo
 
 - name: Add Proxmox Ceph repository
