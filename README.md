@@ -905,6 +905,7 @@ It can be later removed by unsetting this role variable.
 ## Troubleshooting
 
 ### The APT installation of proxmox-ve no longer responds, Ansible aborts, the SSH session stops.
+
 Add this section to your ``ansible.cfg``.
 
 ```yaml
@@ -912,6 +913,19 @@ Add this section to your ``ansible.cfg``.
 ssh_args = -o ServerAliveInterval=20
 ```
 [Reference Issue](https://github.com/lae/ansible-role-proxmox/issues/279)
+
+### Proxmox doesn't boot/does not update GRUB config correctly.
+
+There is no known issue for this, however the following error message is silently ignored because of a false positive on certain systems using ZFS:
+
+```
+$ sudo update-grub
+<...>
+/usr/sbin/grub-probe: error: unknown filesystem.
+<...>
+```
+
+While this error is outside the scope of this role to fix, please open an issue with details if this ignore masks a true positive for your system.
 
 ## Developer Notes
 
