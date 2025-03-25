@@ -25,6 +25,8 @@ With clustering enabled, this role does (or allows you to do) the following:
   - Setup Ceph on a PVE cluster
   - Create and manage high availability groups
 
+WARNING: Support for servers provisioned using the Proxmox ISO installer is limited. Use Debian as your base.
+
 ## Support/Contributing
 
 For support or if you'd like to contribute to this role but want guidance, feel
