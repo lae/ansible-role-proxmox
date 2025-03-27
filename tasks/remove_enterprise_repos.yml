@@ -1,0 +1,10 @@
+- name: Remove automatically installed PVE Enterprise repo configuration
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    filename: pve-enterprise
+    state: absent
+    update_cache: false
+  with_items:
+    - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
+    - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+    - "deb https://enterprise.proxmox.com/debian/ceph-quincy {{ ansible_distribution_release }} enterprise"
