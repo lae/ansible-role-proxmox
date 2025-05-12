@@ -796,6 +796,23 @@ pve_ceph_pools:
     application: rbd
     autoscale_mode: "on"
     storage: true
+# This Ceph pool uses erasure-coding (EC) instead of replicated (default)
+  - name: hydra-rbd1
+    # For erasure code: size, min_size, and rule will be used for the
+    # replicated *metadata* pool, but *not* for the erasure coded data pool.
+    # See https://pve.proxmox.com/wiki/Deploy_Hyper-Converged_Ceph_Cluster
+    size: 3
+    min_size: 2
+    autoscale_mode: "warn"
+    storage: true
+    application: rbd
+    pgs: 1024
+    # Using "erasure" will use pveceph to create a new error coding (EC) pool
+    # plus the needed replicated pool to store the RBD omap and other metadata.
+    # In the end, there will be a <pool name>-data and <pool name>-metadata pool. 
+    protection_strategy: "erasure-coding" # "replicated" (default) or "erasure-coding"
+    k: 3 # Erasure code data blocks, only valid and required for EC pool
+    m: 2 # Erasure code parity blocks, only valid and required for EC pool
 pve_ceph_fs:
 # A CephFS filesystem not defined as a Proxmox storage
   - name: backup

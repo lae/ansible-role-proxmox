@@ -131,6 +131,16 @@
       check_mode: no
       register: _ceph_pools
 
+    - name: "Verify k and m are defined when erasure-coding is selected as ceph pool protection strategy"
+      ansible.builtin.assert:
+        that:
+          - item.k is integer and item.k > 0
+          - item.m is integer and item.m > 0
+        fail_msg: "When erasure-coding is used, k and m must be defined and greater than 0 for pool {{ item.name }}"
+        success_msg: "Required variables 'k' and 'm' are defined and valid for pool {{ item.name }}"
+      when: "item.protection_strategy == 'erasure-coding'"
+      with_items: '{{ pve_ceph_pools }}'
+
     - name: Create Ceph Pools
       command: >-
         pveceph pool create {{ item.name }}
@@ -154,6 +164,9 @@
         {% endif %}
         {% if 'min_size' in item %}
         --min_size {{ item.min_size }}
+        {% endif %}
+        {% if 'protection_strategy' in item and 'protection_strategy' == "erasure-coding" %}
+        --erasure-coding k={{ item.k }},m={{ item.m }}
         {% endif %}
       when: item.name not in _ceph_pools.stdout_lines
       with_items: '{{ pve_ceph_pools }}'
