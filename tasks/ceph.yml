@@ -165,7 +165,7 @@
         {% if 'min_size' in item %}
         --min_size {{ item.min_size }}
         {% endif %}
-        {% if 'protection_strategy' in item and 'protection_strategy' == "erasure-coding" %}
+        {% if 'protection_strategy' in item and item.protection_strategy == 'erasure-coding' %}
         --erasure-coding k={{ item.k }},m={{ item.m }}
         {% endif %}
       when: item.name not in _ceph_pools.stdout_lines
