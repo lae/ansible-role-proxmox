@@ -161,7 +161,7 @@ options:
         description:
             - Specifies whether or not the given path is an externally managed
             mountpoint.
-    create_subdirs        
+    create_subdirs
          required: false
         type: bool
         description:
