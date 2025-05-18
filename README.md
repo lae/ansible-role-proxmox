@@ -738,6 +738,9 @@ pve_ceph_osds:
   - device: /dev/sdd
     block.db: /dev/sdb1
     encrypted: true
+  # NVME OSD
+  - device: /dev/nvme0n1
+    crush.device.class: NVMe
 # Crush rules for different storage classes
 # By default 'type' is set to host, you can find valid types at
 # (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
