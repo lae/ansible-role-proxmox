@@ -683,6 +683,12 @@ pve_storages:
     username: user
     password: supersecurepass
     domain: addomain.tld
+  - name: remote-cifs-truenas01
+    type: dir
+    path: /mnt/nas
+    content: [ "images", "rootdir" ]
+    create_subdirs: false
+    is_mountpoint: true
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.

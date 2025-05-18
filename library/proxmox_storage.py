@@ -161,6 +161,11 @@ options:
         description:
             - Specifies whether or not the given path is an externally managed
             mountpoint.
+    create_subdirs        
+         required: false
+        type: bool
+        description:
+            - Specifies whether or not to populate the directory with the default structure.
     namespace:
         required: false
         type: str
@@ -314,6 +319,7 @@ class ProxmoxStorage(object):
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
         self.is_mountpoint = module.params['is_mountpoint']
+        self.create_subdirs = module.params['create_subdirs']
 
         # namespace for pbs
         self.namespace = module.params['namespace']
@@ -414,6 +420,8 @@ class ProxmoxStorage(object):
             args['sparse'] = 1 if self.sparse else 0
         if self.is_mountpoint is not None:
             args['is_mountpoint'] = 1 if self.is_mountpoint else 0
+        if self.create_subdirs is not None:
+            args['create-subdirs'] = 1 if self.create_subdirs else 0
 
         # CIFS
         if self.subdir is not None:
@@ -587,6 +595,7 @@ def main():
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
         is_mountpoint=dict(default=None, type='bool', required=False),
+        create_subdirs=dict(default=None, type='bool', required=False),
         namespace=dict(default=None, type='str', required=False),
         subdir=dict(default=None, type='str', required=False),
         domain=dict(default=None, type='str', required=False),
