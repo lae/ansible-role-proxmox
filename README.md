@@ -683,6 +683,11 @@ pve_storages:
     username: user
     password: supersecurepass
     domain: addomain.tld
+  - name: empty-dir
+    type: dir
+    path: /mnt/empty-dir
+    content: [ "images", "rootdir" ]
+    create_subdirs: false
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
