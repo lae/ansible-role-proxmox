@@ -69,6 +69,13 @@ options:
         type: str
         description:
             - Ceph/ZFS pool name.
+            - For erasure-coded (EC) pools, with a data and metadata pool, enter the metadata pool name here.
+    datapool:
+        required: false
+        type: str
+        description:
+            - Only used for Ceph erasure-coded (EC) pools.
+            - For erasure-coded pools, with a data and metadata pool, enter the data pool name here.
     monhost:
         required: false
         type: list
