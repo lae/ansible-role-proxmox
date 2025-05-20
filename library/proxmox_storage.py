@@ -320,6 +320,7 @@ class ProxmoxStorage(object):
         self.fingerprint = module.params['fingerprint']
         self.password = module.params['password']
         self.path = module.params['path']
+        self.datapool = module.params['datapool']
         self.pool = module.params['pool']
         self.monhost = module.params['monhost']
         self.username = module.params['username']
@@ -417,6 +418,8 @@ class ProxmoxStorage(object):
             args['password'] = self.password
         if self.path is not None:
             args['path'] = self.path
+        if self.datapool is not None:
+            args['data-pool'] = self.datapool
         if self.pool is not None:
             args['pool'] = self.pool
         if self.monhost is not None:
@@ -585,6 +588,7 @@ def main():
         master_pubkey=dict(default=None, type='str', required=False),
         password=dict(default=None, type='str', required=False, no_log=True),
         path=dict(default=None, required=False, type='str'),
+        datapool=dict(default=None, type='str', required=False),
         pool=dict(default=None, type='str', required=False),
         monhost=dict(default=None, type='list', required=False),
         username=dict(default=None, type='str', required=False),

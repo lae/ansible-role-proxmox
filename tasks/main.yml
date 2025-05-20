@@ -371,6 +371,7 @@
     path: "{{ item.path | default(omit) }}"
     username: "{{ item.username | default(omit) }}"
     pool: "{{ item.pool | default(omit) }}"
+    datapool: "{{ item.datapool | default(omit) }}"
     monhost: "{{ item.monhost | default(omit) }}"
     maxfiles: "{{ item.maxfiles | default(omit) }}"
     krbd: "{{ item.krbd | default(omit) }}"
