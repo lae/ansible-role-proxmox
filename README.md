@@ -683,6 +683,11 @@ pve_storages:
     username: user
     password: supersecurepass
     domain: addomain.tld
+  - name: empty-dir
+    type: dir
+    path: /mnt/empty-dir
+    content: [ "images", "rootdir" ]
+    create_subdirs: false
 ```
 
 Refer to https://pve.proxmox.com/pve-docs/api-viewer/index.html for more information.
@@ -738,6 +743,9 @@ pve_ceph_osds:
   - device: /dev/sdd
     block.db: /dev/sdb1
     encrypted: true
+  # NVME OSD
+  - device: /dev/nvme0n1
+    crush.device.class: NVMe
 # Crush rules for different storage classes
 # By default 'type' is set to host, you can find valid types at
 # (https://docs.ceph.com/en/latest/rados/operations/crush-map/)
