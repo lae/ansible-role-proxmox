@@ -349,6 +349,7 @@
     domain: "{{ item.domain | default(omit) }}"
     subdir: "{{ item.subdir | default(omit) }}"
     share: "{{ item.share | default(omit) }}"
+    shared: "{{ item.shared | default(omit) }}"
     create_subdirs: "{{ item.create_subdirs | default(omit) }}"
     is_mountpoint: "{{ item.is_mountpoint | default(omit) }}"
   no_log: "{{ pve_no_log }}"
