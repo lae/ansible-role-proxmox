@@ -1,4 +1,6 @@
 ---
+- debug:
+    msg: "{{ ansible_processor | unique }}"
 - name: Modify vfio IOMMU references and configuration in default grub
   ansible.builtin.blockinfile:
     dest: /etc/default/grub
