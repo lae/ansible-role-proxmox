@@ -4,7 +4,7 @@
     dest: /etc/default/grub
     marker: "# {mark}: IOMMU default grub configuration (managed by ansible)."
     content: "\
-      {% if '\"GenuineIntel\" in ansible_processor | unique' %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX intel_iommu=on\"\n{% endif %}\
+      {% if 'GenuineIntel' in ansible_processor %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX intel_iommu=on\"\n{% endif %}\
       {% if (pve_iommu_passthrough_mode | bool) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX iommu=pt\"\n{% endif %}\
       {% if (pve_mediated_devices_enabled | bool) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX i915.enable_gvt=1 i915.enable_guc=0\"\n{% endif %}\
       {% if (pve_pci_device_ids | length > 0) %}GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE_LINUX vfio-pci.ids={% for k in pve_pci_device_ids %}{{ k.id }}{% if k != (pve_pci_device_ids | last) %},{% endif %}{% endfor %}\"{% endif %}"
