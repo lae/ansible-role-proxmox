@@ -136,7 +136,8 @@
   when:
     - "'pve-no-subscription' in pve_repository_line"
 
-- block:
+- name: Manage apt repositories
+  ansible.builtin.block:
   - name: Add Proxmox repository
     ansible.builtin.apt_repository:
       repo: "{{ pve_repository_line }}"
@@ -153,7 +154,8 @@
     when: "pve_ceph_enabled | bool"
   when: "ansible_distribution_major_version | int <= 12"
 
-- block:
+- name: Manage deb822 repositories
+  ansible.builtin.block:
   - name: Add Proxmox repository
     ansible.builtin.deb822_repository:
       name: proxmox
