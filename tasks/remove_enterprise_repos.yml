@@ -8,3 +8,15 @@
     - "deb https://enterprise.proxmox.com/debian {{ ansible_distribution_release }} pve-enterprise"
     - "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
     - "deb https://enterprise.proxmox.com/debian/ceph-quincy {{ ansible_distribution_release }} enterprise"
+  when: "ansible_distribution_major_version | int <= 12"
+
+- name: Remove automatically installed PVE Enterprise repo configuration
+  deb822_repository:
+    name: pve-enterprise
+    state: absent
+    types: deb
+    uris: https://enterprise.proxmox.com/debian/pve
+    suites: "{{ ansible_distribution_release }}"
+    components:
+      - pve-enterprise
+  when: "ansible_distribution_major_version | int > 12"

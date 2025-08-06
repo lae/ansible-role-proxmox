@@ -136,20 +136,47 @@
   when:
     - "'pve-no-subscription' in pve_repository_line"
 
-- name: Add Proxmox repository
-  apt_repository:
-    repo: "{{ pve_repository_line }}"
-    filename: proxmox
-    state: present
-  register: _pve_repo
+- block:
+  - name: Add Proxmox repository
+    apt_repository:
+      repo: "{{ pve_repository_line }}"
+      filename: proxmox
+      state: present
+    register: _pve_repo
 
-- name: Add Proxmox Ceph repository
-  apt_repository:
-    repo: '{{ pve_ceph_repository_line }}'
-    filename: ceph
-    state: present
-  register: _pve_ceph_repo
-  when: "pve_ceph_enabled | bool"
+  - name: Add Proxmox Ceph repository
+    apt_repository:
+      repo: '{{ pve_ceph_repository_line }}'
+      filename: ceph
+      state: present
+    register: _pve_ceph_repo
+    when: "pve_ceph_enabled | bool"
+  when: "ansible_distribution_major_version | int <= 12"
+
+- block:
+  - name: Add Proxmox repository
+    deb822_repository:
+      name: proxmox
+      types: deb
+      uris: http://download.proxmox.com/debian/pve
+      suites: "{{ ansible_distribution_release }}"
+      components: pve-no-subscription
+      signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      state: present
+    register: _pve_repo
+
+  - name: Add Proxmox Ceph repository
+    deb822_repository:
+      name: ceph
+      types: deb
+      uris: http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
+      suites: "{{ ansible_distribution_release }}"
+      components: no-subscription
+      signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      state: present
+    register: _pve_ceph_repo
+    when: "pve_ceph_enabled | bool"
+  when: "ansible_distribution_major_version | int > 12"
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:
