@@ -11,7 +11,7 @@
   when: "ansible_distribution_major_version | int <= 12"
 
 - name: Remove automatically installed PVE Enterprise repo configuration
-  deb822_repository:
+  ansible.builtin.deb822_repository:
     name: pve-enterprise
     state: absent
     types: deb
