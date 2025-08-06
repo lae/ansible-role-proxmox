@@ -352,6 +352,7 @@
     shared: "{{ item.shared | default(omit) }}"
     create_subdirs: "{{ item.create_subdirs | default(omit) }}"
     is_mountpoint: "{{ item.is_mountpoint | default(omit) }}"
+    snapshot_as_volume_chain: "{{ item.snapshot_as_volume_chain | default(omit) }}"
   no_log: "{{ pve_no_log }}"
   with_items: "{{ pve_storages }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"

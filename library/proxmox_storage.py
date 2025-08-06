@@ -155,6 +155,13 @@ options:
         type: bool
         description:
             - Use ZFS thin-provisioning.
+    snapshot_as_volume_chain:
+        required: false
+        type: bool
+        default: false
+        description:
+            - Enable support for creating storage-vendor agnostic snapshot through volume backing-chains.
+            - Only supported for LVM storage type.
     is_mountpoint:
         required: false
         type: bool
@@ -227,6 +234,13 @@ EXAMPLES = '''
     type: lvm
     content: [ "images", "rootdir" ]
     vgname: vg1
+- name: Create an LVM storage type with snapshot support
+  proxmox_storage:
+    name: lvm1
+    type: lvm
+    content: [ "images", "rootdir" ]
+    vgname: vg1
+    snapshot_as_volume_chain: true
 - name: Create an LVM-thin storage type
   proxmox_storage:
     name: lvmthin1
@@ -318,6 +332,7 @@ class ProxmoxStorage(object):
         self.vgname = module.params['vgname']
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
+        self.snapshot_as_volume_chain = module.params['snapshot_as_volume_chain']
         self.is_mountpoint = module.params['is_mountpoint']
         self.create_subdirs = module.params['create_subdirs']
 
@@ -344,6 +359,12 @@ class ProxmoxStorage(object):
             except JSONDecodeError:
                 self.module.fail_json(msg=("encryption_key needs to be valid "
                                            "JSON or set to 'autogen'."))
+
+        if self.krbd is not None and self.type != 'rbd':
+            self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
+
+        if self.snapshot_as_volume_chain is not None and self.type != 'lvm':
+            self.module.fail_json(msg="snapshot_as_volume_chain is only allowed with 'lvm' storage type")
 
         # Attempt to retrieve current/live storage definitions
         try:
@@ -418,6 +439,8 @@ class ProxmoxStorage(object):
             args['namespace'] = self.namespace
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
+        if self.snapshot_as_volume_chain is not None:
+            args['snapshot-as-volume-chain'] = 1 if self.snapshot_as_volume_chain else 0
         if self.is_mountpoint is not None:
             args['is_mountpoint'] = 1 if self.is_mountpoint else 0
         if self.create_subdirs is not None:
@@ -453,8 +476,6 @@ class ProxmoxStorage(object):
                     map(lambda cfg: '{}={}'.format(cfg['option'], cfg['value']), other_entries)
                 )
             )
-        if self.krbd is not None and self.type != 'rbd':
-            self.module.fail_json(msg="krbd is only allowed with 'rbd' storage type")
 
         return args
 
@@ -594,6 +615,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
+        snapshot_as_volume_chain=dict(default=None, type='bool', required=False),
         is_mountpoint=dict(default=None, type='bool', required=False),
         create_subdirs=dict(default=None, type='bool', required=False),
         namespace=dict(default=None, type='str', required=False),
