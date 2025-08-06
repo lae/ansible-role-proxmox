@@ -138,14 +138,14 @@
 
 - block:
   - name: Add Proxmox repository
-    apt_repository:
+    ansible.builtin.apt_repository:
       repo: "{{ pve_repository_line }}"
       filename: proxmox
       state: present
     register: _pve_repo
 
   - name: Add Proxmox Ceph repository
-    apt_repository:
+    ansible.builtin.apt_repository:
       repo: '{{ pve_ceph_repository_line }}'
       filename: ceph
       state: present
