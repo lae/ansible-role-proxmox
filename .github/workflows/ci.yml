@@ -44,6 +44,10 @@ jobs:
     if: ${{ needs.changes.outputs.role == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     steps:
+      - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+        with:
+          root-reserve-mb: 10240
+          build-mount-path: /var/lib/libvirt/images
       - uses: actions/checkout@v4
       - run: sudo apt install nfs-kernel-server
       - run: sudo pipx inject ansible-core jmespath netaddr
