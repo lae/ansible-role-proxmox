@@ -12,22 +12,13 @@
 
 - name: Remove automatically installed PVE Enterprise repo configuration
   ansible.builtin.deb822_repository:
-    name: pve-enterprise
+    name: "{{ item.name }}"
     state: absent
     types: deb
-    uris: https://enterprise.proxmox.com/debian/pve
+    uris: "{{ item.uris }}"
     suites: "{{ ansible_distribution_release }}"
-    components:
-      - pve-enterprise
-  when: "ansible_distribution_major_version | int > 12"
-
-- name: Remove automatically installed Ceph Enterprise repo configuration
-  ansible.builtin.deb822_repository:
-    name: ceph
-    state: absent
-    types: deb
-    uris: https://enterprise.proxmox.com/debian/{{ pve_ceph_debian_component }}
-    suites: "{{ ansible_distribution_release }}"
-    components:
-      - enterprise
+    components: "{{ item.components }}"
+  loop:
+    - { name: 'pve-enterprise', uris: 'https://enterprise.proxmox.com/debian/pve', components: ['pve-enterprise'] }
+    - { name: 'ceph', uris: 'https://enterprise.proxmox.com/debian/{{ pve_ceph_debian_component }}', components: ['enterprise'] }
   when: "ansible_distribution_major_version | int > 12"
