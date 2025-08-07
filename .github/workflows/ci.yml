@@ -48,7 +48,6 @@ jobs:
         with:
           root-reserve-mb: 10240
           build-mount-path: /var/lib/libvirt/images
-          build-mount-path-ownership: 'root:root'
       - uses: actions/checkout@v4
       - run: sudo apt install nfs-kernel-server
       - run: sudo pipx inject ansible-core jmespath netaddr
