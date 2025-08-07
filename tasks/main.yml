@@ -160,9 +160,9 @@
     ansible.builtin.deb822_repository:
       name: proxmox
       types: deb
-      uris: http://download.proxmox.com/debian/pve
-      suites: "{{ ansible_distribution_release }}"
-      components: "{{ pve_repository }}"
+      uris: "{{ pve_repository.uris }}"
+      suites: "{{ pve_repository.suites }}"
+      components: "{{ pve_repository.components }}"
       signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
       state: present
     register: _pve_repo
@@ -171,9 +171,9 @@
     ansible.builtin.deb822_repository:
       name: ceph
       types: deb
-      uris: http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
-      suites: "{{ ansible_distribution_release }}"
-      components: "{{ pve_ceph_debian_component }}"
+      uris: "{{ pve_ceph_repository.uris }}"
+      suites: "{{ pve_ceph_repository.suites }}"
+      components: "{{ pve_ceph_repository.components }}"
       signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
       state: present
     register: _pve_ceph_repo
