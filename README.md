@@ -387,9 +387,10 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
 # Proxmox repository configuration for PVE 9 and above
-pve_repository.uris: # List of URIs for the Proxmox repository
-pve_repository.suites: # List of suites for the Proxmox repository
-pve_repository.components: # List of components for the Proxmox repository
+pve_repository:
+  uris: # List of URIs for the Proxmox repository
+  suites: # List of suites for the Proxmox repository
+  components: # List of components for the Proxmox repository
 # Proxmox repository configuration for PVE 8 and below
 pve_repository_line: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
@@ -419,9 +420,10 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
 # Proxmox Ceph repository configuration for PVE 9 and above
-pve_ceph_repository.uris: # List of URIs for the Ceph repository
-pve_ceph_repository.suites: # List of suites for the Ceph repository
-pve_ceph_repository.components: # List of components for the Ceph repository
+pve_ceph_repository:
+  uris: # List of URIs for the Ceph repository
+  suites: # List of suites for the Ceph repository
+  components: # List of components for the Ceph repository
 # Proxmox Ceph repository configuration for PVE 8 and below
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bookworm main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
