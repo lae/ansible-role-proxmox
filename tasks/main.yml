@@ -163,7 +163,7 @@
       uris: "{{ pve_repository.uris }}"
       suites: "{{ pve_repository.suites }}"
       components: "{{ pve_repository.components }}"
-      signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
       state: present
     register: _pve_repo
 
@@ -174,7 +174,7 @@
       uris: "{{ pve_ceph_repository.uris }}"
       suites: "{{ pve_ceph_repository.suites }}"
       components: "{{ pve_ceph_repository.components }}"
-      signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
       state: present
     register: _pve_ceph_repo
     when: "pve_ceph_enabled | bool"
