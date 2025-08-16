@@ -120,7 +120,7 @@
     state: present
   when: "ansible_distribution_major_version | int < 12"
 
-- name: Trust Proxmox' packaging key on Debian 12
+- name: Trust Proxmox' packaging key on Debian >= 12
   copy:
     src: "proxmox-release-{{ ansible_distribution_release }}.gpg"
     dest: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
@@ -178,6 +178,12 @@
       state: present
     register: _pve_ceph_repo
     when: "pve_ceph_enabled | bool"
+
+  - name: Update repositories cache
+    ansible.builtin.apt:
+      update_cache: yes
+    when: _pve_repo is changed or _pve_ceph_repo is changed
+
   when: "ansible_distribution_major_version | int > 12"
 
 - name: Run apt-get dist-upgrade on repository changes
