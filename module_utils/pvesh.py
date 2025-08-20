@@ -25,8 +25,11 @@ def run_command(handler, resource, **params):
         handler,
         resource,
         "--output=json"]
-    for parameter, value in params.items():
-        command += ["-{}".format(parameter), "{}".format(value)]
+    for parameter, values in params.items():
+        if not isinstance(values, list):
+            values = [values]
+        for value in values:
+            command += ["--{}".format(parameter), "{}".format(value)]
 
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (result, stderr) = pipe.communicate()
