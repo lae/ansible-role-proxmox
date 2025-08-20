@@ -120,12 +120,12 @@
     state: present
   when: "ansible_distribution_major_version | int < 12"
 
-- name: Trust Proxmox' packaging key on Debian 12
+- name: Trust Proxmox' packaging key on Debian >= 12
   copy:
     src: "proxmox-release-{{ ansible_distribution_release }}.gpg"
     dest: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
     mode: 0644
-  when: "ansible_distribution_major_version | int == 12"
+  when: "ansible_distribution_major_version | int >= 12"
 
 - name: Remove os-prober package
   apt:
@@ -136,20 +136,55 @@
   when:
     - "'pve-no-subscription' in pve_repository_line"
 
-- name: Add Proxmox repository
-  apt_repository:
-    repo: "{{ pve_repository_line }}"
-    filename: proxmox
-    state: present
-  register: _pve_repo
+- name: Manage apt repositories
+  block:
+  - name: Add Proxmox repository
+    ansible.builtin.apt_repository:
+      repo: "{{ pve_repository_line }}"
+      filename: proxmox
+      state: present
+    register: _pve_repo
 
-- name: Add Proxmox Ceph repository
-  apt_repository:
-    repo: '{{ pve_ceph_repository_line }}'
-    filename: ceph
-    state: present
-  register: _pve_ceph_repo
-  when: "pve_ceph_enabled | bool"
+  - name: Add Proxmox Ceph repository
+    ansible.builtin.apt_repository:
+      repo: '{{ pve_ceph_repository_line }}'
+      filename: ceph
+      state: present
+    register: _pve_ceph_repo
+    when: "pve_ceph_enabled | bool"
+  when: "ansible_distribution_major_version | int <= 12"
+
+- name: Manage deb822 repositories
+  block:
+  - name: Add Proxmox repository
+    ansible.builtin.deb822_repository:
+      name: proxmox
+      types: deb
+      uris: "{{ pve_repository.uris }}"
+      suites: "{{ pve_repository.suites }}"
+      components: "{{ pve_repository.components }}"
+      signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
+      state: present
+    register: _pve_repo
+
+  - name: Add Proxmox Ceph repository
+    ansible.builtin.deb822_repository:
+      name: ceph
+      types: deb
+      uris: "{{ pve_ceph_repository.uris }}"
+      suites: "{{ pve_ceph_repository.suites }}"
+      components: "{{ pve_ceph_repository.components }}"
+      signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
+      state: present
+    register: _pve_ceph_repo
+    when: "pve_ceph_enabled | bool"
+
+  - name: Update repositories cache
+    ansible.builtin.apt:
+      update_cache: yes
+    when: _pve_repo is changed or _pve_ceph_repo is changed
+
+  when: "ansible_distribution_major_version | int > 12"
 
 - name: Run apt-get dist-upgrade on repository changes
   apt:

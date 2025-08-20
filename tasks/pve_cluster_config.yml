@@ -80,7 +80,7 @@
   proxmox_query:
     query: "/cluster/ha/groups"
   register: _ha_group_list
-  when: "inventory_hostname == _init_node"
+  when: "inventory_hostname == _init_node and pve_cluster_ha_groups | length > 0"
 
 - name: Create PVE cluster HA groups
   command: >-
