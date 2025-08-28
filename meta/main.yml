@@ -3,7 +3,7 @@ galaxy_info:
   namespace: lae
   role_name: proxmox
   author: Musee Ullah
-  description: Installs and configures Proxmox Virtual Environment 6.x/7.x on Debian servers.
+  description: Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x/9.x on Debian servers.
   license: MIT
 
   min_ansible_version: "2.9"
@@ -14,6 +14,7 @@ galaxy_info:
         - buster
         - bullseye
         - bookworm
+        - trixie
 
   galaxy_tags:
     - proxmox

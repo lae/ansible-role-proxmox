@@ -3,10 +3,10 @@
 lae.proxmox
 ===========
 
-Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x on Debian servers.
+Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x/9.x on Debian servers.
 
 This role allows you to deploy and manage single-node PVE installations and PVE
-clusters (3+ nodes) on Debian Buster (10) and Bullseye (11) and Bookworm (12). You are able to
+clusters (3+ nodes) on Debian Buster (10), Bullseye (11), Bookworm (12) and Trixie (13). You are able to
 configure the following with the assistance of this role:
 
   - PVE RBAC definitions (roles, groups, users, and access control lists)
@@ -80,7 +80,7 @@ file containing a list of hosts).
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
 
-## Deploying a fully-featured PVE 8.x cluster
+## Deploying a fully-featured PVE 9.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
@@ -478,7 +478,7 @@ pve_datacenter_cfg:
   keyboard: en-us
 ```
 
-You can also configure [HA manager groups][ha-group]:
+You can also configure [HA manager groups][ha-group] (deprecated since Proxmox VE 9.0):
 ```
 pve_cluster_ha_groups: [] # List of HA groups to create in PVE.
 ```
