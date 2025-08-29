@@ -299,7 +299,7 @@ from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
 import re
 import json
-from json import JSONDecodeError, dumps as parse_json
+from json import JSONDecodeError, loads as parse_json, dumps as to_json
 
 
 class ProxmoxStorage(object):
@@ -355,7 +355,9 @@ class ProxmoxStorage(object):
                                           "'backup' content type.")
             try:
                 if self.encryption_key not in ["autogen", None]:
-                    self.encryption_key = parse_json(self.encryption_key)
+                    if isinstance(self.encryption_key, dict):
+                        self.encryption_key = to_json(self.encryption_key)
+                    parse_json(self.encryption_key)
             except JSONDecodeError:
                 self.module.fail_json(msg=("encryption_key needs to be valid "
                                            "JSON or set to 'autogen'."))
