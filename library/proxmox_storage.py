@@ -299,7 +299,7 @@ from ansible.module_utils.pvesh import ProxmoxShellError
 import ansible.module_utils.pvesh as pvesh
 import re
 import json
-from json import JSONDecodeError, loads as parse_json
+from json import JSONDecodeError, dumps as parse_json
 
 
 class ProxmoxStorage(object):
@@ -355,7 +355,7 @@ class ProxmoxStorage(object):
                                           "'backup' content type.")
             try:
                 if self.encryption_key not in ["autogen", None]:
-                    parse_json(self.encryption_key)
+                    self.encryption_key = parse_json(self.encryption_key)
             except JSONDecodeError:
                 self.module.fail_json(msg=("encryption_key needs to be valid "
                                            "JSON or set to 'autogen'."))
@@ -578,7 +578,7 @@ def main():
                            "zfspool", "btrfs", "pbs", "cifs"]),
         # Remaining PVE API arguments (depending on type) past this point
         datastore=dict(default=None, type='str', required=False),
-        encryption_key=dict(default=None, type='str', required=False, no_log=True),
+        encryption_key=dict(default=None, type='raw', required=False, no_log=True),
         fingerprint=dict(default=None, type='str', required=False),
         master_pubkey=dict(default=None, type='str', required=False),
         password=dict(default=None, type='str', required=False, no_log=True),
