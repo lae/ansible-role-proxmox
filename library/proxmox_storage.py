@@ -70,7 +70,7 @@ options:
         description:
             - Ceph/ZFS pool name.
             - For erasure-coded (EC) pools, with a data and metadata pool, enter the metadata pool name here.
-    datapool:
+    data_pool:
         required: false
         type: str
         description:
@@ -327,7 +327,7 @@ class ProxmoxStorage(object):
         self.fingerprint = module.params['fingerprint']
         self.password = module.params['password']
         self.path = module.params['path']
-        self.datapool = module.params['datapool']
+        self.data_pool = module.params['data_pool']
         self.pool = module.params['pool']
         self.monhost = module.params['monhost']
         self.username = module.params['username']
@@ -425,8 +425,8 @@ class ProxmoxStorage(object):
             args['password'] = self.password
         if self.path is not None:
             args['path'] = self.path
-        if self.datapool is not None:
-            args['data-pool'] = self.datapool
+        if self.data_pool is not None:
+            args['data-pool'] = self.data_pool
         if self.pool is not None:
             args['pool'] = self.pool
         if self.monhost is not None:
@@ -595,7 +595,7 @@ def main():
         master_pubkey=dict(default=None, type='str', required=False),
         password=dict(default=None, type='str', required=False, no_log=True),
         path=dict(default=None, required=False, type='str'),
-        datapool=dict(default=None, type='str', required=False),
+        data_pool=dict(default=None, type='str', required=False),
         pool=dict(default=None, type='str', required=False),
         monhost=dict(default=None, type='list', required=False),
         username=dict(default=None, type='str', required=False),
