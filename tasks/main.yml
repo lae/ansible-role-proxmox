@@ -415,7 +415,7 @@
     group: "www-data"
     mode: "0640"
     content: |
-      {% for k,v in pve_datacenter_cfg.items() %}
+      {% for k, v in pve_datacenter_cfg.items() %}
       {{ k }}: {{ v }}
       {% endfor %}
   when:

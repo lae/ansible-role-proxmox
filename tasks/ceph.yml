@@ -2,10 +2,11 @@
 ---
 - block:
     - name: Create initial Ceph config
-      ansible.builtin.command: "pveceph init --network {{ pve_ceph_network }}  \
-               {% if pve_ceph_cluster_network is defined  %} \
-                  --cluster-network {{ pve_ceph_cluster_network }}
-               {% endif %}"
+      ansible.builtin.command: >-
+        pveceph init --network {{ pve_ceph_network }}
+        {% if pve_ceph_cluster_network is defined %}
+          --cluster-network {{ pve_ceph_cluster_network }}
+        {% endif %}
       args:
         creates: /etc/ceph/ceph.conf
 
@@ -43,7 +44,8 @@
 
     - name: Generate a list of active OSDs
       ansible.builtin.set_fact:
-        _existing_ceph_osds: "{{ _ceph_volume_data.stdout | from_json | json_query('*[].devices[]') | default([]) }}"
+        _existing_ceph_osds: >-
+          {{ _ceph_volume_data.stdout | from_json | json_query("*[].devices[]") | default([]) }}
 
     - name: Generate list of unprovisioned OSDs
       ansible.builtin.set_fact:

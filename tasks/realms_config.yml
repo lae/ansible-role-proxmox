@@ -23,7 +23,7 @@
       {% for domain in pve_domains_cfg %}
       {{ domain.type }}: {{ domain.name }}
       {% if domain.attributes %}
-      {% for k,v in domain.attributes.items() %}
+      {% for k, v in domain.attributes.items() %}
       {% if k != 'bind_password' %}
       	{{ k }} {{ v }}
       {% endif %}
