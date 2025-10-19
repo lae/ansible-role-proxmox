@@ -5,27 +5,27 @@
   register: _pve_cluster
 
 - name: Identify if the host is already part of a cluster
-  set_fact:
-    _pve_active_cluster: '{{ _pve_cluster | json_query(query) }}'
+  ansible.builtin.set_fact:
+    _pve_active_cluster: "{{ _pve_cluster | json_query(query) }}"
   when: "_pve_cluster | json_query(query) | ternary(true, false)"
   vars:
     query: "response[?type=='cluster'].name | [0]"
 
 - name: Identify all clusters that the hosts in the specified group may be in
-  set_fact:
+  ansible.builtin.set_fact:
     _pve_found_clusters: "{{ _pve_found_clusters | default([]) | intersect([hostvars[item]['_pve_active_cluster']]) }}"
   with_items: "{{ groups[pve_group] }}"
   when: "'_pve_active_cluster' in hostvars[item]"
 
 - name: Ensure that hosts found are not in multiple existing clusters
-  assert:
+  ansible.builtin.assert:
     that:
       - "(_pve_found_clusters | default([]) | length) <= 1"
     msg: "Some or all of the hosts in {{ pve_group }} appear to already be part of two or more different clusters, \
           please ensure groups only have hosts meant to be in one single cluster."
 
 - name: Ensure that, if we find an existing cluster, that it matches the specified cluster name
-  assert:
+  ansible.builtin.assert:
     that:
       - "_pve_found_clusters[0] == pve_cluster_clustername"
     msg: "Some or all of the hosts in group '{{ pve_group }}' appear to be in a cluster named \
@@ -71,7 +71,7 @@
   vars:
     query: "response[?type=='cluster'].quorate | [0]"
 
-- include_tasks: pve_add_node.yml
+- ansible.builtin.include_tasks: pve_add_node.yml
   when:
     - "_pve_active_cluster is not defined"
     - "inventory_hostname != _init_node"
@@ -83,7 +83,7 @@
   when: "inventory_hostname == _init_node and pve_cluster_ha_groups | length > 0"
 
 - name: Create PVE cluster HA groups
-  command: >-
+  ansible.builtin.command: >-
     ha-manager groupadd {{ item.name }}
     -comment "{{ item.comment | default('') }}"
     -nodes "{{ item.nodes }}"
@@ -99,7 +99,7 @@
   with_items: "{{ pve_cluster_ha_groups }}"
 
 - name: Update PVE cluster HA groups
-  command: >-
+  ansible.builtin.command: >-
     ha-manager groupset {{ item.0.name }} -{{ item.1 }} "{{ item.0[item.1] }}"
   when:
     - "inventory_hostname == _init_node"

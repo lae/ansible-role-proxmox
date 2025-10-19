@@ -1,3 +1,4 @@
+---
 - name: Remove automatically installed PVE Enterprise repo configuration
   ansible.builtin.apt_repository:
     repo: "{{ item }}"

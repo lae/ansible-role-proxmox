@@ -9,7 +9,7 @@
     ansible.builtin.blockinfile:
       dest: /root/.ssh/known_hosts
       create: yes
-      mode: 0600
+      mode: "0600"
       marker: "# {mark}: cluster host key for joining"
       content: "{{ _pve_cluster_host_addresses }} {{ _pve_cluster_host_key }}"
   when: "pve_manage_ssh | bool"
@@ -30,6 +30,6 @@
   ansible.builtin.blockinfile:
     dest: /root/.ssh/known_hosts
     state: absent
-    mode: 0600
+    mode: "0600"
     marker: "# {mark}: cluster host key for joining"
   when: "pve_manage_ssh | bool"
