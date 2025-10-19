@@ -27,13 +27,6 @@ With clustering enabled, this role does (or allows you to do) the following:
 
 WARNING: Support for servers provisioned using the Proxmox ISO installer is limited. Use Debian as your base.
 
-## Support/Contributing
-
-For support or if you'd like to contribute to this role but want guidance, feel
-free to join this Discord server: https://discord.gg/cjqr6Fg. Please note, this
-is an temporary invite, so you'll need to wait for @lae to assign you a role,
-otherwise Discord will remove you from the server when you logout.
-
 ## Quickstart
 
 The primary goal for this role is to configure and manage a
