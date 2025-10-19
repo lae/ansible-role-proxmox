@@ -8,6 +8,7 @@
   ansible.builtin.file:
     path: "/etc/pve/domains.cfg"
     state: "touch"
+    mode: "0640"
   when:
     - not _domains_cfg.stat.exists
 

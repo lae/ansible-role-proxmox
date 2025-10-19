@@ -213,6 +213,7 @@
       Pin: version {{ pve_default_kernel_version }}
       Pin-Priority: 1000
     dest: /etc/apt/preferences.d/proxmox-default-kernel
+    mode: "0644"
   when: pve_default_kernel_version is defined
 
 - name: Ensure preferences exist for kernel pinning only if needed

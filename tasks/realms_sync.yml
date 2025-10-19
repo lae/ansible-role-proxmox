@@ -39,6 +39,7 @@
       {{ groups_before.stdout | from_json | sort(attribute='groupid') | to_yaml }}
       {{ users_before.stdout | from_json | sort(attribute='userid') | to_yaml }}
     dest: "{{ pre_sync_content.path }}"
+    mode: "0600"
   changed_when: false
   when: not ansible_check_mode
 
@@ -48,6 +49,7 @@
       {{ groups_after.stdout | from_json | sort(attribute='groupid') | to_yaml }}
       {{ users_after.stdout | from_json | sort(attribute='userid') | to_yaml }}
     dest: "{{ pre_sync_content.path }}"
+    mode: "0600"
   when: not ansible_check_mode
   diff: true
 
