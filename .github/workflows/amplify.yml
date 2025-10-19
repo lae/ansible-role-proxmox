@@ -26,6 +26,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
+        # @amplify-ignore since this requires human approval through the authorize job
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
