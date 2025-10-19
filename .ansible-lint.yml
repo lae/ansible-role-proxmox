@@ -1,0 +1,9 @@
+---
+skip_list:
+  - no-handler
+  - yaml[line-length]
+  - key-order[task]
+
+exclude_paths:
+  - .github/
+  - .travis.yml

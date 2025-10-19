@@ -29,7 +29,7 @@
   ansible.builtin.blockinfile:
     dest: /etc/ssh/ssh_config
     create: yes
-    mode: 0644
+    mode: "0644"
     marker: "# {mark}: PVE host configuration options (managed by ansible)."
     content: |
       {% for host in groups[pve_group] %}
@@ -66,7 +66,7 @@
     state: absent
   notify:
     - reload ssh server configuration
-    
+
 - name: Enable and start SSH server
   ansible.builtin.systemd:
     name: ssh.service
@@ -84,5 +84,5 @@
     regexp: "^Ciphers .*"
     insertbefore: BOF
     create: yes
-    mode: 0644
+    mode: "0644"
     dest: /root/.ssh/config
