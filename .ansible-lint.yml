@@ -1,0 +1,9 @@
+---
+skip_list:
+  - no-handler
+  - yaml[line-length]
+  - name[casing]
+
+exclude_paths:
+  - .github/
+  - .travis.yml
