@@ -2,7 +2,7 @@
 skip_list:
   - no-handler
   - yaml[line-length]
-  - name[casing]
+  - key-order[task]
 
 exclude_paths:
   - .github/
