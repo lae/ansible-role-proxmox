@@ -6,10 +6,10 @@
 
 - name: Identify if the host is already part of a cluster
   ansible.builtin.set_fact:
-    _pve_active_cluster: "{{ _pve_cluster | json_query(query) }}"
-  when: "_pve_cluster | json_query(query) | ternary(true, false)"
+    _pve_active_cluster: "{{ _pve_cluster | json_query(transform) }}"
+  when: "_pve_cluster | json_query(transform) | ternary(true, false)"
   vars:
-    query: "response[?type=='cluster'].name | [0]"
+    transform: "response[?type=='cluster'].name | [0]"
 
 - name: Identify all clusters that the hosts in the specified group may be in
   ansible.builtin.set_fact:
@@ -63,13 +63,13 @@
   proxmox_query:
     query: cluster/status
   register: _pve_cluster_init
-  until: "(_pve_cluster_init | json_query(query)) == 1"
+  until: "(_pve_cluster_init | json_query(transform)) == 1"
   retries: 5
   delay: 5
   when:
     - "inventory_hostname == _init_node"
   vars:
-    query: "response[?type=='cluster'].quorate | [0]"
+    transform: "response[?type=='cluster'].quorate | [0]"
 
 - ansible.builtin.include_tasks: pve_add_node.yml
   when:
