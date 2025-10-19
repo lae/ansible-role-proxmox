@@ -2,27 +2,26 @@
 # expects to be called with variable pve_ldap_realm set
 
 - name: Get pre-sync state of groups
-  ansible.builtin.shell: pveum group list --output-format json-pretty
+  ansible.builtin.command: pveum group list --output-format json-pretty
   register: groups_before
   changed_when: false
 
 - name: Get pre-sync state of users
-  ansible.builtin.shell: pveum user list --output-format json-pretty
+  ansible.builtin.command: pveum user list --output-format json-pretty
   register: users_before
   changed_when: false
 
 - name: "Sync ldap-based realm {{ pve_ldap_realm.name }}"
-  ansible.builtin.shell: |
-    pveum realm sync {{ pve_ldap_realm.name }}
+  ansible.builtin.command: "pveum realm sync {{ pve_ldap_realm.name }}"
   changed_when: false
 
 - name: Get post-sync state of groups
-  ansible.builtin.shell: pveum group list --output-format json-pretty
+  ansible.builtin.command: pveum group list --output-format json-pretty
   register: groups_after
   changed_when: false
 
 - name: Get post-sync state of users
-  ansible.builtin.shell: pveum user list --output-format json-pretty
+  ansible.builtin.command: pveum user list --output-format json-pretty
   register: users_after
   changed_when: false
 
