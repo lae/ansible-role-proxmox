@@ -26,8 +26,8 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Amplify Runner
-        uses: amplify-security/runner-action@926f003f3c9695a93cbc4e2f1e64eb784dcacbfc  # v0.2.0
+        uses: amplify-security/runner-action@926f003f3c9695a93cbc4e2f1e64eb784dcacbfc # v0.2.0
