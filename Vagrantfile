@@ -1,5 +1,5 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "debian/bullseye64"
+  config.vm.box = "debian/bookworm64"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.memory = 2560
