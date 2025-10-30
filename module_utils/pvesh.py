@@ -2,6 +2,7 @@
 
 import subprocess
 import json
+import os
 import re
 
 from ansible.module_utils._text import to_text
@@ -31,7 +32,9 @@ def run_command(handler, resource, **params):
         for value in values:
             command += ["--{}".format(parameter), "{}".format(value)]
 
-    pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd_env = dict(os.environ)
+    cmd_env["LC_ALL"] = "C"
+    pipe = subprocess.Popen(command, env=cmd_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (result, stderr) = pipe.communicate()
     result = to_text(result)
     stderr = to_text(stderr).splitlines()

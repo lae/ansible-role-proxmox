@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import glob
+import os
 import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
@@ -39,12 +40,14 @@ def main():
     booted_kernel_packages = ""
     old_kernel_packages = []
     if params['lookup_packages']:
+        dpkg_env = dict(os.environ)
+        dpkg_env["LC_ALL"] = "C"
         for kernel in kernels:
             # Identify the currently booted kernel and unused old kernels by
             # querying which packages own directories in /lib/modules
             try:
                 sp = subprocess.run(["dpkg-query", "-S", kernel],
-                                    check=True, capture_output=True)
+                                    check=True, capture_output=True, env=dpkg_env)
             except subprocess.CalledProcessError as e:
                 # Ignore errors about directories not associated with a package
                 if e.stderr.startswith(b"dpkg-query: no path found matching"):
