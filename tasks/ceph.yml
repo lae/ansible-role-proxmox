@@ -139,7 +139,9 @@
           - item.m is integer and item.m > 0
         fail_msg: "When erasure-coding is used, k and m must be defined and greater than 0 for pool {{ item.name }}"
         success_msg: "Required variables 'k' and 'm' are defined and valid for pool {{ item.name }}"
-      when: "item.protection_strategy == 'erasure-coding'"
+      when:
+        - item.protection_strategy is defined
+        - "item.protection_strategy == 'erasure-coding'"
       with_items: '{{ pve_ceph_pools }}'
 
     - name: Create Ceph Pools
