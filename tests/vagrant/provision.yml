@@ -1,12 +1,12 @@
 ---
 - hosts: all
-  become: True
+  become: true
   pre_tasks:
     - name: Copy apt proxy detection script
       ansible.builtin.template:
         src: detect-http-proxy.j2
         dest: /etc/apt/detect-http-proxy
-        mode: 0755
+        mode: "0755"
     - name: Configure apt to use detection script
       ansible.builtin.copy:
         content: "Acquire::Retries 0;\nAcquire::http::ProxyAutoDetect \"/etc/apt/detect-http-proxy\";"
@@ -18,6 +18,14 @@
       ansible.builtin.copy:
         src: files/interfaces
         dest: /etc/network/interfaces
+    - name: Generate alternative locale
+      community.general.locale_gen:
+        name: ja_JP.UTF-8
+        state: present
+    - name: Change locale
+      ansible.builtin.copy:
+        content: "LANG=ja_JP.UTF-8"
+        dest: /etc/default/locale
   roles:
     - geerlingguy.ntp
     - lae.proxmox
