@@ -1,6 +1,6 @@
 ---
 - name: Remove ZFS modprobe configuration
-  file:
+  ansible.builtin.file:
     dest: /etc/modprobe.d/zfs.conf
     state: absent
   when: >
@@ -9,7 +9,7 @@
     (not pve_zfs_enabled | bool)
 
 - name: Disable loading of ZFS module on init
-  file:
+  ansible.builtin.file:
     dest: /etc/modules-load.d/zfs.conf
     state: absent
   when: "not pve_zfs_enabled | bool"
@@ -21,26 +21,26 @@
       when: pve_watchdog is not defined or pve_watchdog | lower == 'none'
 
     - name: Re-enable nmi_watchdog via GRUB config
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: /etc/default/grub
         line: 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX nmi_watchdog=0"'
         state: absent
       notify: update-grub
 
     - name: Remove ipmi_watchdog modprobe configuration
-      file:
+      ansible.builtin.file:
         dest: /etc/modprobe.d/ipmi_watchdog.conf
         state: absent
 
     - name: Load watchdog driver
-      modprobe:
+      community.general.modprobe:
         name: "{{ pve_watchdog }}"
 
     - name: Set PVE HA Manager watchdog to the configured driver
-      copy:
+      ansible.builtin.copy:
         content: "WATCHDOG_MODULE={{ pve_watchdog }}"
         dest: /etc/default/pve-ha-manager
-        mode: 0640
+        mode: "0640"
       notify:
         - restart watchdog-mux
   when: "pve_watchdog != 'ipmi'"

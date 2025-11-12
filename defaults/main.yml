@@ -1,6 +1,11 @@
 ---
 # defaults file for ansible-role-proxmox
 pve_group: proxmox
+pve_repository:
+  uris: http://download.proxmox.com/debian/pve
+  suites: "{{ ansible_distribution_release }}"
+  components: pve-no-subscription
+# Repo configuration for Proxmox VE < 9
 pve_repository_line: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
 pve_remove_subscription_warning: true
 pve_extra_packages: []
@@ -28,8 +33,18 @@ pve_zfs_enabled: no
 # pve_zfs_zed_email: "email address for zfs events"
 pve_zfs_create_volumes: []
 pve_ceph_enabled: false
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }} {{ ansible_distribution_release }} {{ pve_ceph_debian_component }}"
-pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}"
+pve_ceph_repository:
+  uris: http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
+  suites: "{{ ansible_distribution_release }}"
+  components: "{{ pve_ceph_debian_component }}"
+# Ceph Repo configuration for Proxmox VE < 9
+pve_ceph_repository_line: >-
+  deb http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
+  {{ ansible_distribution_release }}
+  {{ pve_ceph_debian_component }}
+pve_ceph_network: >-
+  {{ (ansible_default_ipv4.network + '/' + ansible_default_ipv4.netmask) |
+    ansible.utils.ipaddr('net') }}
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
 pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}"
@@ -43,7 +58,9 @@ pve_ceph_crush_rules: []
 pve_cluster_enabled: no
 pve_cluster_clustername: "{{ pve_group }}"
 pve_manage_hosts_enabled: yes
-pve_cluster_addr0: "{{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}"
+pve_cluster_addr0: >-
+  {{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined
+    else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}
 # pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
 # pve_cluster_addr0_priority: 0
 # pve_cluster_addr1_priority: 1

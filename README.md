@@ -3,10 +3,10 @@
 lae.proxmox
 ===========
 
-Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x on Debian servers.
+Installs and configures Proxmox Virtual Environment 6.x/7.x/8.x/9.x on Debian servers.
 
 This role allows you to deploy and manage single-node PVE installations and PVE
-clusters (3+ nodes) on Debian Buster (10) and Bullseye (11) and Bookworm (12). You are able to
+clusters (3+ nodes) on Debian Buster (10), Bullseye (11), Bookworm (12) and Trixie (13). You are able to
 configure the following with the assistance of this role:
 
   - PVE RBAC definitions (roles, groups, users, and access control lists)
@@ -26,13 +26,6 @@ With clustering enabled, this role does (or allows you to do) the following:
   - Create and manage high availability groups
 
 WARNING: Support for servers provisioned using the Proxmox ISO installer is limited. Use Debian as your base.
-
-## Support/Contributing
-
-For support or if you'd like to contribute to this role but want guidance, feel
-free to join this Discord server: https://discord.gg/cjqr6Fg. Please note, this
-is an temporary invite, so you'll need to wait for @lae to assign you a role,
-otherwise Discord will remove you from the server when you logout.
 
 ## Quickstart
 
@@ -80,7 +73,7 @@ file containing a list of hosts).
 Once complete, you should be able to access your Proxmox VE instance at
 `https://$SSH_HOST_FQDN:8006`.
 
-## Deploying a fully-featured PVE 8.x cluster
+## Deploying a fully-featured PVE 9.x cluster
 
 Create a new playbook directory. We call ours `lab-cluster`. Our playbook will
 eventually look like this, but yours does not have to follow all of the steps:
@@ -386,6 +379,12 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
+# Proxmox repository configuration for PVE 9 and above
+pve_repository:
+  uris: # List of URIs for the Proxmox repository
+  suites: # List of suites for the Proxmox repository
+  components: # List of components for the Proxmox repository
+# Proxmox repository configuration for PVE 8 and below
 pve_repository_line: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
@@ -413,6 +412,12 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
+# Proxmox Ceph repository configuration for PVE 9 and above
+pve_ceph_repository:
+  uris: # List of URIs for the Ceph repository
+  suites: # List of suites for the Ceph repository
+  components: # List of components for the Ceph repository
+# Proxmox Ceph repository configuration for PVE 8 and below
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bookworm main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
@@ -466,7 +471,7 @@ pve_datacenter_cfg:
   keyboard: en-us
 ```
 
-You can also configure [HA manager groups][ha-group]:
+You can also configure [HA manager groups][ha-group] (deprecated since Proxmox VE 9.0):
 ```
 pve_cluster_ha_groups: [] # List of HA groups to create in PVE.
 ```
@@ -784,6 +789,23 @@ pve_ceph_pools:
     application: rbd
     autoscale_mode: "on"
     storage: true
+# This Ceph pool uses erasure-coding (EC) instead of replicated (default)
+  - name: hydra-rbd1
+    # For erasure code: size, min_size, and rule will be used for the
+    # replicated *metadata* pool, but *not* for the erasure coded data pool.
+    # See https://pve.proxmox.com/wiki/Deploy_Hyper-Converged_Ceph_Cluster
+    size: 3
+    min_size: 2
+    autoscale_mode: "warn"
+    storage: true
+    application: rbd
+    pgs: 1024
+    # Using "erasure" will use pveceph to create a new error coding (EC) pool
+    # plus the needed replicated pool to store the RBD omap and other metadata.
+    # In the end, there will be a <pool name>-data and <pool name>-metadata pool. 
+    protection_strategy: "erasure-coding" # "replicated" (default) or "erasure-coding"
+    k: 3 # Erasure code data blocks, only valid and required for EC pool
+    m: 2 # Erasure code parity blocks, only valid and required for EC pool
 pve_ceph_fs:
 # A CephFS filesystem not defined as a Proxmox storage
   - name: backup
