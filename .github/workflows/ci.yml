@@ -1,18 +1,15 @@
 ---
 name: CI
 
-"on":
+on:
   pull_request: {}
   push:
     branches: ["main"]
   workflow_dispatch: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
-
-defaults:
-  run:
-    shell: bash
 
 permissions:
   contents: read
@@ -38,51 +35,15 @@ jobs:
               - 'library/**'
               - 'module_utils/**'
               - 'Vagrantfile'
-  vagrant-deploy:
+  prepare:
     needs: ["changes"]
     if: ${{ needs.changes.outputs.role == 'true' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
         with:
           root-reserve-mb: 10240
           build-mount-path: /var/lib/libvirt/images
       - uses: actions/checkout@v4
-      - run: sudo apt install nfs-kernel-server
       - run: sudo pipx inject ansible-core jmespath netaddr
       - run: ansible-galaxy install geerlingguy.ntp
-      # yamllint disable rule:line-length
-      - name: setup vagrant
-        run: |
-          # Copyright The containerd Authors
-          #
-          # Licensed under the Apache License, Version 2.0 (the "License");
-          # you may not use this file except in compliance with the License.
-          # You may obtain a copy of the License at
-          #
-          #     http://www.apache.org/licenses/LICENSE-2.0
-          #
-          # Unless required by applicable law or agreed to in writing, software
-          # distributed under the License is distributed on an "AS IS" BASIS,
-          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-          # See the License for the specific language governing permissions and
-          # limitations under the License.
-          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-          sudo sed -i 's/^# deb-src/deb-src/' /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install -y libvirt-daemon libvirt-daemon-system vagrant
-          sudo systemctl enable --now libvirtd
-          sudo usermod -aG libvirt ${USER}
-          sudo apt-get build-dep -y vagrant ruby-libvirt
-          sudo apt-get install -y --no-install-recommends libxslt-dev libxml2-dev libvirt-dev ruby-bundler ruby-dev zlib1g-dev
-          vagrant plugin install vagrant-libvirt
-      # yamllint enable rule:line-length
-      - run: >
-          sudo -E -u ${USER}
-          ANSIBLE_STDOUT_CALLBACK=debug
-          ANSIBLE_DISPLAY_SKIPPED_HOSTS=no
-          ANSIBLE_DISPLAY_OK_HOSTS=no
-          DEBIAN_FRONTEND=noninteractive
-          PATH=$PIPX_BIN_DIR:$PATH
-          vagrant up --no-tty || true
