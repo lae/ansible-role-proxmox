@@ -1,0 +1,37 @@
+:role-author: lae
+:role-name: proxmox
+:role: {role-author}.{role-name}
+:gh-name: {role-author}/ansible-role-{role-name}
+= {role}
+:toc:
+:toc-placement: preamble
+ifdef::env-github[]
+:tip-caption: :bulb:
+:warning-caption: :warning:
+
+image:https://img.shields.io/badge/role-{role}-blue?style=for-the-badge[Ansible Galaxy Role,link=https://galaxy.ansible.com/{role-author}/{role-name}]
+endif::[]
+
+Proxmox Virtual Environment (6、7、8板)の構築や設定管理を支えるプロジェクト。
+
+このAnsibleロールを介してPVEの独立ノードやクラスター(3ノード以上)をDebian 10~12にデプロイや色んな設定管理をできます。
+まとめに、以下の設定や機能の管理は可能です:
+
+* PVEのロールベースアクセス制御設定(ロール、グループ、ユーザーアカウント、アクセス制御リスト)
+* PVEのストレージ設定
+* ``datacenter.cfg``の中身
+* ProxmoxのWebインターフェースのSSL証明書
+* PVEパッケージ・リポジトリの設定(例:``pve-no-subscription``か``pve-enterprise``の選択)
+* ウォッチドッグ・モジュール(IPMIまたはNMI)の設定と選択と伴うpve-ha-managerのコンフィグ
+* ZFSモジュールのインストール、ZED通知メール設定
+
+クラスタリングを有効にすると、下記も行うことができます。
+
+* すべてのノードがrootユーザーとして他のクラスター内ノードにSSHできるようの設定
+* 新規PVEクラスターの初期化、または既存クラスターの途中管理
+* 新規ノードを生成しクラスターに追加
+* PVEクラスターのCeph構築
+* HA構成グループの生成や管理
+
+WARNING: Proxmox本家のISOインストーラーで構築されたサーバーは非対応です。
+Debianベースを利用してください。
