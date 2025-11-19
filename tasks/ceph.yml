@@ -180,7 +180,7 @@
   args:
     creates: "/var/lib/ceph/mds/ceph-{{ ansible_hostname }}"
   register: _ceph_mds_create
-  when: "inventory_hostname in groups[pve_ceph_mds_group] and pve_ceph_fs"
+  when: "inventory_hostname in groups[pve_ceph_mds_group] and pve_ceph_fs | length > 0"
 
 - name: Wait for standby MDS
   ansible.builtin.command: ceph mds stat -f json
