@@ -164,6 +164,7 @@
         components: "{{ pve_repository.components }}"
         signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
         state: present
+        install_python_debian: true
       register: _pve_repo
 
     - name: Add Proxmox Ceph repository
@@ -175,6 +176,7 @@
         components: "{{ pve_ceph_repository.components }}"
         signed_by: /etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg
         state: present
+        install_python_debian: true
       register: _pve_ceph_repo
       when: "pve_ceph_enabled | bool"
 

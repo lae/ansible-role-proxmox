@@ -19,6 +19,7 @@
     uris: "{{ item.uris }}"
     suites: "{{ ansible_distribution_release }}"
     components: "{{ item.components }}"
+    install_python_debian: true
   loop:
     - { name: 'pve-enterprise', uris: 'https://enterprise.proxmox.com/debian/pve', components: ['pve-enterprise'] }
     - { name: 'ceph', uris: 'https://enterprise.proxmox.com/debian/{{ pve_ceph_debian_component }}', components: ['enterprise'] }
