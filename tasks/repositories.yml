@@ -1,5 +1,23 @@
-
 ---
+- name: Convert pve_repository_line to pve_repository format
+  ansible.builtin.set_fact:
+    pve_repository:
+      uris: "{{ (pve_repository_line | trim | split(' '))[1] }}"
+      suites: "{{ (pve_repository_line | trim | split(' '))[2] }}"
+      components: "{{ (pve_repository_line | trim | split(' '))[3:] | join(' ') }}"
+  when:
+    - pve_repository_line is defined
+
+- name: Convert pve_ceph_repository_line to pve_ceph_repository format
+  ansible.builtin.set_fact:
+    pve_ceph_repository:
+      uris: "{{ (pve_ceph_repository_line | trim | split(' '))[1] }}"
+      suites: "{{ (pve_ceph_repository_line | trim | split(' '))[2] }}"
+      components: "{{ (pve_ceph_repository_line | trim | split(' '))[3:] | join(' ') }}"
+  when:
+    - pve_ceph_repository_line is defined
+    - pve_ceph_enabled | bool
+
 - name: Add PVE repository (deb822)
   ansible.builtin.deb822_repository:
     name: proxmox
