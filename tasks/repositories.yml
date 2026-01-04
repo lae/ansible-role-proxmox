@@ -50,6 +50,7 @@
       ansible.builtin.command:
         mv /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.sources
       when: _pve_ceph_repo_old_file.stat.exists
+      changed_when: _pve_ceph_repo_old_file.stat.exists | bool
   when:
     - pve_ceph_enabled | bool
 
@@ -80,7 +81,7 @@
 
 - name: Update repositories
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
   when: _pve_repo is changed or _pve_ceph_repo is changed
 
 - name: Ensure PVE enterprise repository is absent (deb822)
@@ -100,5 +101,3 @@
   when:
     - ansible_distribution_major_version | int < 12
     - pve_repository.components != "pve-enterprise"
-
-
