@@ -4,7 +4,7 @@
     pve_repository:
       uris: "{{ (pve_repository_line | trim | split(' '))[1] }}"
       suites: "{{ (pve_repository_line | trim | split(' '))[2] }}"
-      components: "{{ (pve_repository_line | trim | split(' '))[3:] | join(' ') }}"
+      components: "{{ (pve_repository_line | trim | split(' '))[3:] }}"
   when:
     - pve_repository_line is defined
 
@@ -13,7 +13,7 @@
     pve_ceph_repository:
       uris: "{{ (pve_ceph_repository_line | trim | split(' '))[1] }}"
       suites: "{{ (pve_ceph_repository_line | trim | split(' '))[2] }}"
-      components: "{{ (pve_ceph_repository_line | trim | split(' '))[3:] | join(' ') }}"
+      components: "{{ (pve_ceph_repository_line | trim | split(' '))[3:] }}"
   when:
     - pve_ceph_repository_line is defined
     - pve_ceph_enabled | bool
