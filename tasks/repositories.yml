@@ -29,16 +29,6 @@
     state: present
     enabled: true
   register: _pve_repo
-  when:
-    - ansible_distribution_major_version | int >= 12
-
-- name: Add PVE repository (legacy)
-  ansible.builtin.apt_repository:
-    repo: "deb {{ pve_repository.uris }} {{ pve_repository.suites }} {{ pve_repository.components }}"
-    state: present
-    filename: proxmox
-  register: _pve_repo
-  when: ansible_distribution_major_version | int < 12
 
 - name: Ensure Ceph repository (PVE 8 and below) is compatible with new filename (PVE 9)
   ansible.builtin.command:
@@ -64,17 +54,6 @@
     enabled: true
   register: _pve_ceph_repo
   when:
-    - ansible_distribution_major_version | int >= 12
-    - pve_ceph_enabled | bool
-
-- name: Add Ceph repository (legacy)
-  ansible.builtin.apt_repository:
-    repo: "deb {{ pve_ceph_repository.uris }} {{ pve_ceph_repository.suites }} {{ pve_ceph_repository.components }}"
-    state: present
-    filename: ceph
-  register: _pve_ceph_repo
-  when:
-    - ansible_distribution_major_version | int < 12
     - pve_ceph_enabled | bool
 
 - name: Update repositories
@@ -88,7 +67,6 @@
     enabled: false
     state: absent
   when:
-    - ansible_distribution_major_version | int >= 12
     - pve_repository.components != "pve-enterprise"
 
 - name: Ensure PVE enterprise repository is absent (legacy)
@@ -97,5 +75,4 @@
     state: absent
     filename: pve-enterprise
   when:
-    - ansible_distribution_major_version | int < 12
     - pve_repository.components != "pve-enterprise"
