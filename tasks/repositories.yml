@@ -41,16 +41,14 @@
   when: ansible_distribution_major_version | int < 12
 
 - name: Ensure Ceph repository (PVE 8 and below) is compatible with new filename (PVE 9)
-  block:
-    - name: Check if old Ceph repository file exists
-      ansible.builtin.stat:
-        path: /etc/apt/sources.list.d/ceph.list
-      register: _pve_ceph_repo_old_file
-    - name: Rename old Ceph repository file to new filename
-      ansible.builtin.command:
-        mv /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.sources
-      when: _pve_ceph_repo_old_file.stat.exists
-      changed_when: _pve_ceph_repo_old_file.stat.exists | bool
+  ansible.builtin.command:
+    mv "{{ _pve_ceph_repo_file_old }}" "{{ _pve_ceph_repo_file }}"
+  args:
+    creates: "{{ _pve_ceph_repo_file }}"
+    removes: "{{ _pve_ceph_repo_file_old }}"
+  vars:
+    _pve_ceph_repo_file: /etc/apt/sources.list.d/ceph.sources
+    _pve_ceph_repo_file_old: /etc/apt/sources.list.d/ceph.list
   when:
     - pve_ceph_enabled | bool
 
