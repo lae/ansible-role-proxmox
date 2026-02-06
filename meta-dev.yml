@@ -1,0 +1,10 @@
+names:
+  service: infra-bm-role-proxmox
+
+project:
+  squad: infra-bare-metal-squad
+  primary_maintainer: daan
+  public_api: false
+  private_api: false
+  dependencies: []
+  processes_pii: false
