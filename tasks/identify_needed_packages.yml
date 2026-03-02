@@ -14,7 +14,7 @@
 
 - name: Stage Ceph packages if Ceph is enabled
   ansible.builtin.set_fact:
-    _pve_install_packages: "{{ _pve_install_packages | union(['ceph', 'ceph-common', 'ceph-mds', 'ceph-fuse', 'gdisk']) }}"
+    _pve_install_packages: "{{ _pve_install_packages | union(['ceph', 'ceph-common', 'ceph-mds', 'ceph-fuse', 'ceph-volume', 'gdisk']) }}"
   when: "pve_ceph_enabled | bool"
 
 - name: Stage any extra packages the user has specified

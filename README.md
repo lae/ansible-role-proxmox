@@ -379,13 +379,12 @@ serially during a maintenance period.) It will also enable the IPMI watchdog.
 ```
 [variable]: [default] #[description/purpose]
 pve_group: proxmox # host group that contains the Proxmox hosts to be clustered together
-# Proxmox repository configuration for PVE 9 and above
+# Proxmox repository configuration
 pve_repository:
-  uris: # List of URIs for the Proxmox repository
-  suites: # List of suites for the Proxmox repository
-  components: # List of components for the Proxmox repository
-# Proxmox repository configuration for PVE 8 and below
-pve_repository_line: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription" # apt-repository configuration - change to enterprise if needed (although TODO further configuration may be needed)
+  uris: http://download.proxmox.com/debian/pve
+  suites: "{{ ansible_distribution_release }}"
+  components: pve-no-subscription # change to enterprise if needed (although TODO further configuration may be needed)
+# pve_repository_line: "" # apt-repository configuration, backward compatibility, prefer to use pve_repository instead
 pve_remove_subscription_warning: true # patches the subscription warning messages in proxmox if you are using the community edition
 pve_extra_packages: [] # Any extra packages you may want to install, e.g. ngrep
 pve_run_system_upgrades: false # Let role perform system upgrades
@@ -412,13 +411,12 @@ pve_zfs_enabled: no # Specifies whether or not to install and configure ZFS pack
 # pve_zfs_zed_email: "" # Should be set to an email to receive ZFS notifications
 pve_zfs_create_volumes: [] # List of ZFS Volumes to create (to use as PVE Storages). See section on Storage Management.
 pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph packages. See below for an example configuration.
-# Proxmox Ceph repository configuration for PVE 9 and above
+# Proxmox Ceph Repository
 pve_ceph_repository:
-  uris: # List of URIs for the Ceph repository
-  suites: # List of suites for the Ceph repository
-  components: # List of components for the Ceph repository
-# Proxmox Ceph repository configuration for PVE 8 and below
-pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bookworm main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
+  uris: http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
+  suites: "{{ ansible_distribution_release }}"
+  components: "{{ pve_ceph_debian_component }}"
+#pve_ceph_repository_line: "" # apt-repository configuration, backward compatibility, prefer to use pve_ceph_repository instead
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ansible.utils.ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
 pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
@@ -438,7 +436,7 @@ pve_storages: [] # List of storages to manage in PVE. See section on Storage Man
 pve_metric_servers: [] # List of metric servers to configure in PVE.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
 pve_domains_cfg: [] # List of realms to use as authentication sources in the PVE domains.cfg config file.
-pve_no_log: false # Set this to true in production to prevent leaking of storage credentials in run logs. (may be used in other tasks in the future)
+pve_no_log: true # Set this to false if you need to debug the content via run logs for certain configuration tasks, such as for storage or SSL.
 ```
 
 To enable clustering with this role, configure the following variables appropriately:

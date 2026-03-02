@@ -46,7 +46,7 @@
     owner: root
     group: www-data
     mode: "0700"
-  when: pve_ldap_realms_with_bind_pw | length
+  when: pve_ldap_realms_with_bind_pw | length > 0
 
 - name: Ensure ldap-based realm secret files exists
   ansible.builtin.file:

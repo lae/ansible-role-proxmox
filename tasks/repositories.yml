@@ -1,0 +1,78 @@
+---
+- name: Convert pve_repository_line to pve_repository format
+  ansible.builtin.set_fact:
+    pve_repository:
+      uris: "{{ (pve_repository_line | trim | split(' '))[1] }}"
+      suites: "{{ (pve_repository_line | trim | split(' '))[2] }}"
+      components: "{{ (pve_repository_line | trim | split(' '))[3:] }}"
+  when:
+    - pve_repository_line is defined
+
+- name: Convert pve_ceph_repository_line to pve_ceph_repository format
+  ansible.builtin.set_fact:
+    pve_ceph_repository:
+      uris: "{{ (pve_ceph_repository_line | trim | split(' '))[1] }}"
+      suites: "{{ (pve_ceph_repository_line | trim | split(' '))[2] }}"
+      components: "{{ (pve_ceph_repository_line | trim | split(' '))[3:] }}"
+  when:
+    - pve_ceph_repository_line is defined
+    - pve_ceph_enabled | bool
+
+- name: Add PVE repository (deb822)
+  ansible.builtin.deb822_repository:
+    name: proxmox
+    types: deb
+    uris: "{{ pve_repository.uris }}"
+    suites: "{{ pve_repository.suites }}"
+    components: "{{ pve_repository.components }}"
+    signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    state: present
+    enabled: true
+  register: _pve_repo
+
+- name: Ensure Ceph repository (PVE 8 and below) is compatible with new filename (PVE 9)
+  ansible.builtin.command:
+    mv "{{ _pve_ceph_repo_file_old }}" "{{ _pve_ceph_repo_file }}"
+  args:
+    creates: "{{ _pve_ceph_repo_file }}"
+    removes: "{{ _pve_ceph_repo_file_old }}"
+  vars:
+    _pve_ceph_repo_file: /etc/apt/sources.list.d/ceph.sources
+    _pve_ceph_repo_file_old: /etc/apt/sources.list.d/ceph.list
+  when:
+    - pve_ceph_enabled | bool
+
+- name: Add Ceph repository (deb822)
+  ansible.builtin.deb822_repository:
+    name: ceph
+    types: deb
+    uris: "{{ pve_ceph_repository.uris }}"
+    suites: "{{ pve_ceph_repository.suites }}"
+    components: "{{ pve_ceph_repository.components }}"
+    signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    state: present
+    enabled: true
+  register: _pve_ceph_repo
+  when:
+    - pve_ceph_enabled | bool
+
+- name: Update repositories
+  ansible.builtin.apt:
+    update_cache: true
+  when: _pve_repo is changed or _pve_ceph_repo is changed
+
+- name: Ensure PVE enterprise repository is absent (deb822)
+  ansible.builtin.deb822_repository:
+    name: pve-enterprise
+    enabled: false
+    state: absent
+  when:
+    - pve_repository.components != "pve-enterprise"
+
+- name: Ensure PVE enterprise repository is absent (legacy)
+  ansible.builtin.apt_repository:
+    repo: "deb {{ pve_repository.uris }} {{ pve_repository.suites }} pve-enterprise"
+    state: absent
+    filename: pve-enterprise
+  when:
+    - pve_repository.components != "pve-enterprise"
