@@ -75,4 +75,4 @@ pve_metric_servers: []
 pve_ssh_port: 22
 pve_manage_ssh: true
 pve_hooks: {}
-pve_no_log: false
+pve_no_log: true
