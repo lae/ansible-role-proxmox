@@ -4,6 +4,7 @@
     content: "{{ item.content }}"
     dest: "{{ item.dest }}"
     mode: "0640"
+  no_log: true
   with_items:
     - dest: "/etc/ssl/pveproxy-ssl.key"
       content: "{{ pve_ssl_private_key }}"
