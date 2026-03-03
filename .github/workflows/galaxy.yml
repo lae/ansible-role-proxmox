@@ -1,5 +1,5 @@
 ---
-name: Publish to Galaxy
+name: publish role on galaxy
 
 on:
   push:
@@ -11,11 +11,9 @@ on:
 
 jobs:
   build:
-    name: Publish to Ansible Galaxy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: robertdebock/galaxy-action@7d89099e09f4385ec4b53eb58c0d120f1ad806dd # 1.2.1
+      - uses: hspaans/ansible-galaxy-action@e8e53e52c543ae3b0082a3eb46ae326fa044affb # v2.1.1
         with:
-          galaxy_api_key: ${{ secrets.MILKY_WAY }}
-          git_branch: main
+          api_key: ${{ secrets.MILKY_WAY }}
