@@ -124,7 +124,10 @@
     src: "{{ pve_repository.key }}"
     dest: "{{ pve_repository.signed_by }}"
     mode: "0644"
-  when: "ansible_distribution_major_version | int >= 12"
+  when:
+    - ansible_distribution_major_version | int >= 12
+    - pve_repository.key is defined
+    - pve_repository.key | length > 0
 
 - name: Trust Ceph packaging key on Debian >= 12
   ansible.builtin.copy:
@@ -134,6 +137,8 @@
   when:
     - ansible_distribution_major_version | int >= 12
     - pve_ceph_enabled | bool
+    - pve_ceph_repository.key is defined
+    - pve_ceph_repository.key | length > 0
 
 - name: Remove os-prober package
   ansible.builtin.apt:
