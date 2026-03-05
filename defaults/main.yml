@@ -7,6 +7,7 @@ pve_repository:
   suites: "{{ ansible_distribution_release }}"
   components: pve-no-subscription
   signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+  key: "proxmox-release-{{ ansible_distribution_release }}.gpg"
 # pve_repository_line: ""
 pve_remove_subscription_warning: true
 pve_extra_packages: []
@@ -40,6 +41,7 @@ pve_ceph_repository:
   suites: "{{ ansible_distribution_release }}"
   components: "{{ pve_ceph_debian_component }}"
   signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+  key: "proxmox-release-{{ ansible_distribution_release }}.gpg"
 # pve_ceph_repository_line: ""
 pve_ceph_network: >-
   {{ (ansible_default_ipv4.network + '/' + ansible_default_ipv4.netmask) |

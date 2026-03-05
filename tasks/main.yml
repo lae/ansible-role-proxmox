@@ -119,12 +119,21 @@
     state: present
   when: "ansible_distribution_major_version | int < 12"
 
-- name: Trust Proxmox' packaging key on Debian >= 12
+- name: Trust PVE packaging key on Debian >= 12
   ansible.builtin.copy:
-    src: "proxmox-release-{{ ansible_distribution_release }}.gpg"
-    dest: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    src: "{{ pve_repository.key }}"
+    dest: "{{ pve_repository.signed_by }}"
     mode: "0644"
   when: "ansible_distribution_major_version | int >= 12"
+
+- name: Trust Ceph packaging key on Debian >= 12
+  ansible.builtin.copy:
+    src: "{{ pve_ceph_repository.key }}"
+    dest: "{{ pve_ceph_repository.signed_by }}"
+    mode: "0644"
+  when:
+    - ansible_distribution_major_version | int >= 12
+    - pve_ceph_enabled | bool
 
 - name: Remove os-prober package
   ansible.builtin.apt:
