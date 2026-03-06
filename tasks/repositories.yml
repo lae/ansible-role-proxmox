@@ -87,9 +87,8 @@
     - pve_repository.components != "pve-enterprise"
 
 - name: Ensure PVE enterprise repository is absent (legacy)
-  ansible.builtin.apt_repository:
-    repo: "deb {{ pve_repository.uris }} {{ pve_repository.suites }} pve-enterprise"
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/pve-enterprise.list"
     state: absent
-    filename: pve-enterprise
   when:
     - pve_repository.components != "pve-enterprise"
