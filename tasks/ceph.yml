@@ -93,8 +93,12 @@
               "rule {{ item.name }} {\
               \\g<space>id \\g<id>\
               \\g<space>type \\g<r_type>\
+              {%- if ((pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].min_size | default(False)) -%}\
               \\g<space>min_size {{ (pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].min_size | default(\"\\g<min>\") | trim }}\
+              {%- endif -%}\
+              {%- if ((pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].max_size | default(False)) -%}\
               \\g<space>max_size {{ (pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].max_size | default(\"\\g<max>\") | trim }}\
+              {%- endif -%}\
               {%- if ((pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].class | default(False)) -%}\
                 \\g<space>step take default class {{ (pve_ceph_crush_rules | selectattr(\"name\", \"match\", item.name) | list)[0].class }}\
               {%- else -%}\
