@@ -12,7 +12,7 @@
   changed_when: false
 
 - name: "Sync ldap-based realm {{ pve_ldap_realm.name }}"
-  ansible.builtin.command: "pveum realm sync {{ pve_ldap_realm.name }}"
+  ansible.builtin.command: "pveum realm sync {{ pve_ldap_realm.name }}{% if pve_ldap_realm.sync_extra_opts is defined %} {{ pve_ldap_realm.sync_extra_opts }}{% endif %}"
   changed_when: false
 
 - name: Get post-sync state of groups

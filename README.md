@@ -520,6 +520,7 @@ pve_domains_cfg:
   - name: ldap
     type: ldap
     sync: true
+    sync_extra_opts: "--remove-vanished entry --scope both"
     attributes:
       comment: LDAP authentication
       base_dn: CN=Users,dc=yourdomain,dc=com
