@@ -108,6 +108,7 @@
               \\g<space>step emit\n}"
           loop: "{{ pve_ceph_crush_rules }}"
           register: _crushmap
+          when: not ansible_check_mode
 
         - name: Validate and compress new crushmap
           ansible.builtin.command: crushtool -c crush_map_decompressed -o new_crush_map_compressed

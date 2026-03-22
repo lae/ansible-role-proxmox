@@ -496,6 +496,10 @@ You can set realms / domains as authentication sources in the `domains.cfg` conf
 If this file is not present, only the `Linux PAM` and `Proxmox VE authentication server` realms
 are available. Supported types are `pam`, `pve`, `ad` and `ldap`.
 It’s possible to automatically sync users and groups for LDAP-based realms (LDAP & Microsoft Active Directory) with `sync: true`.
+
+You can also specify extra paremeters for the realm sync using `sync_extra_opts` in the `pve_domains_cfg` config. These opts are appended to the realm sync command.
+The available options are defined in the [Proxmox pveum cli util manual][pveum-realm-sync]
+
 One realm should have the `default: 1` property to mark it as the default:
 
 ```
@@ -520,6 +524,7 @@ pve_domains_cfg:
   - name: ldap
     type: ldap
     sync: true
+    sync_extra_opts: "--remove-vanished entry --scope both"
     attributes:
       comment: LDAP authentication
       base_dn: CN=Users,dc=yourdomain,dc=com
@@ -1016,3 +1021,4 @@ Antoine Thys ([@thystips](https://github.com/thystips)) - Metric Servers Support
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg
 [ceph_volume]: https://github.com/ceph/ceph-ansible/blob/master/library/ceph_volume.py
 [ha-group]: https://pve.proxmox.com/wiki/High_Availability#ha_manager_groups
+[pveum-realm-sync]: https://pve.proxmox.com/pve-docs/pveum.1.html#cli_pveum_realm_sync
