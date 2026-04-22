@@ -31,4 +31,4 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Amplify Runner
-        uses: amplify-security/runner-action@926f003f3c9695a93cbc4e2f1e64eb784dcacbfc # v0.2.0
+        uses: amplify-security/runner-action@81ace61c04209f965bb8af04760c4723e4f98e48 # v0.4.0
