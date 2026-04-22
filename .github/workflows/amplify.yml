@@ -15,14 +15,14 @@ jobs:
     environment:
       ${{ github.event_name == 'pull_request_target' &&
       github.event.pull_request.head.repo.fork && 'external' || 'internal' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - run: true
 
   amplify-security-scan:
     name: Amplify Security Scan
     needs: authorize
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
