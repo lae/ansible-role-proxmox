@@ -1,0 +1,36 @@
+minimumLimaVersion: 2.0.0
+
+base:
+  - template:debian-13
+
+vmType: qemu
+arch: x86_64
+cpus: 2
+memory: 2GiB
+disk: 8GiB
+plain: true
+
+containerd:
+  system: false
+  user: false
+
+networks:
+  - lima: user-v2
+
+ssh:
+  loadDotSSHPubKeys: false
+
+user:
+  name: lima
+  home: /home/lima
+  shell: /bin/bash
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      current_hostname="$(hostname --short)"
+      if [ "${current_hostname}" != "{{.Name}}" ]; then
+        hostnamectl set-hostname "{{.Name}}"
+      fi

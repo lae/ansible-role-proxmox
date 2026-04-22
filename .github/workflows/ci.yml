@@ -1,5 +1,21 @@
 ---
-name: CI
+# Copyright (C) 2026 lae
+#
+# This file is separately licensed under AGPLv3 as part of the suite in tests/lima.
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, version 3.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+name: CI / Cluster Deployment
 
 on:
   pull_request: {}
@@ -20,8 +36,8 @@ jobs:
     outputs:
       role: ${{ steps.filter.outputs.role }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dorny/paths-filter@9d7afb8d214ad99e78fbd4247752c4caed2b6e4c # v4.0.0
         id: filter
         with:
           base: ${{ github.ref }}
@@ -34,16 +50,62 @@ jobs:
               - 'files/**'
               - 'library/**'
               - 'module_utils/**'
-              - 'Vagrantfile'
-  prepare:
+              - 'tests/**'
+
+  lima-deploy:
     needs: ["changes"]
     if: ${{ needs.changes.outputs.role == 'true' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: set shared CI env
+        run: |
+          printf '%s\n' \
+            "DEBIAN_FRONTEND=noninteractive" \
+            "LIMA_HOME=${GITHUB_WORKSPACE}/.lima" \
+            "LIMA_WORKDIR=${RUNNER_TEMP}/ansible-role-proxmox-lima" \
+            >> "$GITHUB_ENV"
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          root-reserve-mb: 10240
-          build-mount-path: /var/lib/libvirt/images
-      - uses: actions/checkout@v4
-      - run: sudo pipx inject ansible-core jmespath netaddr
-      - run: ansible-galaxy install geerlingguy.ntp
+          python-version: "3.14"
+          cache: "pip"
+          cache-dependency-path: "requirements-dev.txt"
+      - name: install Ansible host dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+      - name: install Lima
+        uses: lima-vm/lima-actions/setup@55627e31b78637bf254a8b2a14da8ea7d12564e5 # v1.1.0
+        id: lima-actions-setup
+      - name: cache ~/.cache/lima
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/lima
+          key: lima-${{ steps.lima-actions-setup.outputs.version }}
+      - name: start Lima VM cluster
+        run: tests/lima/run.sh up
+      - name: run PVE provisioning playbook
+        env:
+          ANSIBLE_STDOUT_CALLBACK: debug
+          ANSIBLE_DISPLAY_SKIPPED_HOSTS: "no"
+          ANSIBLE_DISPLAY_OK_HOSTS: "no"
+        run: tests/lima/run.sh provision
+      - name: run test playbook
+        env:
+          ANSIBLE_STDOUT_CALLBACK: default
+          ANSIBLE_DISPLAY_SKIPPED_HOSTS: "yes"
+          ANSIBLE_DISPLAY_OK_HOSTS: "yes"
+        run: tests/lima/run.sh test
+      - name: collect diagnostic logs from Lima VMs/PVE services
+        if: always()
+        run: tests/lima/run.sh collect-logs
+      - name: upload diagnostics artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lima-artifacts
+          path: ${{ runner.temp }}/ansible-role-proxmox-lima/artifacts
+          if-no-files-found: ignore
+      - name: tear down Lima VM cluster
+        if: always()
+        run: tests/lima/run.sh destroy

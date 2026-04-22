@@ -1,5 +1,6 @@
 ---
 - hosts: all
+  become: true
   tasks:
     - name: Ensure Proxmox Web UI returns a successful HTTP response
       uri:
@@ -77,9 +78,15 @@
 
     - name: Check that PVE ACLs exist
       assert:
-        that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
+        that: "(_pve_acl.stdout | from_json | json_query(query)) == expected_acl_count"
       vars:
         query: "length([])"
+        expected_acl_count: >-
+          {{
+            (pve_acls | map(attribute='groups') | map('default', []) | map('length') | sum)
+            +
+            (pve_acls | map(attribute='users') | map('default', []) | map('length') | sum)
+          }}
       run_once: True
 
     - name: Query PVE storages
@@ -111,7 +118,8 @@
 
     - name: Check datacenter.cfg content
       assert:
-        that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
+        that: "'{{ item.key }}: {{ item.value }}' in datacenter_cfg.content | b64decode"
+      loop: "{{ pve_datacenter_cfg | dict2items }}"
 
     - name: Query PVE HA groups
       command: "pvesh get /cluster/ha/groups --output=json"

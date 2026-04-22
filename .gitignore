@@ -12,3 +12,5 @@ fetch/
 .vagrant/
 /.settings/
 **/__pycache__
+
+tests/lima/ssl
