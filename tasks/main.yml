@@ -356,7 +356,7 @@
     name: "{{ item.name }}"
     state: "{{ item.state | default('present') }}"
     # Globally applicable PVE API arguments
-    content: "{{ item.content | default([]) }}"
+    content: "{{ item.content | default(omit) }}"
     disable: "{{ item.disable | default(False) }}"
     nodes: "{{ item.nodes | default(omit) }}"
     type: "{{ item.type }}"
