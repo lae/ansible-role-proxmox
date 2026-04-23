@@ -22,16 +22,11 @@
       register: _pve_realms
       changed_when: False
 
-    - name: Construct realm list
-      set_fact:
-        realm_list: "{{ realm_list | default([]) }} + [ '{{ item.type }}' ]"
-      with_items: "{{ pve_domains_cfg }}"
-
     - name: Check that PVE realms exist
       assert:
-        that: "realm_list is subset(_pve_realms.stdout | from_json | json_query(query))"
+        that: "(pve_domains_cfg | map(attribute='name') | list) is subset(_pve_realms.stdout | from_json | json_query(query))"
       vars:
-        query: "[*].type"
+        query: "[*].realm"
       run_once: True
 
     - name: Check PVE realms configuration
