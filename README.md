@@ -964,24 +964,21 @@ While this error is outside the scope of this role to fix, please open an issue 
 
 ## Developer Notes
 
-When developing new features or fixing something in this role, you can test out
-your changes by using Vagrant (only libvirt is supported currently). The
-playbook can be found in `tests/vagrant` (so be sure to modify group variables
-as needed). Be sure to test any changes on all supported versions of Debian (update the
-Vagrantfile locally to use `debian/bookworm64`, `debian/bullseye64`, or `debian/buster64`) before submitting a PR.
+When developing new features or fixing something in this role, you can test out your changes by using Lima.
+Refer to the documentation under `tests/lima` for this.
 
 You can also specify an apt caching proxy (e.g. `apt-cacher-ng`, and it must
 run on port 3142) with the `APT_CACHE_HOST` environment variable to speed up
 package downloads if you have one running locally in your environment. The
-vagrant playbook will detect whether or not the caching proxy is available and
+provisioner playbook will detect whether or not the caching proxy is available and
 only use it if it is accessible from your network, so you could just
 permanently set this variable in your development environment if you prefer.
 
 For example, you could run the following to show verbose/easier to read output,
 use a caching proxy, and keep the VMs running if you run into an error (so that
-you can troubleshoot it and/or run `vagrant provision` after fixing):
+you can troubleshoot it and/or run `provision` after fixing):
 
-    APT_CACHE_HOST=10.71.71.10 ANSIBLE_STDOUT_CALLBACK=debug vagrant up --no-destroy-on-error
+    APT_CACHE_HOST=10.71.71.10 ANSIBLE_STDOUT_CALLBACK=debug tests/lima/run.sh provision
 
 ## Contributors
 

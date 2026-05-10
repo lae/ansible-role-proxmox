@@ -1,0 +1,165 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: create directory for storing SSL key material
+      file:
+        dest: "{{ ssl_directory }}"
+        state: directory
+
+    - name: write root CA extensions
+      ansible.builtin.copy:
+        dest: "{{ ssl_directory }}/ca.ext"
+        mode: "0644"
+        content: |
+          [v3_ca]
+          basicConstraints=critical,CA:TRUE
+          keyUsage=critical,keyCertSign,cRLSign
+          subjectKeyIdentifier=hash
+          authorityKeyIdentifier=keyid:always,issuer
+
+    - name: generate root CA private key
+      shell: "openssl genrsa -out {{ ssl_ca_key_path }} 2048"
+
+    - name: issue root CA certificate
+      shell: >-
+        openssl req -x509 -new -nodes
+        -key {{ ssl_ca_key_path }}
+        -sha256 -days 1
+        -subj '{{ ssl_subj }}'
+        -out {{ ssl_ca_cert_path }}
+        -extensions v3_ca
+        -config <(cat /etc/ssl/openssl.cnf {{ ssl_directory }}/ca.ext)
+      args:
+        executable: /bin/bash
+
+- hosts: all
+  become: true
+  #serial: 1
+  pre_tasks:
+    - name: wait for cloud-init to finish
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+      register: _cloud_init_status
+      failed_when:
+        - _cloud_init_status.rc not in [0, 2]
+        - "'status: done' not in _cloud_init_status.stdout"
+
+    - name: install root CA
+      ansible.builtin.copy:
+        src: "{{ ssl_ca_cert_path }}"
+        dest: /usr/local/share/ca-certificates/test-ca.crt
+
+    - name: update CA certificates
+      ansible.builtin.command: update-ca-certificates
+
+    - block:
+        - name: write host certificate extensions
+          ansible.builtin.copy:
+            dest: "{{ ssl_directory }}/{{ inventory_hostname }}.ext"
+            mode: "0644"
+            content: |
+              [v3_server]
+              basicConstraints=critical,CA:FALSE
+              keyUsage=critical,digitalSignature,keyEncipherment
+              extendedKeyUsage=serverAuth
+              subjectAltName=DNS:{{ inventory_hostname }},DNS:{{ ansible_hostname }},DNS:{{ ansible_fqdn }}
+          delegate_to: localhost
+
+        - name: generate a private key for the host
+          ansible.builtin.command: "openssl genrsa -out {{ ssl_host_key_path }} 2048"
+
+        - name: allow private key to be readable
+          ansible.builtin.file:
+            path: "{{ ssl_host_key_path }}"
+            mode: "0644"
+
+        - name: prepare a CSR for the host's SSL certificate
+          ansible.builtin.command: "openssl req -new -key {{ ssl_host_key_path }} -subj '{{ ssl_subj }}' -out {{ ssl_host_csr_path }}"
+
+        - name: issue new SSL certificate for the host
+          ansible.builtin.command: >-
+            openssl x509 -req
+            -in {{ ssl_host_csr_path }}
+            -CA {{ ssl_ca_cert_path }}
+            -CAkey {{ ssl_ca_key_path }}
+            -days 1
+            -CAcreateserial
+            -sha256
+            -out {{ ssl_host_cert_path }}
+            -extfile {{ ssl_directory }}/{{ inventory_hostname }}.ext
+            -extensions v3_server
+      delegate_to: localhost
+
+    - name: copy apt proxy detection script
+      ansible.builtin.template:
+        src: templates/detect-http-proxy.j2
+        dest: /etc/apt/detect-http-proxy
+        mode: "0755"
+
+    - name: configure apt to use detection script
+      ansible.builtin.copy:
+        content: "Acquire::Retries 0;\nAcquire::http::ProxyAutoDetect \"/etc/apt/detect-http-proxy\";"
+        dest: /etc/apt/apt.conf.d/30detectproxy
+        mode: "0644"
+
+    - name: ensure gnupg is installed
+      ansible.builtin.apt:
+        name: gnupg
+        update_cache: true
+
+    - name: generate alternative locale
+      community.general.locale_gen:
+        name: ja_JP.UTF-8
+        state: present
+
+    - name: change locale
+      ansible.builtin.copy:
+        content: "LANG=ja_JP.UTF-8\n"
+        dest: /etc/default/locale
+        mode: "0644"
+
+    - name: identify the root disk backing device
+      ansible.builtin.shell: |
+        set -euo pipefail
+        root_source="$(findmnt -no SOURCE /)"
+        root_parent="$(lsblk -ndo PKNAME "${root_source}" 2>/dev/null || true)"
+        if [ -n "${root_parent}" ]; then
+          printf '/dev/%s\n' "${root_parent}"
+        else
+          printf '%s\n' "${root_source}"
+        fi
+      args:
+        executable: /bin/bash
+      register: _lima_root_disk
+      changed_when: false
+
+    - name: identify attached Lima data disks
+      ansible.builtin.shell: |
+        set -euo pipefail
+        lsblk -dnpo NAME,TYPE | awk '$2 == "disk" { print $1 }' \
+          | grep -vx "{{ _lima_root_disk.stdout }}" \
+          | sort
+      args:
+        executable: /bin/bash
+      register: _lima_data_disks
+      changed_when: false
+
+    - name: ensure exactly two Lima data disks are available
+      ansible.builtin.assert:
+        that:
+          - _lima_data_disks.stdout_lines | length == 2
+        fail_msg: >-
+          Expected exactly two extra Lima data disks, found
+          {{ _lima_data_disks.stdout_lines | length }}:
+          {{ _lima_data_disks.stdout_lines | join(', ') }}
+
+    - name: update run to use the Lima disks for Ceph and ZFS
+      ansible.builtin.set_fact:
+        pve_ceph_osds:
+          - device: "{{ _lima_data_disks.stdout_lines[0] }}"
+        lima_zfs_disk: "{{ _lima_data_disks.stdout_lines[1] }}"
+
+  roles:
+    - frzk.chrony
+    - lae.proxmox

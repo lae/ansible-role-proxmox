@@ -1,0 +1,40 @@
+= Lima Test Suite
+
+This folder contains scripts and configurations for bringing up a Proxmox cluster for testing and validation using https://lima-vm.io[Lima].
+
+The suite should work on both Linux and MacOS, but is not tested outside of Arch Linux and GitHub's Ubuntu runners.
+On Apple Silicon machines, you may also need `lima-additional-guestagents` for x86_64 support.
+
+If you're running into QEMU crashes when using Lima during the PVE installation task, try try downgrading it to 10.1.x.
+There's a bug in 10.2.x that seems to trigger on heavy network traffic, which has been reported upstream to QEMU: https://gitlab.com/qemu-project/qemu/-/work_items/3285[https://gitlab.com/qemu-project/qemu/-/work_items/3285]
+
+== Workflow
+
+The entrypoint is `tests/lima/run.sh`.
+
+[source,bash]
+----
+tests/lima/run.sh up
+tests/lima/run.sh provision
+tests/lima/run.sh test
+tests/lima/run.sh destroy
+----
+
+Or run the full CI-equivalent flow locally:
+
+[source,bash]
+----
+tests/lima/run.sh ci
+----
+
+== Configurable Environment Variables
+
+* `LIMA_HOME`: override the Lima instance root (helpful for using a different mountpoint for storing the VM disks)
+* `LIMA_WORKDIR`: override the host-side work directory for generated files and logs
+* `LIMA_BOOT_DISK`: override the VM boot disk size, default `8GiB`
+* `LIMA_EXTRA_DISK_SIZE`: override the size of each extra disk, default `128MiB`
+* `APT_CACHE_HOST`: use apt-cacher-ng host for caching PVE packages (a local one speeds up downloads)
+
+== License
+
+Please note, the files under this directory are licensed separately from the rest of this project and are under `AGPL-3.0-only`.

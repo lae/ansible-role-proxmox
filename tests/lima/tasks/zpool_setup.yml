@@ -1,5 +1,6 @@
 - name: Identify imported ZFS pools
   community.general.zpool_facts:
+
 - name: Create testpool ZFS pool
-  ansible.builtin.command: zpool create testpool vdc
+  ansible.builtin.command: "zpool create testpool {{ lima_zfs_disk }}"
   when: "'testpool' not in (ansible_zfs_pools | json_query('[].name'))"

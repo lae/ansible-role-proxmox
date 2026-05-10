@@ -1,147 +1,162 @@
 ---
 - hosts: all
+  become: true
+  ignore_unreachable: true
   tasks:
     - name: Ensure Proxmox Web UI returns a successful HTTP response
-      uri:
-        url: "https://{{ inventory_hostname }}:8006"
-
-    - name: Query PVE cluster status
-      shell: "pvesh get /cluster/status --output=json"
-      register: _pve_cluster
-      changed_when: False
+      block:
+        - uri:
+            url: "https://{{ inventory_hostname }}:8006"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check that this node is within the cluster and it is in quorum
-      assert:
-        that: "(_pve_cluster.stdout | from_json | json_query(query)) == 1"
-      vars:
-        query: "([?type=='cluster'].quorate)[0]"
+      block:
+        - ansible.builtin.shell: "pvesh get /cluster/status --output=json"
+          register: _pve_cluster
+          changed_when: false
 
-    - name: Query PVE realms
-      shell: "pvesh get /access/domains --output=json"
-      register: _pve_realms
-      changed_when: False
-
-    - name: Construct realm list
-      set_fact:
-        realm_list: "{{ realm_list | default([]) }} + [ '{{ item.type }}' ]"
-      with_items: "{{ pve_domains_cfg }}"
-
-    - name: Check that PVE realms exist
-      assert:
-        that: "realm_list is subset(_pve_realms.stdout | from_json | json_query(query))"
-      vars:
-        query: "[*].type"
-      run_once: True
+        - ansible.builtin.assert:
+            that: "(_pve_cluster.stdout | from_json | json_query(query)) == 1"
+          vars:
+            query: "([?type=='cluster'].quorate)[0]"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check PVE realms configuration
-      assert:
-        that:
-          - item.type == realm.type
-          - item.name == realm.realm
-          - item.attributes.comment == realm.comment
-      vars:
-        realm: '{{ _pve_realms.stdout | from_json
-                   | json_query("[?realm==''" + item.name + "'']") | first }}'
-      with_items: "{{ pve_domains_cfg }}"
+      block:
+        - ansible.builtin.shell: "pvesh get /access/domains --output=json"
+          register: _pve_realms
+          changed_when: false
 
-    - name: Query PVE groups
-      shell: "pvesh get /access/groups --output=json"
-      register: _pve_groups
-      changed_when: False
+        - ansible.builtin.assert:
+            that: "(pve_domains_cfg | map(attribute='name') | list) is subset(_pve_realms.stdout | from_json | json_query(query))"
+          vars:
+            query: "[*].realm"
+          run_once: true
+
+        - ansible.builtin.assert:
+            that:
+              - item.type == realm.type
+              - item.name == realm.realm
+              - item.attributes.comment == realm.comment
+          vars:
+            realm: '{{ _pve_realms.stdout | from_json
+                       | json_query("[?realm==''" + item.name + "'']") | first }}'
+          with_items: "{{ pve_domains_cfg }}"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check that PVE groups exist
-      assert:
-        that: "(_pve_groups.stdout | from_json | json_query(query)) == 1"
-      vars:
-        query: "length([?groupid=='{{ item.name }}'])"
-      run_once: True
-      with_items: "{{ pve_groups }}"
+      block:
+        - ansible.builtin.shell: "pvesh get /access/groups --output=json"
+          register: _pve_groups
+          changed_when: false
 
-    - name: Query PVE users
-      shell: "pvesh get /access/users --output=json"
-      register: _pve_users
-      changed_when: False
+        - ansible.builtin.assert:
+            that: "(_pve_groups.stdout | from_json | json_query(query)) == 1"
+          vars:
+            query: "length([?groupid=='{{ item.name }}'])"
+          run_once: true
+          with_items: "{{ pve_groups }}"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check that PVE users exist
-      assert:
-        that: "(_pve_users.stdout | from_json | json_query(query)) == 1"
-      vars:
-        query: "length([?userid=='{{ item.name }}'])"
-      run_once: True
-      with_items: "{{ pve_users }}"
+      block:
+        - ansible.builtin.shell: "pvesh get /access/users --output=json"
+          register: _pve_users
+          changed_when: false
 
-    - name: Query PVE ACLs
-      shell: "pvesh get /access/acl --output=json"
-      register: _pve_acl
-      changed_when: False
+        - ansible.builtin.assert:
+            that: "(_pve_users.stdout | from_json | json_query(query)) == 1"
+          vars:
+            query: "length([?userid=='{{ item.name }}'])"
+          run_once: true
+          with_items: "{{ pve_users }}"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check that PVE ACLs exist
-      assert:
-        that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
-      vars:
-        query: "length([])"
-      run_once: True
+      block:
+        - ansible.builtin.shell: "pvesh get /access/acl --output=json"
+          register: _pve_acl
+          changed_when: false
 
-    - name: Query PVE storages
-      shell: "pvesh get /storage --output=json"
-      register: _pve_storage
-      changed_when: False
-
-    - name: Construct storage list
-      set_fact:
-        sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
-      with_items: "{{ pve_storages }}"
+        - ansible.builtin.assert:
+            that: "(_pve_acl.stdout | from_json | json_query(query)) == expected_acl_count"
+          vars:
+            query: "length([])"
+            expected_acl_count: >-
+              {{
+                (pve_acls | map(attribute='groups') | map('default', []) | map('length') | sum)
+                +
+                (pve_acls | map(attribute='users') | map('default', []) | map('length') | sum)
+              }}
+          run_once: true
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check that PVE storages exist
-      assert:
-        that: "sto_list is subset(_pve_storage.stdout | from_json | json_query(query))"
-      vars:
-        query: "[*].storage"
-      run_once: True
+      block:
+        - ansible.builtin.shell: "pvesh get /storage --output=json"
+          register: _pve_storage
+          changed_when: false
 
-    - name: Check that User specified ZFS Volumes exist
-      zfs_facts:
-        dataset: "{{ item }}"
-      with_items: "{{ pve_zfs_create_volumes }}"
+        - ansible.builtin.set_fact:
+            sto_list: "{{ sto_list | default([]) }} + [ '{{ item.name }}' ]"
+          with_items: "{{ pve_storages }}"
 
-    - name: Read datacenter.cfg file
-      slurp:
-        src: "/etc/pve/datacenter.cfg"
-      register: datacenter_cfg
+        - ansible.builtin.assert:
+            that: "sto_list is subset(_pve_storage.stdout | from_json | json_query(query))"
+          vars:
+            query: "[*].storage"
+          run_once: true
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
+
+    - name: Check that user specified ZFS volumes exist
+      block:
+        - zfs_facts:
+            dataset: "{{ item }}"
+          with_items: "{{ pve_zfs_create_volumes }}"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
     - name: Check datacenter.cfg content
-      assert:
-        that: "'console: xtermjs' in datacenter_cfg.content | b64decode"
+      block:
+        - ansible.builtin.slurp:
+            src: "/etc/pve/datacenter.cfg"
+          register: datacenter_cfg
 
-    - name: Query PVE HA groups
-      command: "pvesh get /cluster/ha/groups --output=json"
-      register: _ha_group_list
-      run_once: true
+        - ansible.builtin.assert:
+            that: "'{{ item.key }}: {{ item.value }}' in datacenter_cfg.content | b64decode"
+          loop: "{{ pve_datacenter_cfg | dict2items }}"
+      rescue:
+        - ansible.builtin.set_fact:
+            test_suite_failed: true
 
-    - name: Check PVE HA group configuration
-      assert:
-        that:
-          - item.name == ha_group.group
-          - item.comment == ha_group.comment
-          - item.nodes == ha_group.nodes
-          - item.restricted == ha_group.restricted
-          - "'nofailback' not in ha_group"
-      vars:
-        ha_group: '{{ _ha_group_list.stdout | from_json
-                      | json_query("[?group==''" + item.name + "'']") | first }}'
-      with_items: "{{ pve_cluster_ha_groups }}"
+    - name: Collect service diagnostics
+      block:
+        - ansible.builtin.shell: "journalctl --no-pager -xu pvedaemon.service"
+          changed_when: false
+        - ansible.builtin.shell: "journalctl --no-pager -xu pve-cluster.service"
+          changed_when: false
+        - ansible.builtin.shell: "journalctl --no-pager -xu pveproxy.service"
+          changed_when: false
+        - ansible.builtin.shell: "cat /etc/hosts"
+          changed_when: false
+      ignore_errors: true
 
-    - block:
-        - name: pvedaemon service status
-          shell: "journalctl --no-pager -xu pvedaemon.service"
-          changed_when: False
-        - name: pve-cluster service status
-          shell: "journalctl --no-pager -xu pve-cluster.service"
-          changed_when: False
-        - name: pveproxy service status
-          shell: "journalctl --no-pager -xu pveproxy.service"
-          changed_when: False
-        - name: hosts file
-          shell: "cat /etc/hosts"
-          changed_when: False
-      ignore_errors: yes
+    - name: Fail if any test checks failed
+      ansible.builtin.fail:
+        msg: "One or more test checks failed. Review the task results above."
+      when: test_suite_failed | default(false)

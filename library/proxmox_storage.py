@@ -402,11 +402,12 @@ class ProxmoxStorage(object):
         args = {}
 
         args['type'] = self.type
-        if self.content is not None and len(self.content) > 0:
-            args['content'] = ','.join(self.content)
-        else:
-            # PVE uses "none" to represent when no content types are selected
-            args['content'] = 'none'
+        if self.content is not None:
+            if len(self.content) > 0:
+                args['content'] = ','.join(self.content)
+            else:
+                # PVE uses "none" to represent when no content types are selected
+                args['content'] = 'none'
         if self.nodes is not None:
             args['nodes'] = ','.join(self.nodes)
         if self.shared is not None:
@@ -581,11 +582,11 @@ def main():
         name=dict(type='str', required=True, aliases=['storage', 'storageid']),
         state=dict(default='present', choices=['present', 'absent'], type='str'),
         # Globally applicable PVE API arguments
-        content=dict(type='list', required=True, aliases=['storagetype']),
+        content=dict(type='list', required=False, aliases=['storagecontent']),
         disable=dict(required=False, type='bool', default=False),
         nodes=dict(type='list', required=False, default=None),
         shared=dict(type='bool', required=False, default=None),
-        type=dict(default=None, type='str', required=True,
+        type=dict(default=None, type='str', required=True, aliases=['storagetype'],
                   choices=["dir", "nfs", "rbd", "lvm", "lvmthin", "cephfs",
                            "zfspool", "btrfs", "pbs", "cifs"]),
         # Remaining PVE API arguments (depending on type) past this point
@@ -642,13 +643,13 @@ def main():
         supports_check_mode=True,
         required_if=[
             ["type", "cephfs", ["content"]],
-            ["type", "dir", ["path", "content"]],
+            ["type", "dir", ["path"]],
             ["type", "rbd", ["pool", "content"]],
             ["type", "nfs", ["server", "content", "export"]],
             ["type", "lvm", ["vgname", "content"]],
             ["type", "lvmthin", ["vgname", "thinpool", "content"]],
             ["type", "zfspool", ["pool", "content"]],
-            ["type", "btrfs", ["path", "content"]],
+            ["type", "btrfs", ["path"]],
             ["type", "pbs", ["server", "username", "password", "datastore"]],
             ["type", "cifs", ["server", "share"]],
         ],
