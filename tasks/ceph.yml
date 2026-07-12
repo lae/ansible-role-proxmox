@@ -13,7 +13,7 @@
     - name: Create initial Ceph monitor
       ansible.builtin.command: "pveceph mon create"
       args:
-        creates: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/"
+        creates: "/var/lib/ceph/mon/ceph-{{ ansible_facts['hostname'] }}/"
       register: _ceph_initial_mon
 
     - name: Fail if initial monitor creation failed
@@ -25,7 +25,7 @@
 - name: Create additional Ceph monitors
   ansible.builtin.command: "pveceph mon create"
   args:
-    creates: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}/"
+    creates: "/var/lib/ceph/mon/ceph-{{ ansible_facts['hostname'] }}/"
   when:
     - "inventory_hostname != groups[pve_ceph_mon_group][0]"
     - "inventory_hostname in groups[pve_ceph_mon_group]"
@@ -33,7 +33,7 @@
 - name: Create additional Ceph managers
   ansible.builtin.command: "pveceph mgr create"
   args:
-    creates: "/var/lib/ceph/mgr/ceph-{{ ansible_hostname }}/"
+    creates: "/var/lib/ceph/mgr/ceph-{{ ansible_facts['hostname'] }}/"
   when: "inventory_hostname in groups[pve_ceph_mgr_group]"
 
 - block:
@@ -183,7 +183,7 @@
 - name: Create Ceph MDS servers
   ansible.builtin.command: pveceph mds create
   args:
-    creates: "/var/lib/ceph/mds/ceph-{{ ansible_hostname }}"
+    creates: "/var/lib/ceph/mds/ceph-{{ ansible_facts['hostname'] }}"
   register: _ceph_mds_create
   when: "inventory_hostname in groups[pve_ceph_mds_group] and pve_ceph_fs | length > 0"
 
@@ -263,7 +263,7 @@
     path: "{{ item.mountpoint }}"
     src: |-
       {% for h in groups[pve_ceph_mon_group] -%}
-      {{ hostvars[h].ansible_all_ipv4_addresses | ansible.utils.ipaddr(pve_ceph_network) | first -}}
+      {{ hostvars[h].ansible_facts['all_ipv4_addresses'] | ansible.utils.ipaddr(pve_ceph_network) | first -}}
       {{ loop.last | ternary("", ",") -}}
       {% endfor %}:/
     fstype: "ceph"

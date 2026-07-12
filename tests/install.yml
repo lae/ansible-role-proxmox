@@ -23,7 +23,7 @@
       - "lxc.apparmor.profile = unconfined"
       - "lxc.mount.auto = proc:rw sys:rw cgroup-full:rw"
       - "lxc.cgroup.devices.allow = a *:* rmw"
-      - "lxc.mount.entry = /lib/modules/{{ ansible_kernel }} lib/modules/{{ ansible_kernel }} none bind,create=dir,ro 0 0"
+      - "lxc.mount.entry = /lib/modules/{{ ansible_facts['kernel'] }} lib/modules/{{ ansible_facts['kernel'] }} none bind,create=dir,ro 0 0"
 
 # Run the following within the containers in the inventory
 - hosts: all
@@ -41,8 +41,8 @@
         path: /etc/hosts
         line: "{{ item }}"
       with_items:
-        - "127.0.1.1    {{ ansible_fqdn }} {{ ansible_hostname }}"
-        - "10.22.33.44    {{ ansible_hostname }} {{ ansible_fqdn }}"
+        - "127.0.1.1    {{ ansible_facts['fqdn'] }} {{ ansible_facts['hostname'] }}"
+        - "10.22.33.44    {{ ansible_facts['hostname'] }} {{ ansible_facts['fqdn'] }}"
     - name: Update CA certificate store
       shell: update-ca-certificates
     - block:
@@ -83,7 +83,7 @@
                 flush_interval = "10s"
                 flush_jitter = "0s"
                 precision = ""
-                hostname = "{{ ansible_hostname }}"
+                hostname = "{{ ansible_facts['hostname'] }}"
                 omit_hostname = false
               [[inputs.socket_listener]]
                 service_address = "udp://127.0.0.1:8089"

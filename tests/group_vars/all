@@ -1,7 +1,7 @@
 ---
 ansible_ssh_user: root
 
-pve_group: "{{ ansible_distribution_release }}cluster"
+pve_group: "{{ ansible_facts['distribution_release'] }}cluster"
 pve_extra_packages:
   - sl
 pve_check_for_kernel_update: false

@@ -4,10 +4,10 @@ pve_group: proxmox
 # Proxmox PVE Repository
 pve_repository:
   uris: http://download.proxmox.com/debian/pve
-  suites: "{{ ansible_distribution_release }}"
+  suites: "{{ ansible_facts['distribution_release'] }}"
   components: pve-no-subscription
-  signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
-  key: "proxmox-release-{{ ansible_distribution_release }}.gpg"
+  signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_facts['distribution_release'] }}.gpg"
+  key: "proxmox-release-{{ ansible_facts['distribution_release'] }}.gpg"
 # pve_repository_line: ""
 pve_remove_subscription_warning: true
 pve_extra_packages: []
@@ -38,13 +38,13 @@ pve_ceph_enabled: false
 # Proxmox Ceph Repository
 pve_ceph_repository:
   uris: http://download.proxmox.com/debian/ceph-{{ pve_ceph_default_version }}
-  suites: "{{ ansible_distribution_release }}"
+  suites: "{{ ansible_facts['distribution_release'] }}"
   components: "{{ pve_ceph_debian_component }}"
-  signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_distribution_release }}.gpg"
-  key: "proxmox-release-{{ ansible_distribution_release }}.gpg"
+  signed_by: "/etc/apt/trusted.gpg.d/proxmox-release-{{ ansible_facts['distribution_release'] }}.gpg"
+  key: "proxmox-release-{{ ansible_facts['distribution_release'] }}.gpg"
 # pve_ceph_repository_line: ""
 pve_ceph_network: >-
-  {{ (ansible_default_ipv4.network + '/' + ansible_default_ipv4.netmask) |
+  {{ (ansible_facts['default_ipv4'].network + '/' + ansible_facts['default_ipv4'].netmask) |
     ansible.utils.ipaddr('net') }}
 pve_ceph_nodes: "{{ pve_group }}"
 pve_ceph_mon_group: "{{ pve_group }}"
@@ -60,9 +60,9 @@ pve_cluster_enabled: no
 pve_cluster_clustername: "{{ pve_group }}"
 pve_manage_hosts_enabled: yes
 pve_cluster_addr0: >-
-  {{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined
-    else ansible_default_ipv6.address if ansible_default_ipv6.address is defined }}
-# pve_cluster_addr1: "{{ ansible_eth1.ipv4.address }}
+  {{ ansible_facts['default_ipv4'].address if ansible_facts['default_ipv4'].address is defined
+    else ansible_facts['default_ipv6'].address if ansible_facts['default_ipv6'].address is defined }}
+# pve_cluster_addr1: "{{ ansible_facts['eth1'].ipv4.address }}
 # pve_cluster_addr0_priority: 0
 # pve_cluster_addr1_priority: 1
 pve_datacenter_cfg: {}
