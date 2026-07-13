@@ -53,7 +53,7 @@
   notify: update-grub
   when: >
     (not pve_pcie_passthrough_enabled | bool) or
-    ((not 'GenuineIntel' in ansible_processor | unique) and
+    ((not 'GenuineIntel' in ansible_facts['processor'] | unique) and
     (not pve_iommu_passthrough_mode | bool) and
     (not pve_mediated_devices_enabled | bool) and
     (not pve_pci_device_ids | length > 0))

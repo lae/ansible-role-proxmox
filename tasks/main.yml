@@ -44,8 +44,8 @@
     content: "\
       {% for host in groups[pve_group] %}\
         {{ hostvars[host].pve_cluster_addr0 }}
-        {{ hostvars[host].ansible_fqdn }}
-        {{ hostvars[host].ansible_hostname }}
+        {{ hostvars[host].ansible_facts['fqdn'] }}
+        {{ hostvars[host].ansible_facts['hostname'] }}
 
 
       {% endfor %}"
@@ -80,13 +80,13 @@
   vars:
     _correct_line: "\
       {{ hostvars[item].pve_cluster_addr0 }}
-      {{ hostvars[item].ansible_fqdn }}
-      {{ hostvars[item].ansible_hostname }}"
+      {{ hostvars[item].ansible_facts['fqdn'] }}
+      {{ hostvars[item].ansible_facts['hostname'] }}"
     _correct_ip: "{{ hostvars[item].pve_cluster_addr0 }}"
     _match_hosts: >-
       [
-        "{{ hostvars[item].ansible_fqdn }}",
-        "{{ hostvars[item].ansible_hostname }}"
+        "{{ hostvars[item].ansible_facts['fqdn'] }}",
+        "{{ hostvars[item].ansible_facts['hostname'] }}"
       ]
   when: "pve_cluster_enabled | bool and pve_manage_hosts_enabled | bool"
 
@@ -99,11 +99,11 @@
       {# Match at least one whitespace, and any non-hostname names #}\
       (\\s+.*)*\\s\
       {# Match either our fqdn or hostname #}\
-      ({{ ansible_fqdn | regex_escape() }}|{{ ansible_hostname | regex_escape() }})\
+      ({{ ansible_facts['fqdn'] | regex_escape() }}|{{ ansible_facts['hostname'] | regex_escape() }})\
       {# Require there be a word boundary at the end of the name(s). #}\
       {# This can be any whitespace, or end-of-line. #}\
       (\\s+.*|\\s*)$"
-    line: "{{ hostvars[inventory_hostname].pve_cluster_addr0 }} {{ ansible_fqdn }} {{ ansible_hostname }}"
+    line: "{{ hostvars[inventory_hostname].pve_cluster_addr0 }} {{ ansible_facts['fqdn'] }} {{ ansible_facts['hostname'] }}"
     backup: yes
   when: "not pve_cluster_enabled | bool and pve_manage_hosts_enabled | bool"
 
@@ -117,7 +117,7 @@
     data: "{{ lookup('file', pve_release_key) }}"
     id: "{{ pve_release_key_id }}"
     state: present
-  when: "ansible_distribution_major_version | int < 12"
+  when: "ansible_facts['distribution_major_version'] | int < 12"
 
 - name: Trust PVE packaging key on Debian >= 12
   ansible.builtin.copy:
@@ -125,7 +125,7 @@
     dest: "{{ pve_repository.signed_by }}"
     mode: "0644"
   when:
-    - ansible_distribution_major_version | int >= 12
+    - ansible_facts['distribution_major_version'] | int >= 12
     - pve_repository.key is defined
     - pve_repository.key | length > 0
 
@@ -135,7 +135,7 @@
     dest: "{{ pve_ceph_repository.signed_by }}"
     mode: "0644"
   when:
-    - ansible_distribution_major_version | int >= 12
+    - ansible_facts['distribution_major_version'] | int >= 12
     - pve_ceph_enabled | bool
     - pve_ceph_repository.key is defined
     - pve_ceph_repository.key | length > 0

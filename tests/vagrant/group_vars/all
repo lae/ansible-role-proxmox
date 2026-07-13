@@ -62,7 +62,7 @@ pve_storages:
     pool: vm-storage
     username: admin
     monhost:
-      - "{{ ansible_fqdn }}:6789"
+      - "{{ ansible_facts['fqdn'] }}:6789"
   - name: zfs1
     type: zfspool
     content: [ "images", "rootdir" ]

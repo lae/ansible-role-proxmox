@@ -2,4 +2,4 @@
   community.general.zpool_facts:
 - name: Create testpool ZFS pool
   ansible.builtin.command: zpool create testpool vdc
-  when: "'testpool' not in (ansible_zfs_pools | json_query('[].name'))"
+  when: "'testpool' not in (ansible_facts['zfs_pools'] | json_query('[].name'))"
