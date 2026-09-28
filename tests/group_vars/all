@@ -87,7 +87,15 @@ pve_users:
     email: tempuser@pve.example
     firstname: Test
     lastname: User
-pve_acls: # This should generate 3 different ACLs (note that this is count should be modified in tests/test.yml if this var is changed)
+pve_user_tokens:
+  - userid: pveapi@pve
+    tokenid: terraform
+    comment: Used by Terraform
+    privsep: no
+  - userid: testapi@pve
+    tokenid: monitoring
+    expire: 1893456000
+pve_acls: # This should generate 4 different ACLs (note that this is count should be modified in tests/test.yml if this var is changed)
   - path: /
     roles: [ "Administrator" ]
     groups: [ "Admins" ]
@@ -97,6 +105,10 @@ pve_acls: # This should generate 3 different ACLs (note that this is count shoul
       - pveapi@pve
     groups:
       - test_users
+  - path: /vms
+    roles: [ "PVEVMAdmin" ]
+    tokens:
+      - testapi@pve!monitoring
 pve_storages: # This should create 2 different storages.
   - name: dir1
     type: dir

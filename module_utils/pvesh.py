@@ -98,6 +98,8 @@ def create(resource, **params):
     if response["status"] != 200:
         raise ProxmoxShellError(response)
 
+    return response.get("data")
+
 def set(resource, **params):
     response = run_command("set", resource, **params)
 

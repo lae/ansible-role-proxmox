@@ -432,6 +432,7 @@ pve_ceph_crush_rules: [] # List of CRUSH rules to create
 pve_roles: [] # Added more roles with specific privileges. See section on User Management.
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
+pve_user_tokens: [] # List of user API tokens to manage in PVE. See section on User Management.
 pve_storages: [] # List of storages to manage in PVE. See section on Storage Management.
 pve_metric_servers: [] # List of metric servers to configure in PVE.
 pve_datacenter_cfg: {} # Dictionary to configure the PVE datacenter.cfg config file.
@@ -587,6 +588,48 @@ pve_users:
 Refer to `library/proxmox_user.py` [link][user-module] and
 `library/proxmox_group.py` [link][group-module] for module documentation.
 
+API tokens can be managed for existing users with `pve_user_tokens`:
+
+```
+pve_user_tokens:
+  - userid: pveapi@pve
+    tokenid: terraform
+    comment: Used by Terraform
+    privsep: no # Share the privileges of pveapi@pve
+  - userid: pveapi@pve
+    tokenid: monitoring
+    expire: 1893456000 # Defaults to 0 (never expires)
+  - userid: pveapi@pve
+    tokenid: legacy
+    state: absent
+```
+
+Tokens with privilege separation (`privsep: yes`, the default) don't have any
+privileges on their own, so make sure to grant them some with `pve_acls` (see
+below).
+
+Note that PVE only reveals a token's secret when it gets created, so this role
+cannot update or retrieve it afterwards: existing tokens are left as is apart
+from their `comment`, `expire` and `privsep` settings. The secrets of tokens
+created during a run are exposed in the `pve_user_token_secrets` fact (a
+dictionary indexed by full token ID, e.g. `pveapi@pve!terraform`) on the host
+that created them (the first node of a cluster), so you can store them
+somewhere afterwards, e.g.:
+
+```
+- name: Save newly created PVE API tokens
+  ansible.builtin.copy:
+    content: "{{ item.value }}"
+    dest: "secrets/{{ item.key }}"
+    mode: "0600"
+  loop: "{{ pve_user_token_secrets | default({}) | dict2items }}"
+  delegate_to: localhost
+  no_log: true
+```
+
+Refer to `library/proxmox_user_token.py` [link][user-token-module] for module
+documentation.
+
 For managing roles and ACLs, a similar module is employed, but the main
 difference is that most of the parameters only accept lists (subject to
 change):
@@ -610,6 +653,10 @@ pve_acls:
       - pveapi@pve
     groups:
       - test_users
+  - path: /vms
+    roles: [ "PVEVMAdmin" ]
+    tokens:
+      - pveapi@pve!monitoring
 ```
 
 Refer to `library/proxmox_role.py` [link][user-module] and
@@ -1016,6 +1063,7 @@ Antoine Thys ([@thystips](https://github.com/thystips)) - Metric Servers Support
 [pvesm]: https://pve.proxmox.com/pve-docs/chapter-pvesm.html
 [user-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user.py
 [group-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
+[user-token-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_user_token.py
 [acl-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_group.py
 [storage-module]: https://github.com/lae/ansible-role-proxmox/blob/master/library/proxmox_storage.py
 [datacenter-cfg]: https://pve.proxmox.com/wiki/Manual:_datacenter.cfg

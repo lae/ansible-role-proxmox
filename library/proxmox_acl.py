@@ -41,6 +41,12 @@ options:
         type: list
         description:
             - Specifies a list of PVE users to apply this access control for.
+    tokens:
+        required: false
+        type: list
+        description:
+            - Specifies a list of PVE API tokens (in the C(userid!tokenid)
+              format) to apply this access control for.
 
 author:
     - Musee Ullah (@lae)
@@ -60,6 +66,12 @@ EXAMPLES = '''
       - pveapi@pve
     groups:
       - test_users
+- name: Allow the pveapi@pve!terraform API token PVEVMAdmin access to /vms
+  proxmox_acl:
+    path: /vms
+    roles: [ "PVEVMAdmin" ]
+    tokens:
+      - pveapi@pve!terraform
 '''
 
 RETURN = '''
@@ -77,6 +89,7 @@ class ProxmoxACL(object):
         self.roles = module.params['roles']
         self.groups = module.params['groups']
         self.users = module.params['users']
+        self.tokens = module.params['tokens']
 
         try:
             self.existing_acl = pvesh.get("access/acl")
@@ -98,6 +111,9 @@ class ProxmoxACL(object):
 
         if self.groups is not None:
             [constituents.append(["group", group]) for group in self.groups]
+
+        if self.tokens is not None:
+            [constituents.append(["token", token]) for token in self.tokens]
 
         self.acls = []
         for role in self.roles:
@@ -128,6 +144,9 @@ class ProxmoxACL(object):
         if self.users is not None:
             args['users'] = ','.join(self.users)
 
+        if self.tokens:
+            args['tokens'] = ','.join(self.tokens)
+
         return args
 
     def set_acl(self, delete=0):
@@ -148,8 +167,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             groups=dict(default=None, type='list'),
             users=dict(default=None, type='list'),
+            tokens=dict(default=None, type='list'),
         ),
-        required_one_of=[["groups", "users"]],
+        required_one_of=[["groups", "users", "tokens"]],
         supports_check_mode=True
     )
 

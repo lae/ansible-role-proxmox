@@ -70,6 +70,23 @@
       run_once: True
       with_items: "{{ pve_users }}"
 
+    - name: Query PVE user API tokens
+      shell: "pvesh get /access/users/{{ item.userid }}/token --output=json"
+      register: _pve_user_tokens_query
+      changed_when: False
+      run_once: True
+      with_items: "{{ pve_user_tokens }}"
+
+    - name: Check that PVE user API tokens exist
+      assert:
+        that: "(item.stdout | from_json | json_query(query)) == 1"
+      vars:
+        query: "length([?tokenid=='{{ item.item.tokenid }}'])"
+      run_once: True
+      with_items: "{{ _pve_user_tokens_query.results }}"
+      loop_control:
+        label: "{{ item.item.userid }}!{{ item.item.tokenid }}"
+
     - name: Query PVE ACLs
       shell: "pvesh get /access/acl --output=json"
       register: _pve_acl
@@ -77,7 +94,7 @@
 
     - name: Check that PVE ACLs exist
       assert:
-        that: "(_pve_acl.stdout | from_json | json_query(query)) == 3"
+        that: "(_pve_acl.stdout | from_json | json_query(query)) == 4"
       vars:
         query: "length([])"
       run_once: True

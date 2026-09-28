@@ -268,6 +268,30 @@
   with_items: "{{ pve_users }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
+- name: Configure Proxmox user API tokens
+  proxmox_user_token:
+    userid: "{{ item.userid }}"
+    tokenid: "{{ item.tokenid }}"
+    state: "{{ item.state | default('present') }}"
+    comment: "{{ item.comment | default(omit) }}"
+    expire: "{{ item.expire | default(omit) }}"
+    privsep: "{{ item.privsep | default(omit) }}"
+  with_items: "{{ pve_user_tokens }}"
+  loop_control:
+    label: "{{ item.userid }}!{{ item.tokenid }}"
+  register: _pve_user_tokens
+  # Secrets are returned in clear text on creation
+  no_log: "{{ pve_no_log }}"
+  when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
+
+- name: Expose secrets of newly created Proxmox user API tokens
+  ansible.builtin.set_fact:
+    pve_user_token_secrets: "{{ _pve_user_tokens.results | selectattr('value', 'defined') | items2dict(key_name='full_tokenid', value_name='value') }}"
+  no_log: "{{ pve_no_log }}"
+  when:
+    - _pve_user_tokens.results is defined
+    - not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)
+
 - ansible.builtin.import_tasks: realms_config.yml
   when:
     - not pve_cluster_enabled | bool or (pve_cluster_enabled and inventory_hostname == groups[pve_group][0])
@@ -296,6 +320,7 @@
     state: "{{ item.state | default('present') }}"
     groups: "{{ item.groups | default([]) }}"
     users: "{{ item.users | default([]) }}"
+    tokens: "{{ item.tokens | default([]) }}"
   with_items: "{{ pve_acls }}"
   when: "not pve_cluster_enabled | bool or (pve_cluster_enabled | bool and inventory_hostname == _init_node)"
 
