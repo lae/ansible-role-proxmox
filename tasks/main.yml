@@ -341,6 +341,7 @@
     vgname: "{{ item.vgname | default(omit) }}"
     thinpool: "{{ item.thinpool | default(omit) }}"
     sparse: "{{ item.sparse | default(omit) }}"
+    blocksize: "{{ item.blocksize | default(omit) }}"
     namespace: "{{ item.namespace | default(omit) }}"
     domain: "{{ item.domain | default(omit) }}"
     subdir: "{{ item.subdir | default(omit) }}"

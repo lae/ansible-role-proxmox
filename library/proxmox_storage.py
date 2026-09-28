@@ -162,6 +162,12 @@ options:
         type: bool
         description:
             - Use ZFS thin-provisioning.
+    blocksize:
+        required: false
+        type: str
+        description:
+            - Block size of the ZFS volumes, e.g. C(16k).
+            - Only applies to newly created volumes.
     snapshot_as_volume_chain:
         required: false
         type: bool
@@ -284,6 +290,7 @@ EXAMPLES = '''
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+    blocksize: 16k
 - name: CIFS-Share
   proxmox_storage:
     name: cifs1
@@ -340,6 +347,7 @@ class ProxmoxStorage(object):
         self.vgname = module.params['vgname']
         self.thinpool = module.params['thinpool']
         self.sparse = module.params['sparse']
+        self.blocksize = module.params['blocksize']
         self.snapshot_as_volume_chain = module.params['snapshot_as_volume_chain']
         self.is_mountpoint = module.params['is_mountpoint']
         self.create_subdirs = module.params['create_subdirs']
@@ -451,6 +459,8 @@ class ProxmoxStorage(object):
             args['namespace'] = self.namespace
         if self.sparse is not None:
             args['sparse'] = 1 if self.sparse else 0
+        if self.blocksize is not None:
+            args['blocksize'] = self.blocksize
         if self.snapshot_as_volume_chain is not None:
             args['snapshot-as-volume-chain'] = 1 if self.snapshot_as_volume_chain else 0
         if self.is_mountpoint is not None:
@@ -628,6 +638,7 @@ def main():
         vgname=dict(default=None, type='str', required=False),
         thinpool=dict(default=None, type='str', required=False),
         sparse=dict(default=None, type='bool', required=False),
+        blocksize=dict(default=None, type='str', required=False),
         snapshot_as_volume_chain=dict(default=None, type='bool', required=False),
         is_mountpoint=dict(default=None, type='bool', required=False),
         create_subdirs=dict(default=None, type='bool', required=False),

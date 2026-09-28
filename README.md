@@ -676,6 +676,7 @@ pve_storages:
     content: [ "images", "rootdir" ]
     pool: rpool/data
     sparse: true
+    blocksize: 16k
   - name: btrfs1
     type: btrfs
     content: [ "images", "rootdir" ]
